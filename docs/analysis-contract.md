@@ -1,6 +1,6 @@
 # 관류 분석 연동 약속
 
-<mark>**앱과 관류 분석 프로그램은 서로의 코드를 읽지 않고, 표준 입력의 JSON 한 줄, 표준 출력의 줄, 결과 파일로만 주고받습니다.**</mark> 이 문서는 그 형식과 규칙의 원본입니다. 내용은 지금 C++ 앱(deepmediHardwareLab `68e136d`)과 관류 분석 프로그램이 실제로 하는 동작에서 옮겼습니다.
+<mark>**앱과 관류 분석 프로그램은 서로의 코드를 읽지 않고, 표준 입력의 JSON 한 줄, 표준 출력의 줄, 결과 파일로만 주고받습니다.**</mark> 이 문서는 그 형식과 규칙의 원본입니다.
 
 - **관류 분석 프로그램은 이 레포에 없습니다**<br>같은 약속을 지키는 가짜 분석기가 `tools/DiabeticFoot.FakeAnalyzer`에 있습니다. 실행 방법은 [가짜 분석기 README](../tools/DiabeticFoot.FakeAnalyzer/README.md)에 있습니다
 - **결과 배열 파일은 npz를 그대로 씁니다**<br>근거는 [12절](#12-결정-결과-배열-파일은-npz를-그대로-씀)에 있습니다
@@ -446,14 +446,14 @@ C++ 앱이 보내는 요청 한 줄의 예입니다(읽기 쉽게 줄을 나눴�
 
 ## 12. 결정: 결과 배열 파일은 npz를 그대로 씀
 
-<mark>**결과 배열 파일은 지금처럼 npz로 두고, 관류 분석 프로그램이 쓰는 형식은 바꾸지 않습니다.**</mark> C# 앱은 C++ 앱의 npz 읽기(`npy_archive.cc`)를 그대로 이식합니다.
+<mark>**결과 배열 파일은 지금처럼 npz로 두고, 관류 분석 프로그램이 쓰는 형식은 바꾸지 않습니다.**</mark> C# 앱은 `src/DiabeticFoot.Platform/NpyArchive.cs`로 npz를 읽습니다.
 
 | 형식 | 분석 프로그램 수정 | 앱이 할 일 | 지난 결과 열기 |
 | --- | --- | --- | --- |
-| npz 유지 | 없음 | npz 읽기 이식(328줄과 시험) | 그대로 됨 |
+| npz 유지 | 없음 | npz 읽기(이미 있음) | 그대로 됨 |
 | JSON이나 CSV로 바꿈 | 저장 코드, 시험 데이터 | 새 읽기 작성 | npz 읽기가 따로 필요 |
 
-- **C++ 앱이 이미 npz를 직접 읽습니다**<br>`npy_archive.cc`가 외부 라이브러리 없이 무압축 ZIP과 npy를 읽고, 시험과 실제 결과 고정 파일이 있습니다
+- **앱이 이미 npz를 직접 읽습니다**<br>`NpyArchive`가 외부 라이브러리 없이 무압축 ZIP과 npy를 읽고, 시험과 실제 결과 고정 파일이 있습니다
 - **형식을 바꾸면 두 레포를 함께 고쳐야 합니다**<br>지난 결과는 npz로 남아 있어, 형식을 바꿔도 앱에서 npz 읽기를 뺄 수 없습니다
 - **NuGet 패키지가 필요 없습니다**<br>.NET 기본 라이브러리만으로 무압축 ZIP을 읽고 씁니다. 가짜 분석기는 `System.IO.Compression.ZipArchive`로 npz를 씁니다
 
@@ -461,11 +461,3 @@ C++ 앱이 보내는 요청 한 줄의 예입니다(읽기 쉽게 줄을 나눴�
 
 `tools/DiabeticFoot.FakeAnalyzer`는 이 문서의 줄과 파일을 그대로 내고, 결과 값은 모든 요청에 같습니다. 영상을 풀지 않으므로 장 수 확인, 가로 영상 확인, 발 찾기 실패는 흉내 내지 않습니다. 실행 방법과 실패를 흉내 내는 방법은 [README](../tools/DiabeticFoot.FakeAnalyzer/README.md)에 있습니다.
 
-## 근거 코드
-
-deepmediHardwareLab `68e136d`의 다음 파일에서 옮겼습니다.
-
-- **띄우기, 줄 해석, 시간 제한**<br>`platform/src/analyzer.cc`, `platform/src/perfusion_analysis.cc`, `platform/src/output_lines.h`, `platform/src/json_reader.h`, `app/src/main.cc`
-- **진행 단계 이름, 분석 상태 화면, 판**<br>`app/src/analysis_controller.cc`, `app/src/analysis_variants.cc`
-- **결과 파일 읽기**<br>`platform/src/perfusion_summary.cc`, `platform/src/perfusion_detail.cc`, `platform/src/npy_archive.cc`, `app/src/result_view.cc`, `core/src/timing/include/hwlab/timing/window_index.h`
-- **분석 프로그램 쪽 동작**<br>`analysis/dfr_worker.py`, `docs/01-analysis.md`

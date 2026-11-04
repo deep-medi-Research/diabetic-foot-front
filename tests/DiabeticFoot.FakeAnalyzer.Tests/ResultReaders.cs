@@ -31,7 +31,7 @@ internal sealed record NpyEntry(string Descr, long[] Shape, byte[] Data)
 }
 
 /// <summary>
-/// 앱의 npz 읽기(npy_archive.cc)가 받는 범위인지 확인하며 읽습니다. 무압축 항목, 암호화 없음, CRC 일치, `.npy` 머리 버전 1~3,
+/// 앱의 npz 읽기(NpyArchive)가 받는 범위인지 확인하며 읽습니다. 무압축 항목, 암호화 없음, CRC 일치, `.npy` 머리 버전 1~3,
 /// C 순서만 통과합니다.
 /// </summary>
 internal static partial class NpzFile

@@ -111,7 +111,7 @@ internal sealed class FakeAnalyzerProcess : IDisposable
     }
 }
 
-/// <summary>관류 분석 프로그램 출력 줄의 규칙입니다. 앱의 줄 해석(perfusion_analysis.cc ParseAnalyzerLine)과 같습니다.</summary>
+/// <summary>관류 분석 프로그램 출력 줄의 규칙입니다. 앱의 줄 해석(PerfusionAnalysis)과 같습니다.</summary>
 internal static partial class AnalyzerLines
 {
     [GeneratedRegex(@"^\[(\d{1,6})/(\d{1,6})\]")]
