@@ -1,0 +1,23 @@
+{
+  "device": "See3CAM_24CUG",
+  "width": 1280,
+  "height": 720,
+  "target_frames": 1800,
+  "clip_level": 250,
+  "buffer_frames": 120,
+  "codec": "ffv1",
+  "thermal_record_period_us": 111111,
+  "settings": {
+    "mode": "manual",
+    "exposure_step": -9,
+    "gain": 1,
+    "white_balance_k": 4000,
+    "sdk_frame_rate": 60
+  },
+  "settle": {
+    "exposure_applied_frame": 4,
+    "gain_applied_frame": 3,
+    "white_balance_applied_frame": 3,
+    "black_level_settled_frame": 75
+  }
+}

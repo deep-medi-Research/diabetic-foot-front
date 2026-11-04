@@ -109,7 +109,7 @@ public enum ActionKind : byte
 /// <param name="Reason"><see cref="ActionKind.EndRecording"/>일 때만 씁니다.</param>
 public sealed record FlowAction(ActionKind Kind = ActionKind.WriteFrame, EndReason Reason = EndReason.Completed);
 
-/// <summary>촬영 흐름의 규칙입니다. 촬영 선언에서 꺼냅니다(<c>FlowFunctions.RuleOf</c>).</summary>
+/// <summary>촬영 흐름의 규칙입니다. 촬영 선언에서 꺼냅니다(<see cref="FlowFunctions.RuleOf"/>).</summary>
 public readonly record struct FlowRule
 {
     public SettleRule Settle { get; init; }
