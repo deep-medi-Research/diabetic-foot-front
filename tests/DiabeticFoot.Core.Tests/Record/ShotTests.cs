@@ -96,6 +96,19 @@ public class ShotTests
         Assert.Equal("20260915_142233_12_full.mkv", NumberLayout(layout, 12).NameOf(FileRole.FullVideo));
     }
 
+    // C#에서 추가한 확인입니다. 직접 만든 배치에서 Stem이 Folder보다 길면 원본(size_t 뺄셈이 감김)처럼 폴더 전체 뒤에 번호 붙은 Stem을 잇습니다.
+    [Fact]
+    public void NumberedLayoutWithStemLongerThanFolderKeepsWholeFolder()
+    {
+        var layout = new ShotLayout { Folder = "a", Stem = "xyz", Files = new[] { new ShotFile(FileRole.Manifest, "xyz_shot.json") } };
+
+        var second = NumberLayout(layout, 2);
+
+        Assert.Equal("axyz_2", second.Folder);
+        Assert.Equal("xyz_2", second.Stem);
+        Assert.Equal("xyz_2_shot.json", second.NameOf(FileRole.Manifest));
+    }
+
     // 폴더 이름이 되는 이름에 Windows가 거부하는 문자가 있으면 만들지 않습니다.
     [Theory]
     [InlineData("홍/길동")]

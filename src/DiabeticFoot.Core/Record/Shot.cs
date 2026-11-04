@@ -379,7 +379,11 @@ public static partial class RecordFunctions
             return layout;
         }
         string stem = layout.Stem + "_" + CFormat.Int(number);
-        string folder = layout.Folder.Substring(0, layout.Folder.Length - layout.Stem.Length) + stem;
+        // 직접 만든 배치에서 Stem이 Folder보다 길면 원본은 부호 없는 뺄셈이 감겨 폴더 전체를 그대로 씁니다.
+        string parent = layout.Folder.Length >= layout.Stem.Length
+            ? layout.Folder.Substring(0, layout.Folder.Length - layout.Stem.Length)
+            : layout.Folder;
+        string folder = parent + stem;
         var files = new List<ShotFile>();
         foreach (ShotFile f in layout.Files)
         {
