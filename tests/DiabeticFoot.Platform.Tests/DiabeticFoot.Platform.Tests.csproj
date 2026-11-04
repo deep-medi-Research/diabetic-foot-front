@@ -25,6 +25,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\DiabeticFoot.TestWorker\DiabeticFoot.TestWorker.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
     <None Update="Data\**" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
