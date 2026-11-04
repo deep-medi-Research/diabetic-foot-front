@@ -11,7 +11,6 @@ namespace DiabeticFoot.Platform;
 /// </summary>
 /// <remarks>
 /// 녹화 중에는 밝기를 바꾸지 않습니다. 이 클래스는 막지 않으므로 부른 쪽(촬영 흐름)이 지킵니다.
-/// 포트는 사람이 고릅니다. PPG 장치도 같은 종류의 직렬 변환기를 쓰므로 목록의 첫 포트를 자동으로 열지 않습니다.
 /// </remarks>
 public sealed class Light : IDisposable
 {
@@ -20,7 +19,6 @@ public sealed class Light : IDisposable
     ISerialPort? _port;
     int? _lastSentPercent;
 
-    /// <param name="opener">포트를 여는 함수입니다. 제품은 SystemSerialPort.Open, 테스트는 FakeSerialPort.Opener입니다.</param>
     public Light(SerialPortOpener opener)
     {
         _opener = opener;
@@ -30,9 +28,7 @@ public sealed class Light : IDisposable
     /// 포트를 열고 밝기를 보냅니다. 이미 열려 있으면 먼저 닫습니다.
     /// 열었지만 보내지 못했으면 포트를 닫고 false입니다.
     /// </summary>
-    /// <param name="portName">사람이 고른 포트 이름입니다(예: "COM3").</param>
     /// <param name="percent">열자마자 보낼 밝기(%)입니다. 0~100으로 자릅니다.</param>
-    /// <param name="error">실패하면 이유입니다.</param>
     public bool Open(string portName, int percent, [NotNullWhen(false)] out string? error)
     {
         lock (_gate)
@@ -45,7 +41,6 @@ public sealed class Light : IDisposable
                 return false;
             }
             _port = opened.Port;
-            // 보드의 현재 밝기를 읽을 수 없으므로 열자마자 보내 LastSentPercent를 장치와 맞춥니다.
             return SendLocked(percent, out error);
         }
     }
@@ -55,7 +50,6 @@ public sealed class Light : IDisposable
     /// 연결되어 있지 않거나 쓰기가 실패하면 false이고, 쓰기 실패면 연결을 끊습니다.
     /// </summary>
     /// <param name="percent">밝기(%)입니다. 0~100으로 자릅니다.</param>
-    /// <param name="error">실패하면 이유입니다.</param>
     public bool SetPercent(int percent, [NotNullWhen(false)] out string? error)
     {
         lock (_gate)

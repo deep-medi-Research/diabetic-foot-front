@@ -2,7 +2,6 @@ namespace DiabeticFoot.Platform.Tests;
 
 public class PpgWireTests
 {
-    // 장치가 보내는 메시지를 만듭니다. PC 명령과 발신지만 다릅니다.
     static byte[] FromDevice(byte code, byte[] data)
     {
         byte[] message = PpgWire.BuildCommand(code, data);
@@ -51,7 +50,6 @@ public class PpgWireTests
         Assert.Equal(new byte[] { 30, 60, (byte)'F', (byte)'M', 40, (byte)'A' }, start[5..11]);
     }
 
-    // 장치가 받지 않는 값은 명령을 만들지 않습니다.
     [Fact]
     public void RejectsOutOfRangeStart()
     {
@@ -61,7 +59,6 @@ public class PpgWireTests
         Assert.False(PpgWire.TryBuildStart(new PpgStartRequest { PreviewS = 5 }, out _, out _));
     }
 
-    // 장치가 받는 값의 경계는 받고, 한 칸 벗어나면 받지 않습니다.
     [Theory]
     [InlineData(10, 60, 'P', 'M', 1, 'A', true)]
     [InlineData(60, 150, 'F', 'F', 120, 'W', true)]
@@ -94,7 +91,6 @@ public class PpgWireTests
         Assert.Equal((byte)'P', stop[4]);
     }
 
-    // 여러 덩어리로 나뉘어 온 메시지를 이어서 합치고, 마지막 바이트가 든 덩어리의 시각을 메시지 시각으로 씁니다.
     [Fact]
     public void Parser_ParsesMessageSplitAcrossChunks()
     {
@@ -125,7 +121,6 @@ public class PpgWireTests
         Assert.Equal(0, parser.Counts.SkippedBytes);
     }
 
-    // 앞의 잡음과 CRC가 틀린 메시지를 건너뛰고 다음 정상 메시지를 찾습니다.
     [Fact]
     public void Parser_ResyncsAfterNoiseAndBadCrc()
     {
@@ -158,7 +153,6 @@ public class PpgWireTests
         Assert.True(parser.Counts.BadLengths + parser.Counts.Implausible >= 1);
     }
 
-    // 바이트를 하나씩 받아도 한 번에 받은 것과 같은 메시지와 같은 집계가 나옵니다.
     [Fact]
     public void Parser_ByteAtATimeEqualsOneChunk()
     {
@@ -185,7 +179,6 @@ public class PpgWireTests
         Assert.Equal(whole.Counts, piecewise.Counts);
     }
 
-    // 끝 3바이트를 뺀 길이가 홀수인 측정 데이터는 풀지 않습니다.
     [Fact]
     public void DecodeMeasure_RejectsOddSampleBytes()
     {

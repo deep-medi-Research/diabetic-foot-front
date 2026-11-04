@@ -20,13 +20,11 @@ public sealed class SystemSerialPort : ISerialPort
     readonly SerialPort _port;
     readonly SerialDataReceivedEventHandler _onData;
 
-    // 열기, 닫기와 진행 중인 입출력 수를 지킵니다.
     readonly object _gate = new();
     int _inFlight;
     bool _open = true;
     bool _closing;
 
-    // 읽기를 기다리는 쪽과 알리는 쪽이 공유합니다.
     readonly object _signal = new();
     bool _dataSignaled;
     bool _wakePending;
@@ -53,7 +51,6 @@ public sealed class SystemSerialPort : ISerialPort
 
     /// <summary>
     /// 포트를 엽니다. 속도와 8N1은 config와 고정값이고 흐름 제어는 쓰지 않습니다. 열기 전에 장치가 보낸 바이트는 버립니다.
-    /// SerialPortOpener로 넘길 수 있습니다.
     /// </summary>
     /// <remarks>
     /// DTR과 RTS는 켠 채로 둡니다. 원본은 흐름 제어만 끄고 드라이버 기본값을 그대로 두었고, Windows 직렬 드라이버는 열 때
@@ -61,7 +58,7 @@ public sealed class SystemSerialPort : ISerialPort
     /// </remarks>
     public static SerialOpenResult Open(string name, SerialConfig config) => Open(name, config, assertModemLines: true);
 
-    // 가상 단말(pty)은 모뎀 제어선을 지원하지 않아 DTR을 켜면 열기가 실패합니다. 시험이 pty로 열 수 있게 둡니다.
+    // 가상 단말(pty)은 모뎀 제어선을 지원하지 않아 DTR을 켜면 열기가 실패합니다.
     internal static SerialOpenResult Open(string name, SerialConfig config, bool assertModemLines)
     {
         SerialPort? serial = null;
@@ -139,7 +136,8 @@ public sealed class SystemSerialPort : ISerialPort
             if (_closing) return;
             _closing = true;
             _open = false;
-            // 기다리는 읽기를 깨운 뒤, 입출력이 모두 돌아올 때까지 기다렸다가 닫습니다. 쓰기는 시간 제한 안에 돌아옵니다.
+            // 기다리는 읽기를 깨운 뒤, 입출력이 모두 돌아올 때까지 기다렸다가 닫습니다. 쓰기는 시간 제한 안에 돌아오지만,
+            // 드라이버가 멈추면 돌아오지 않을 수 있어 ISerialPort.Close가 부르는 쪽의 대비를 요구합니다.
             Signal(data: false);
             while (_inFlight > 0) Monitor.Wait(_gate);
         }

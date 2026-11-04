@@ -2,11 +2,8 @@ using System.Globalization;
 
 namespace DiabeticFoot.Platform;
 
-/// <summary>
-/// 시스템에 있는 직렬 포트 하나입니다. 사람이 포트를 고를 때 보여 줍니다.
-/// </summary>
 /// <param name="Name">열 때 쓰는 이름입니다(예: "COM3").</param>
-/// <param name="Description">장치 관리자에 보이는 이름입니다. 어느 변환기인지 사람이 구분하는 데 씁니다.</param>
+/// <param name="Description">장치 관리자에 보이는 이름입니다.</param>
 /// <param name="UsbVendorId">USB 변환기면 VID입니다(예: 0x10C4).</param>
 /// <param name="UsbProductId">USB 변환기면 PID입니다(예: 0xEA60).</param>
 /// <param name="SerialNumber">
@@ -73,7 +70,7 @@ public static class UsbDeviceId
             : null;
     }
 
-    /// <summary>"COM12"에서 12를 읽습니다. 번호가 없으면 0입니다. 포트 목록을 번호 순서로 정렬하는 데 씁니다.</summary>
+    /// <summary>"COM12"에서 12를 읽습니다. 번호가 없으면 0입니다.</summary>
     public static int PortNumber(string name)
     {
         if (name.Length <= 3) return 0;

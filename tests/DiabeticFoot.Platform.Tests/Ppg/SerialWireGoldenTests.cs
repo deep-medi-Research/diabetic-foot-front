@@ -4,21 +4,22 @@ using System.Text;
 namespace DiabeticFoot.Platform.Tests;
 
 /// <summary>
-/// 원본 C++ 구현이 같은 입력에 낸 바이트(data/serial/cpp_golden.txt)와 이식본이 내는 바이트를 줄 단위로 비교합니다.
+/// 원본 C++ 구현이 같은 입력에 낸 바이트(Data/Serial/cpp_golden.txt)와 이식본이 내는 바이트를 줄 단위로 비교합니다.
 /// 줄 형식은 다음과 같고 바이트는 16진수 대문자이며 빈 값은 '-'입니다.
 ///   crc 입력 CRC
-///   command 코드 데이터 메시지
+///   command 코드 데이터 메시지, stop 메시지, info 메시지
 ///   start 미리보기 측정 센서 성별 나이 기준 ok 메시지 | err 이유
 ///   light 밝기 명령
-///   decode 데이터 (null | 표본(쉼표) 심박수 SpO2 오류)
+///   decode 데이터 (null | 표본(쉼표) 심박수 SpO2 오류), error_text 오류 값 문구
 ///   parse 번호, in 입력, chunks 덩어리 크기들, msg 발신지 코드 데이터 시각, counts 다섯 집계
 ///   fake 이름 다음에 op(동작)와 expect(기대하는 장치 상태나 장치가 보낸 바이트)
 ///   wave 표본 번호 값, wave_fnv 표본 수 해시
+///   serial_number 장치 인스턴스 ID => 일련번호
 /// </summary>
 public class SerialWireGoldenTests
 {
     static readonly string[] Lines =
-        File.ReadAllLines(Path.Combine(AppContext.BaseDirectory, "data", "serial", "cpp_golden.txt"))
+        File.ReadAllLines(Path.Combine(AppContext.BaseDirectory, "Data", "Serial", "cpp_golden.txt"))
             .Where(line => !line.StartsWith('#'))
             .ToArray();
 

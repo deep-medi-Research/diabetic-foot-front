@@ -2,7 +2,6 @@ using System.Runtime.InteropServices;
 
 namespace DiabeticFoot.Platform.Tests;
 
-/// <summary>macOS와 Linux에서만 실행하는 시험입니다. Windows에는 가상 단말(pty)이 없습니다.</summary>
 public sealed class UnixFactAttribute : FactAttribute
 {
     public UnixFactAttribute()
@@ -13,7 +12,6 @@ public sealed class UnixFactAttribute : FactAttribute
 
 /// <summary>
 /// 가상 단말 한 쌍입니다. 시험이 장치 쪽(master)을 쥐고, SlavePath를 직렬 포트처럼 엽니다.
-/// 실제 USB 변환기 없이 System.IO.Ports로 읽고 쓰는 경로를 확인하는 데 씁니다.
 /// </summary>
 public sealed class PseudoTerminal : IDisposable
 {
@@ -31,7 +29,6 @@ public sealed class PseudoTerminal : IDisposable
         SlavePath = Marshal.PtrToStringAnsi(ptsname(_master))!;
     }
 
-    /// <summary>직렬 포트로 여는 경로입니다(예: /dev/ttys003).</summary>
     public string SlavePath { get; }
 
     /// <summary>장치가 보낸 것처럼 바이트를 넣습니다. 포트의 Read가 받습니다.</summary>

@@ -20,7 +20,6 @@ public interface ISerialPort : IDisposable
     bool IsOpen { get; }
 
     /// <summary>바이트를 모두 내보냅니다.</summary>
-    /// <param name="bytes">보낼 바이트입니다.</param>
     /// <param name="timeoutMs">모두 내보낼 때까지 기다리는 최대 시간입니다.</param>
     /// <returns>
     /// 시간 안에 모두 내보냈으면 true입니다. 일부만 나갔거나 시간이 지났거나 장치 오류면 false입니다.
@@ -32,7 +31,6 @@ public interface ISerialPort : IDisposable
     /// 받은 바이트를 읽습니다. 이미 받은 바이트가 있으면 기다리지 않고 buffer 크기까지 돌려주고, 없으면 첫 바이트가
     /// 올 때까지 최대 timeoutMs 기다립니다. 정해진 길이가 다 찰 때까지 기다리지 않으므로 패킷을 맞추는 일은 부른 쪽이 합니다.
     /// </summary>
-    /// <param name="buffer">받은 바이트를 넣을 곳입니다.</param>
     /// <param name="timeoutMs">첫 바이트를 기다리는 최대 시간입니다. 0이면 기다리지 않습니다.</param>
     /// <returns>읽은 바이트 수입니다(시간 초과면 0). 포트가 닫혔거나 장치 오류면 null입니다.</returns>
     int? Read(Span<byte> buffer, int timeoutMs);
@@ -44,7 +42,11 @@ public interface ISerialPort : IDisposable
     /// </summary>
     void WakeRead();
 
-    /// <summary>포트를 닫습니다. 여러 번 불러도 됩니다.</summary>
+    /// <summary>
+    /// 포트를 닫습니다. 여러 번 불러도 됩니다. 진행 중인 읽기와 쓰기가 돌아온 뒤 닫습니다.
+    /// 드라이버가 멈추면 이 함수가 돌아오지 않을 수 있습니다. 2026-10-20 기존 앱 실기에서 FTDI 드라이버가 멈춰 쓰기와
+    /// 닫기가 돌아오지 않았으므로, 부르는 쪽은 장치 전용 스레드에서 부르고 앱이 끝날 때 그 스레드를 기다리지 않을 수 있게 둡니다.
+    /// </summary>
     void Close();
 }
 
@@ -68,5 +70,4 @@ public sealed class SerialOpenResult
     public static SerialOpenResult Failed(string error) => new(null, error);
 }
 
-/// <summary>이름으로 직렬 포트를 엽니다. 테스트에서는 가짜 포트를 여는 함수로 바꿔 넣습니다.</summary>
 public delegate SerialOpenResult SerialPortOpener(string name, SerialConfig config);

@@ -1,11 +1,9 @@
 namespace DiabeticFoot.Platform;
 
-/// <summary>PpgParser가 버린 바이트와 메시지 수입니다. 통신 상태를 기록에 남기는 데 씁니다.</summary>
 /// <param name="CrcFailures">CRC가 맞지 않아 버린 시작 후보 수입니다.</param>
 /// <param name="BadLengths">길이가 범위를 벗어나 버린 시작 후보 수입니다.</param>
 /// <param name="Implausible">사양서에 없는 코드이거나 코드에 맞지 않는 길이라 버린 시작 후보 수입니다.</param>
 /// <param name="SkippedBytes">시작을 다시 찾느라 건너뛴 바이트 수입니다.</param>
-/// <param name="Messages">완성한 메시지 수입니다.</param>
 public readonly record struct PpgParserCounts(
     long CrcFailures = 0,
     long BadLengths = 0,
@@ -34,7 +32,6 @@ public sealed class PpgParser
     public PpgParserCounts Counts => new(_crcFailures, _badLengths, _implausible, _skippedBytes, _messages);
 
     /// <summary>바이트를 더하고 이번에 완성된 메시지를 받은 순서대로 돌려줍니다.</summary>
-    /// <param name="bytes">직렬 포트에서 읽은 덩어리입니다.</param>
     /// <param name="hostTimeUs">덩어리를 읽은 PC 시각입니다. 이 덩어리에서 끝나는 메시지에 붙습니다.</param>
     public IReadOnlyList<PpgMessage> Feed(ReadOnlySpan<byte> bytes, long hostTimeUs)
     {

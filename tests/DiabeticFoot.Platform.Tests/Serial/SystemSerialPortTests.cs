@@ -16,7 +16,7 @@ public class SystemSerialPortTests
 
     static byte[] AllByteValues() => Enumerable.Range(0, 256).Select(i => (byte)i).ToArray();
 
-    // 포트에 쓴 바이트가 장치 쪽에 그대로 나옵니다. 0x00~0xFF 모두 바뀌지 않습니다(8비트 raw).
+    // 0x00~0xFF를 모두 보내 8비트 raw로 열렸는지(바이트가 바뀌지 않는지) 봅니다.
     [UnixFact]
     public void Write_DeliversEveryByteValueUnchanged()
     {
@@ -28,7 +28,6 @@ public class SystemSerialPortTests
         Assert.Equal(AllByteValues(), pty.Receive(256, 2000));
     }
 
-    // 장치가 보낸 바이트를 그대로 읽습니다.
     [UnixFact]
     public void Read_ReturnsEveryByteValueUnchanged()
     {
@@ -48,7 +47,6 @@ public class SystemSerialPortTests
         Assert.Equal(AllByteValues(), received);
     }
 
-    // 받은 바이트가 있으면 기다리지 않고 버퍼 크기까지 돌려주고, 나머지는 다음 읽기에 남깁니다.
     [UnixFact]
     public void Read_ReturnsAvailableBytesUpToBuffer()
     {
@@ -66,7 +64,6 @@ public class SystemSerialPortTests
         Assert.True(watch.ElapsedMilliseconds < 500, $"{watch.ElapsedMilliseconds}ms");
     }
 
-    // 받은 바이트가 없으면 시간 제한까지 기다린 뒤 0을 돌려주고, 제한이 0이면 기다리지 않습니다.
     [UnixFact]
     public void Read_TimesOutWithZero()
     {
@@ -84,7 +81,6 @@ public class SystemSerialPortTests
         Assert.True(port.IsOpen);
     }
 
-    // 기다리는 동안 바이트가 오면 시간 제한 전에 돌려줍니다.
     [UnixFact]
     public void Read_WakesWhenBytesArrive()
     {
@@ -105,7 +101,6 @@ public class SystemSerialPortTests
         device.Join();
     }
 
-    // WakeRead는 기다리는 Read를 바로 돌아오게 하고 포트는 닫지 않습니다.
     [UnixFact]
     public void WakeRead_ReturnsWaitingRead()
     {
@@ -126,7 +121,6 @@ public class SystemSerialPortTests
         Assert.True(port.IsOpen);
     }
 
-    // 기다리는 Read가 없을 때 부른 WakeRead는 다음 Read 한 번이 기다리지 않게 하고, 그 다음 Read는 다시 기다립니다.
     [UnixFact]
     public void WakeRead_WithoutWaiterSkipsNextWaitOnly()
     {
@@ -144,7 +138,6 @@ public class SystemSerialPortTests
         Assert.InRange(second.ElapsedMilliseconds, 90, 400);
     }
 
-    // 이미 받은 바이트가 있으면 WakeRead가 있어도 그 바이트를 돌려줍니다.
     [UnixFact]
     public void WakeRead_DoesNotHideReceivedBytes()
     {
@@ -159,7 +152,6 @@ public class SystemSerialPortTests
         Assert.Equal(2, port.Read(buffer, 1000));
     }
 
-    // 한 스레드가 Read로 기다리는 동안 다른 스레드가 Write를 할 수 있습니다.
     [UnixFact]
     public void Write_WhileAnotherThreadReads()
     {
@@ -178,7 +170,6 @@ public class SystemSerialPortTests
         Assert.Equal(1, read);
     }
 
-    // 닫으면 기다리던 Read가 바로 돌아오고, 이후 읽기와 쓰기는 실패합니다. 이름은 닫은 뒤에도 같습니다.
     [UnixFact]
     public void Close_ReturnsWaitingReadAndStopsIo()
     {
@@ -204,7 +195,6 @@ public class SystemSerialPortTests
         port.WakeRead();
     }
 
-    // 닫은 포트를 다시 열 수 있습니다. 앞 포트가 쥐고 있던 장치가 풀려 있어야 합니다.
     [UnixFact]
     public void Reopen_AfterClose()
     {
@@ -217,7 +207,6 @@ public class SystemSerialPortTests
         Assert.Equal(new byte[] { 5 }, pty.Receive(1, 2000));
     }
 
-    // 없는 포트는 열지 못하고 이유를 돌려줍니다.
     [UnixFact]
     public void Open_FailsForMissingPort()
     {
@@ -227,7 +216,6 @@ public class SystemSerialPortTests
         Assert.Contains("/dev/ttys999", result.Error);
     }
 
-    // 다른 프로그램이 쓰는 이름이거나 형식이 맞지 않는 이름도 예외 대신 열기 실패로 알립니다.
     [Fact]
     public void Open_FailsForInvalidName()
     {
@@ -237,8 +225,8 @@ public class SystemSerialPortTests
         Assert.Contains("not-a-port", result.Error);
     }
 
-    // 읽고 쓰는 중에 닫는 일을 시점을 바꿔 되풀이해도 멈추거나 예외가 나지 않습니다.
     // 장치 쪽이 읽지 않으면 System.IO.Ports의 Close가 보낼 바이트가 빠질 때까지 돌아오지 않으므로, 장치 쪽이 계속 읽습니다.
+    // 장치 쪽이 읽지 않으면 System.IO.Ports의 Close가 보낼 바이트가 빠질 때까지 돌아오지 않으므로(pty에서 관찰), 장치 쪽이 계속 읽습니다.
     [UnixFact]
     public void Close_RacesWithReadAndWrite()
     {

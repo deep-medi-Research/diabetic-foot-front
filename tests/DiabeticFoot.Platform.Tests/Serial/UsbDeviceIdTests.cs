@@ -10,7 +10,6 @@ public class UsbDeviceIdTests
         Assert.Equal("A50285BIA", UsbDeviceId.SerialNumberFromInstanceId(@"FTDIBUS\VID_0403+PID_6001+A50285BIA"));
     }
 
-    // USB 장치는 마지막 \ 뒤가 일련번호입니다.
     [Fact]
     public void SerialNumber_ReadsUsbInstanceId()
     {
@@ -28,7 +27,6 @@ public class UsbDeviceIdTests
         Assert.Equal("", UsbDeviceId.SerialNumberFromInstanceId(""));
     }
 
-    // 복합 장치 인터페이스의 하드웨어 ID에서 VID와 PID를 읽습니다.
     [Theory]
     [InlineData(@"USB\VID_10C4&PID_EA60&REV_0100", "VID_", 0x10C4)]
     [InlineData(@"USB\VID_10C4&PID_EA60&REV_0100", "PID_", 0xEA60)]
@@ -39,7 +37,6 @@ public class UsbDeviceIdTests
         Assert.Equal((ushort)expected, UsbDeviceId.ReadHexAfter(hardwareId, key));
     }
 
-    // 키가 없거나 4자리가 안 되거나 16진수가 아니면 값이 없습니다.
     [Theory]
     [InlineData(@"ACPI\PNP0501", "VID_")]
     [InlineData(@"USB\VID_10C", "VID_")]
@@ -50,7 +47,6 @@ public class UsbDeviceIdTests
         Assert.Null(UsbDeviceId.ReadHexAfter(hardwareId, key));
     }
 
-    // 포트 목록은 COM 번호 순서로 보이므로 COM10이 COM9 뒤에 옵니다.
     [Theory]
     [InlineData("COM3", 3)]
     [InlineData("COM12", 12)]

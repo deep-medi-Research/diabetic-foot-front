@@ -15,7 +15,6 @@ public sealed class FakePpgDevice
     long _nextSample;
     bool _booting;
 
-    /// <param name="line">포트의 장치 쪽입니다. PPG 센서가 같은 회선으로 엽니다.</param>
     public FakePpgDevice(FakeSerialLine line)
     {
         _line = line;
@@ -27,7 +26,6 @@ public sealed class FakePpgDevice
     /// <summary>받아들인 시작 명령 수입니다. 측정 중에 받아 오류로 답한 시작 명령은 세지 않습니다.</summary>
     public int StartCount { get; private set; }
 
-    /// <summary>받은 중지 명령 수입니다.</summary>
     public int StopCount { get; private set; }
 
     /// <summary>받은 정보 요청 수입니다. 초기화 중에 받아 답하지 않은 요청도 셉니다.</summary>
@@ -85,10 +83,8 @@ public sealed class FakePpgDevice
     }
 
     /// <summary>측정 데이터 메시지 하나를 넣습니다. 측정 중이 아니어도 넣습니다.</summary>
-    /// <param name="samples">이 메시지의 표본 수입니다.</param>
     /// <param name="heartRate">장치 심박수(bpm)입니다. 계산 전이면 0입니다.</param>
     /// <param name="spo2">장치 SpO2(%)입니다. 계산 전이면 0입니다.</param>
-    /// <param name="error">측정 오류 바이트입니다(0 정상, 'f' 손가락 빠짐 등).</param>
     public void EmitMeasurement(int samples, byte heartRate, byte spo2, byte error = 0)
     {
         var data = new byte[samples * 2 + 3];
@@ -144,11 +140,12 @@ public sealed class FakePpgDevice
         EmitStatus(PpgStatus.Boot);
     }
 
-    /// <summary>표본 번호의 맥파 값입니다. 받은 표본과 비교할 때 씁니다. 2048을 중심으로 진폭 400, 1.2Hz(500Hz 기준) 사인파입니다.</summary>
+    /// <summary>표본 번호의 맥파 값입니다. 2048을 중심으로 진폭 400, 1.2Hz(500Hz 기준) 사인파입니다.</summary>
     /// <param name="sample">시작 뒤 표본 번호입니다.</param>
     public static ushort WaveAt(long sample)
     {
         double t = (double)sample / PpgWire.SampleHz;
+        // C++ std::lround와 같게 반올림합니다. 값이 모두 양수라 0에서 먼 쪽이 곧 .5 올림입니다.
         return (ushort)Math.Round(2048.0 + 400.0 * Math.Sin(2.0 * Math.PI * 1.2 * t), MidpointRounding.AwayFromZero);
     }
 

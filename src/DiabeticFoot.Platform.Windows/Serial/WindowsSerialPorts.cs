@@ -9,10 +9,6 @@ namespace DiabeticFoot.Platform.Windows;
 /// 시스템의 직렬 포트 목록입니다. SetupAPI의 Ports 장치 클래스에서 포트 이름, 장치 이름, USB VID:PID, 일련번호를 읽습니다.
 /// 포트를 열지 않습니다.
 /// </summary>
-/// <remarks>
-/// LED 보드와 PPG 장치가 같은 종류의 USB 직렬 변환기를 쓸 수 있어, 목록에서 자동으로 고르지 않고 사람이 고릅니다.
-/// 포트를 여는 것은 <see cref="SystemSerialPort.Open"/>입니다.
-/// </remarks>
 public static class WindowsSerialPorts
 {
     static readonly Guid PortsClass = new("4D36E978-E325-11CE-BFC1-08002BE10318");

@@ -77,7 +77,6 @@ public sealed class FakeSerialLine
         }
     }
 
-    /// <summary>이 회선으로 포트를 연 횟수입니다.</summary>
     public int OpenCount
     {
         get
@@ -88,7 +87,6 @@ public sealed class FakeSerialLine
 
     /// <summary>
     /// 성공한 Write 수가 seen보다 많아지거나, timeout이 지나거나, StopWaiting을 부를 때까지 기다립니다.
-    /// 가짜 장치가 명령을 반복 확인하지 않고 다음 메시지 시각까지 기다리게 하기 위함입니다.
     /// </summary>
     /// <param name="seen">부른 쪽이 이미 본 Write 수입니다.</param>
     /// <param name="timeout">기다리는 최대 시간입니다.</param>
@@ -97,12 +95,12 @@ public sealed class FakeSerialLine
     {
         lock (Gate)
         {
-            WaitUntil(() => _stopWaiting || _writes.Count > seen, timeout);
+            WaitUntilLocked(() => _stopWaiting || _writes.Count > seen, timeout);
             return _writes.Count;
         }
     }
 
-    /// <summary>WaitForWrites로 기다리는 쪽을 깨우고, 이후의 WaitForWrites는 기다리지 않습니다. 가짜 장치를 끝낼 때 씁니다.</summary>
+    /// <summary>WaitForWrites로 기다리는 쪽을 깨우고, 이후의 WaitForWrites는 기다리지 않습니다.</summary>
     public void StopWaiting()
     {
         lock (Gate)
@@ -132,7 +130,7 @@ public sealed class FakeSerialLine
     }
 
     // Gate를 잡고 부릅니다. 쓰기를 받아들였으면 true이고, 실패시키면 false와 함께 포트를 닫을지를 disconnect로 알립니다.
-    internal bool TryAcceptWrite(ReadOnlySpan<byte> bytes, out bool disconnect)
+    internal bool TryAcceptWriteLocked(ReadOnlySpan<byte> bytes, out bool disconnect)
     {
         disconnect = false;
         if (_writesBeforeFailure == 0)
@@ -147,7 +145,7 @@ public sealed class FakeSerialLine
     }
 
     // Gate를 잡고 부릅니다. 조건이 참이 되거나 시간이 지나면 돌아오며, 돌아온 시점의 조건 값을 돌려줍니다.
-    internal bool WaitUntil(Func<bool> condition, TimeSpan timeout)
+    internal bool WaitUntilLocked(Func<bool> condition, TimeSpan timeout)
     {
         long start = Stopwatch.GetTimestamp();
         while (!condition())
@@ -160,13 +158,12 @@ public sealed class FakeSerialLine
     }
 }
 
-/// <summary>장비 없이 직렬 포트 사용자를 시험하는 포트입니다. 장치 쪽 동작은 FakeSerialLine이 정합니다.</summary>
 public sealed class FakeSerialPort : ISerialPort
 {
     readonly FakeSerialLine _line;
-    // 아래 둘은 _line.Gate 아래에서 읽고 씁니다. _woken은 WakeRead를 불렀고 아직 Read가 돌아오지 않았음을 뜻합니다.
+    // _line.Gate 아래에서 읽고 씁니다. _wakePending은 WakeRead를 불렀고 아직 Read가 돌아오지 않았음을 뜻합니다.
     bool _open = true;
-    bool _woken;
+    bool _wakePending;
 
     public FakeSerialPort(string name, FakeSerialLine line)
     {
@@ -188,11 +185,10 @@ public sealed class FakeSerialPort : ISerialPort
     {
         lock (_line.Gate)
         {
-            // 멈춘 드라이버처럼 시간 제한과 상관없이 풀어 줄 때까지 돌아오지 않습니다.
             while (_line.WritesHeld) Monitor.Wait(_line.Gate);
             if (!_line.Plugged) _open = false;
             if (!_open) return false;
-            if (_line.TryAcceptWrite(bytes, out bool disconnect)) return true;
+            if (_line.TryAcceptWriteLocked(bytes, out bool disconnect)) return true;
             if (disconnect) _open = false;
             return false;
         }
@@ -202,10 +198,10 @@ public sealed class FakeSerialPort : ISerialPort
     {
         lock (_line.Gate)
         {
-            _line.WaitUntil(
-                () => _woken || !_open || !_line.Plugged || _line.Inbound.Count > 0,
+            _line.WaitUntilLocked(
+                () => _wakePending || !_open || !_line.Plugged || _line.Inbound.Count > 0,
                 TimeSpan.FromMilliseconds(Math.Max(timeoutMs, 0)));
-            _woken = false;
+            _wakePending = false;
             if (!_line.Plugged) _open = false;
             if (!_open) return null;
             int count = Math.Min(buffer.Length, _line.Inbound.Count);
@@ -218,7 +214,7 @@ public sealed class FakeSerialPort : ISerialPort
     {
         lock (_line.Gate)
         {
-            _woken = true;
+            _wakePending = true;
             Monitor.PulseAll(_line.Gate);
         }
     }

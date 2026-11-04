@@ -2,11 +2,10 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace DiabeticFoot.Platform;
 
-/// <summary>메시지 발신지입니다.</summary>
 public static class PpgSource
 {
-    public const byte Pc = 0x55; // 'U'
-    public const byte Device = 0x4D; // 'M'
+    public const byte Pc = 0x55;
+    public const byte Device = 0x4D;
 }
 
 /// <summary>장치가 보내는 메시지 코드입니다.</summary>
@@ -21,7 +20,6 @@ public static class PpgCode
     public const byte Time = (byte)'t';
 }
 
-/// <summary>상태 메시지의 값입니다.</summary>
 public static class PpgStatus
 {
     public const byte Boot = (byte)'o';
@@ -40,12 +38,10 @@ public static class PpgStatus
 /// 장치 사양서(Interface Basic Rev.06, 2025-07-31)와 실기(2026-10-19~20)로 확인한 형식입니다.
 /// </remarks>
 /// <param name="Source">발신지입니다(<see cref="PpgSource"/>).</param>
-/// <param name="Code">메시지 코드입니다.</param>
 /// <param name="Data">코드와 CRC를 뺀 데이터입니다.</param>
 /// <param name="HostTimeUs">메시지의 마지막 바이트가 들어 있던 수신 덩어리의 PC 시각(마이크로초)입니다.</param>
 public sealed record PpgMessage(byte Source, byte Code, byte[] Data, long HostTimeUs);
 
-/// <summary>측정 시작 명령에 넣는 값입니다.</summary>
 public sealed record PpgStartRequest
 {
     /// <summary>미리보기 길이(초)입니다. 장치는 10~60을 받습니다. 파형은 미리보기 동안에도 옵니다.</summary>
@@ -66,7 +62,6 @@ public sealed record PpgStartRequest
     public char Reference { get; init; } = 'A';
 }
 
-/// <summary>측정 데이터 메시지('m') 하나를 푼 값입니다.</summary>
 /// <param name="Samples">파형 표본(부호 없는 16비트)입니다. 500Hz 순서대로입니다.</param>
 /// <param name="HeartRate">장치가 계산한 심박수(bpm)입니다. 계산 전이면 0입니다.</param>
 /// <param name="Spo2">장치가 계산한 SpO2(%)입니다. 계산 전이면 0입니다.</param>
@@ -101,11 +96,9 @@ public static class PpgWire
         return crc;
     }
 
-    /// <summary>PC가 보내는 메시지를 머리부터 CRC까지 만듭니다.</summary>
     public static byte[] BuildCommand(byte code, ReadOnlySpan<byte> data = default) =>
         BuildMessage(PpgSource.Pc, code, data);
 
-    /// <summary>발신지를 정해 메시지를 만듭니다. 장치 쪽 흉내(FakePpgDevice)가 장치 메시지를 만들 때 씁니다.</summary>
     internal static byte[] BuildMessage(byte source, byte code, ReadOnlySpan<byte> data)
     {
         int length = 1 + data.Length + 2;

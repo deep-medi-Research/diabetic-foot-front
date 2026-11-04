@@ -2,7 +2,6 @@ namespace DiabeticFoot.Platform.Tests;
 
 public class LightCommandTests
 {
-    // 100%는 FE 64, 0%는 FE 00입니다.
     [Fact]
     public void PercentIsSecondByte()
     {
@@ -11,7 +10,6 @@ public class LightCommandTests
         Assert.Equal(new byte[] { 0xFE, 37 }, LightProtocol.MakeCommand(37));
     }
 
-    // 범위 밖의 값은 0과 100으로 자릅니다.
     [Fact]
     public void ClampsOutOfRange()
     {
@@ -44,7 +42,6 @@ public class LightTests
         public Rig() => Light = new Light(FakeSerialPort.Opener("COM7", Line));
     }
 
-    // 포트를 열면 그 자리에서 현재 밝기를 한 번 보냅니다.
     [Fact]
     public void Open_SendsCurrentPercent()
     {
@@ -58,7 +55,6 @@ public class LightTests
         Assert.Equal(70, rig.Light.LastSentPercent);
     }
 
-    // 열 때 넘긴 값도 자른 뒤에 보내고 기억합니다.
     [Fact]
     public void Open_ClampsPercent()
     {
@@ -70,7 +66,6 @@ public class LightTests
         Assert.Equal(100, rig.Light.LastSentPercent);
     }
 
-    // 밝기를 바꿀 때마다 명령 하나를 보내고 마지막으로 보낸 값을 기억합니다.
     [Fact]
     public void SetPercent_SendsAbsoluteCommand()
     {
@@ -86,7 +81,6 @@ public class LightTests
         Assert.Equal(0, rig.Light.LastSentPercent);
     }
 
-    // 없는 포트는 열지 못하고 아무것도 보내지 않습니다.
     [Fact]
     public void Open_FailsForUnknownPort()
     {
@@ -100,7 +94,6 @@ public class LightTests
         Assert.Empty(rig.Line.Written());
     }
 
-    // 연결 전에는 밝기를 보내지 못하고 마지막으로 보낸 값도 없습니다.
     [Fact]
     public void SetPercent_FailsWhenNotConnected()
     {
@@ -112,7 +105,6 @@ public class LightTests
         Assert.Null(rig.Light.LastSentPercent);
     }
 
-    // 쓰기가 실패하면(시간 초과 포함) 연결을 끊고, 마지막으로 보낸 값을 지웁니다.
     [Fact]
     public void WriteFailure_Disconnects()
     {
@@ -126,12 +118,10 @@ public class LightTests
         Assert.False(rig.Light.IsConnected);
         Assert.Null(rig.Light.LastSentPercent);
         Assert.Equal("", rig.Light.PortName);
-        // 끊긴 뒤의 호출은 포트에 가지 않습니다.
         Assert.False(rig.Light.SetPercent(70, out _));
         Assert.Equal(new[] { new byte[] { 0xFE, 50 } }, rig.Line.Writes());
     }
 
-    // 장치를 빼면 다음 쓰기에서 연결 끊김이 되고, 다시 꽂고 열면 현재 값을 다시 보냅니다.
     [Fact]
     public void Reopen_AfterUnplug_SendsAgain()
     {
@@ -149,7 +139,6 @@ public class LightTests
         Assert.Equal(2, rig.Line.OpenCount);
     }
 
-    // 열 때의 첫 쓰기가 실패하면 열기 실패로 보고 포트를 닫습니다.
     [Fact]
     public void Open_FailsWhenFirstWriteFails()
     {
@@ -162,7 +151,7 @@ public class LightTests
         Assert.Null(rig.Light.LastSentPercent);
     }
 
-    // 닫으면 마지막으로 보낸 값이 없어집니다. 사이드카에 근거 없는 값을 남기지 않기 위함입니다.
+    // 사이드카에 근거 없는 값을 남기지 않기 위해, 닫으면 마지막으로 보낸 값이 없어집니다.
     [Fact]
     public void Close_ForgetsLastSent()
     {
@@ -187,7 +176,6 @@ public class LightTests
         Assert.Equal(new[] { new byte[] { 0xFE, 80 } }, rig.Line.Writes());
     }
 
-    // 새 포트를 여는 데 실패해도 열려 있던 포트는 먼저 닫혀, 앞 연결의 값이 남지 않습니다.
     [Fact]
     public void Open_ClosesPreviousPortFirst()
     {
@@ -207,7 +195,6 @@ public class LightPortIdentityTests
     static SerialPortInfo Port(string name, ushort vid, ushort pid, string serial) =>
         new(name, "USB Serial Port", vid, pid, serial);
 
-    // 같은 FTDI 변환기(0403:6001)가 둘이면 일련번호가 같은 포트만 제안합니다. COM 번호는 보지 않습니다.
     [Fact]
     public void FindPort_MatchesSerialAmongSameVidPid()
     {
@@ -217,7 +204,6 @@ public class LightPortIdentityTests
         Assert.Null(new LightPortIdentity(0x0403, 0x6001, "OTHER").FindPort(ports));
     }
 
-    // 일련번호가 없는 변환기는 같은 VID:PID가 하나뿐일 때만 제안합니다.
     [Fact]
     public void FindPort_WithoutSerialRequiresSingleVidPid()
     {
@@ -229,7 +215,6 @@ public class LightPortIdentityTests
         Assert.Null(remembered.FindPort(two));
     }
 
-    // USB가 아닌 포트는 기억할 식별값이 없고 제안하지 않습니다.
     [Fact]
     public void FindPort_SkipsNonUsbPorts()
     {

@@ -1,6 +1,5 @@
 namespace DiabeticFoot.Platform;
 
-/// <summary>LED 보드가 받는 명령과 직렬 조건입니다.</summary>
 public static class LightProtocol
 {
     /// <summary>LED 보드의 직렬 조건입니다. 115200bps 8N1, 흐름 제어 없음입니다(기존 앱 docs/LIGHT.md).</summary>

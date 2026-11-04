@@ -16,7 +16,6 @@ public class FakePpgDeviceTests
             Port = FakeSerialPort.Opener("COM6", Line)("COM6", new SerialConfig()).Port!;
         }
 
-        // 장치가 포트로 보낸 바이트를 모두 읽어 메시지로 나눕니다.
         public IReadOnlyList<PpgMessage> Received()
         {
             var buffer = new byte[4096];
@@ -40,7 +39,7 @@ public class FakePpgDeviceTests
         }
     }
 
-    // 가짜 장치는 시작에 상태 'v', 측정 중 다시 시작에 오류 's', 중지에 상태 'u', 정보 요청에 장치 정보로 답합니다.
+    // 시작에 상태 'v', 측정 중 다시 시작에 오류 's', 중지에 상태 'u', 정보 요청에 장치 정보로 답합니다(원본 시험과 같은 순서).
     [Fact]
     public void AnswersCommandsLikeDevice()
     {
@@ -68,7 +67,6 @@ public class FakePpgDeviceTests
         Assert.Equal("200000270270320", Encoding.ASCII.GetString(info.Data));
     }
 
-    // 장치가 보낸 메시지는 장치 발신지이고 CRC가 맞아 해석기가 받아들입니다.
     [Fact]
     public void Messages_AreFromDevice()
     {
@@ -79,7 +77,6 @@ public class FakePpgDeviceTests
         Assert.Equal(PpgSource.Device, message.Source);
     }
 
-    // 측정하고 있지 않을 때 받은 중지 명령은 세기만 하고 답하지 않습니다.
     [Fact]
     public void Stop_WhenNotRunning_IsCountedWithoutAnswer()
     {
@@ -91,7 +88,6 @@ public class FakePpgDeviceTests
         Assert.False(rig.Device.Running);
     }
 
-    // 시작 명령의 데이터를 그대로 기억합니다.
     [Fact]
     public void LastStartData_KeepsRequestedValues()
     {
@@ -103,7 +99,6 @@ public class FakePpgDeviceTests
         Assert.Equal(new byte[] { 25, 150, (byte)'F', (byte)'F', 63, (byte)'W' }, rig.Device.LastStartData);
     }
 
-    // 명령이 여러 번에 나뉘어 써져도, 앞에 잡음이 섞여도 시작 명령 하나로 받아들입니다.
     [Fact]
     public void HandleCommands_ReassemblesCommandSplitAcrossWrites()
     {
@@ -119,7 +114,6 @@ public class FakePpgDeviceTests
         Assert.Equal(1, rig.Device.StartCount);
     }
 
-    // 초기화 중에는 어떤 명령에도 답하지 않고 정보 요청 수만 셉니다. 끝나면 묻지 않아도 정보와 상태 'o'를 보냅니다.
     [Fact]
     public void Booting_DoesNotAnswerUntilFinished()
     {
@@ -141,7 +135,6 @@ public class FakePpgDeviceTests
         Assert.Equal(PpgStatus.Preview, Assert.Single(rig.Exchange(rig.Start())).Data[0]);
     }
 
-    // 장치가 보낸 메시지 형식을 PC 쪽에서 보낸 것처럼 쓰면 명령으로 보지 않습니다.
     [Fact]
     public void IgnoresBytesWithDeviceSource()
     {
@@ -157,7 +150,6 @@ public class FakePpgDeviceTests
         Assert.False(rig.Device.Running);
     }
 
-    // 표본 번호는 시작할 때마다 0부터 다시 세고, 측정 데이터가 이어서 번호를 매깁니다.
     [Fact]
     public void Measurements_NumberSamplesFromEachStart()
     {
@@ -178,7 +170,6 @@ public class FakePpgDeviceTests
         Assert.Equal(97, restarted.Spo2);
     }
 
-    // 측정 데이터 메시지의 심박수, SpO2, 측정 오류 바이트를 그대로 싣고, 측정 중이 아니어도 넣습니다.
     [Fact]
     public void EmitMeasurement_CarriesVitalsAndError()
     {
@@ -194,7 +185,6 @@ public class FakePpgDeviceTests
         Assert.False(rig.Device.Running);
     }
 
-    // 상태 'p'(장치 측정 끝)는 측정을 끝내고, 다른 상태 알림은 측정 여부를 바꾸지 않습니다.
     [Theory]
     [InlineData((byte)'p', false)]
     [InlineData((byte)'u', true)]
@@ -210,7 +200,6 @@ public class FakePpgDeviceTests
         Assert.Equal(new[] { status }, sent.Data);
     }
 
-    // 오류 'f'와 'm'은 측정을 끝내고, 그 밖의 오류는 측정을 이어갑니다.
     [Theory]
     [InlineData((byte)'f', false)]
     [InlineData((byte)'m', false)]
@@ -229,7 +218,6 @@ public class FakePpgDeviceTests
         Assert.Equal(new[] { error }, sent.Data);
     }
 
-    // 맥파는 2048을 중심으로 진폭 400, 주기가 500Hz 기준 약 416표본인 사인파입니다.
     [Fact]
     public void WaveAt_IsSineAroundMidScale()
     {
