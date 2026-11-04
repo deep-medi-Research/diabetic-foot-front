@@ -25,6 +25,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DiabeticFoot.Platform.Tests
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DiabeticFoot.App", "src\DiabeticFoot.App\DiabeticFoot.App.csproj", "{9C20B3FC-41F8-411E-BF90-A910D33B206E}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DiabeticFoot.FakeAnalyzer.Tests", "tests\DiabeticFoot.FakeAnalyzer.Tests\DiabeticFoot.FakeAnalyzer.Tests.csproj", "{7A7D4933-0DB9-495F-9293-9D30C153DEEB}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -66,6 +68,10 @@ Global
 		{9C20B3FC-41F8-411E-BF90-A910D33B206E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{9C20B3FC-41F8-411E-BF90-A910D33B206E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{9C20B3FC-41F8-411E-BF90-A910D33B206E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7A7D4933-0DB9-495F-9293-9D30C153DEEB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7A7D4933-0DB9-495F-9293-9D30C153DEEB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7A7D4933-0DB9-495F-9293-9D30C153DEEB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7A7D4933-0DB9-495F-9293-9D30C153DEEB}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{C15C5E5B-0812-431C-9131-EF741D07F065} = {B779BF57-9DDB-49DA-A4C7-80612B1F755A}
@@ -76,5 +82,6 @@ Global
 		{502C9CD8-C43A-4050-AC1A-695B60F3BA51} = {08886D3B-D426-4F88-BE37-D4CDF969C7B9}
 		{5FC48D02-24A9-4994-95A4-3AC88D29D164} = {08886D3B-D426-4F88-BE37-D4CDF969C7B9}
 		{9C20B3FC-41F8-411E-BF90-A910D33B206E} = {B779BF57-9DDB-49DA-A4C7-80612B1F755A}
+		{7A7D4933-0DB9-495F-9293-9D30C153DEEB} = {08886D3B-D426-4F88-BE37-D4CDF969C7B9}
 	EndGlobalSection
 EndGlobal
