@@ -26,6 +26,7 @@ public class JsonReaderTests
     [InlineData("{\"a\": [1]}")]
     [InlineData("[1, 2]")]
     [InlineData("{\"a\": NaNx}")]
+    [InlineData("{\"a\": 01}")]
     public void RejectsFlatObjectThatIsMalformedOrNested(string json) => Assert.Null(new JsonReader(json).Read());
 
     [Fact]
