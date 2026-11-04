@@ -1,3 +1,4 @@
+using System.Text;
 using DiabeticFoot.Core.Flow;
 using DiabeticFoot.Core.Tests.Support;
 using DiabeticFoot.Core.Timing;
@@ -318,5 +319,52 @@ public class CaptureSpecTests
             new[] { SpecProblem.BadWhiteBalance },
             ProblemsWith(s => s with { Settings = s.Settings with { WhiteBalanceK = 70000 } }));
         Assert.Empty(ProblemsWith(s => s with { Settings = s.Settings with { Gain = 0, WhiteBalanceK = 65535 } }));
+    }
+
+    // C#에서 추가한 확인입니다. 바이트를 그대로 넘기면 UTF-8이 아닌 바이트가 있어도 오류 문장의 바이트 위치가 원본과 같습니다.
+    // 기대 문장은 원본 capture_spec.cc를 컴파일해 같은 바이트로 얻은 값입니다.
+    [Fact]
+    public void ByteInputKeepsErrorPositionsWithInvalidUtf8()
+    {
+        byte[] bytes = new byte[]
+        {
+            (byte)'{', (byte)'"', (byte)'d', (byte)'e', (byte)'v', (byte)'i', (byte)'c', (byte)'e', (byte)'"', (byte)':', (byte)' ',
+            (byte)'"', 0xC3, 0x28, 0xFF, 0xFE, (byte)'"', (byte)',', (byte)' ',
+            (byte)'"', (byte)'w', (byte)'i', (byte)'d', (byte)'t', (byte)'h', (byte)'"', (byte)':', (byte)' ',
+            (byte)'1', (byte)'.', (byte)'5', (byte)'}',
+        };
+
+        Assert.Null(ParseCaptureSpec(bytes, out string error));
+        Assert.Equal("선언 파일의 숫자는 정수만 씁니다 (29번째 바이트)", error);
+    }
+
+    // 문자열 값에 든 UTF-8이 아닌 바이트는 C# 문자열에서 U+FFFD가 되지만 읽기는 성공합니다(원본은 바이트를 그대로 둡니다).
+    [Fact]
+    public void ByteInputReplacesInvalidUtf8InStringValue()
+    {
+        string text = ReadSpecFile("see3cam_manual_30fps.json");
+        string withInvalid = ReplaceFirst(text, "See3CAM_24CUG", "See3@CAM_24CUG");
+        byte[] bytes = Encoding.UTF8.GetBytes(withInvalid);
+        int at = Array.IndexOf(bytes, (byte)'@');
+        bytes[at] = 0xFF;
+
+        var spec = ParseCaptureSpec(bytes, out string error);
+
+        Assert.NotNull(spec);
+        Assert.Equal("", error);
+        Assert.Equal("See3\uFFFDCAM_24CUG", spec.Device);
+    }
+
+    // BOM은 원본처럼 값이 아닌 바이트로 보아 거부합니다. 바이트 입력과 BOM을 지키는 문자열 입력의 결과가 같습니다.
+    [Fact]
+    public void ByteOrderMarkIsRejectedLikeOriginal()
+    {
+        string text = ReadSpecFile("see3cam_manual_30fps.json");
+        byte[] bytes = new byte[] { 0xEF, 0xBB, 0xBF }.Concat(Encoding.UTF8.GetBytes(text)).ToArray();
+
+        Assert.Null(ParseCaptureSpec(bytes, out string byteError));
+        Assert.Equal("알 수 없는 값입니다 (0번째 바이트)", byteError);
+        Assert.Null(ParseCaptureSpec("\uFEFF" + text, out string textError));
+        Assert.Equal(byteError, textError);
     }
 }

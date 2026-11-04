@@ -99,10 +99,19 @@ public static partial class RecordFunctions
     /// 필요한 키는 stream, foot, format.width, format.height, crop, frames.written, frames.written_in_rgb_window,
     /// frames.missing, frames.dropped입니다. 다른 키는 읽지 않습니다.
     /// </remarks>
-    public static SidecarSummary? ReadSidecarSummary(string json, out string error)
+    public static SidecarSummary? ReadSidecarSummary(string json, out string error) =>
+        ReadSidecarSummary(Encoding.UTF8.GetBytes(json), out error);
+
+    /// <summary>
+    /// 사이드카 파일의 바이트에서 분석 전 확인에 쓰는 값을 읽습니다. 파일을 읽은 바이트를 그대로 넘기면 UTF-8이 아닌 바이트도 원본처럼 바이트 단위로 다룹니다.
+    /// </summary>
+    /// <param name="json">사이드카 파일의 바이트(UTF-8)</param>
+    /// <param name="error">실패하면 이유를 씁니다. 성공하면 빈 문자열입니다</param>
+    /// <returns>읽은 값. 문법이 틀리거나, schema_version이 3보다 작거나, 필요한 키가 없으면 null입니다</returns>
+    public static SidecarSummary? ReadSidecarSummary(ReadOnlySpan<byte> json, out string error)
     {
         error = "";
-        SidecarJsonValue? root = new SidecarJsonReader(Encoding.UTF8.GetBytes(json)).ReadDocument();
+        SidecarJsonValue? root = new SidecarJsonReader(json.ToArray()).ReadDocument();
         if (root is null || root.Kind != SidecarJsonValue.ValueKind.Object)
         {
             error = "사이드카 JSON을 읽지 못함";

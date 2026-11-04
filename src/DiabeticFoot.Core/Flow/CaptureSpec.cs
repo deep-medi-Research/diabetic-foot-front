@@ -18,7 +18,7 @@ public enum VideoCodec : byte
 /// 촬영 한 번의 선언입니다.
 /// </summary>
 /// <remarks>
-/// 실행 순서는 이 값으로 core가 정하고, platform과 화면은 실행만 합니다. 보통 specs 폴더의 JSON 선언 파일에서 읽습니다(<see cref="FlowFunctions.ParseCaptureSpec"/>).
+/// 실행 순서는 이 값으로 core가 정하고, platform과 화면은 실행만 합니다. 보통 specs 폴더의 JSON 선언 파일에서 읽습니다(<c>FlowFunctions.ParseCaptureSpec</c>).
 /// </remarks>
 public sealed record CaptureSpec
 {
@@ -203,10 +203,20 @@ public static partial class FlowFunctions
     /// 값 범위는 보지 않습니다. 읽은 뒤 <see cref="ValidateCaptureSpec"/>으로 검증합니다.
     /// 오류 문장의 "n번째 바이트"는 <paramref name="json"/>을 UTF-8로 바꾼 바이트 위치입니다.
     /// </remarks>
-    public static CaptureSpec? ParseCaptureSpec(string json, out string error)
+    public static CaptureSpec? ParseCaptureSpec(string json, out string error) =>
+        ParseCaptureSpec(Encoding.UTF8.GetBytes(json), out error);
+
+    /// <summary>
+    /// JSON 선언 파일의 바이트를 읽습니다. 파일을 읽은 바이트를 그대로 넘기면 UTF-8이 아닌 바이트와 BOM도 원본처럼
+    /// 바이트 단위로 다뤄, 오류 문장의 "n번째 바이트"가 원본과 같은 숫자입니다.
+    /// </summary>
+    /// <param name="json">선언 파일의 바이트(UTF-8)</param>
+    /// <param name="error">실패하면 이유와 위치를 씁니다. 성공하면 빈 문자열입니다</param>
+    /// <returns>읽은 선언. 문자열 값에 든 UTF-8이 아닌 바이트는 U+FFFD로 바뀝니다</returns>
+    public static CaptureSpec? ParseCaptureSpec(ReadOnlySpan<byte> json, out string error)
     {
         var errors = new SpecError();
-        Json? root = new Reader(json).ReadDocument(errors);
+        Json? root = new Reader(json.ToArray()).ReadDocument(errors);
         if (root is null)
         {
             error = errors.Message;
@@ -353,9 +363,9 @@ public static partial class FlowFunctions
         private int pos;
         private string error = "";
 
-        public Reader(string json)
+        public Reader(byte[] json)
         {
-            text = Encoding.UTF8.GetBytes(json);
+            text = json;
         }
 
         public Json? ReadDocument(SpecError errors)

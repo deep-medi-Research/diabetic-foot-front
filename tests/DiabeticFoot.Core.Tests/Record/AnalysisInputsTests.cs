@@ -46,6 +46,20 @@ public class SidecarSummaryTests
         Assert.Equal(1, summary.Value.DroppedFrames);
     }
 
+    // C#에서 추가한 확인입니다. 파일 바이트를 그대로 넘기는 오버로드도 같은 값을 읽습니다.
+    [Fact]
+    public void ReadsFromBytesLikeFromText()
+    {
+        string json = BuildSidecarJson(new Sidecar { Format = new VideoFormat(PixelFormat.Uyvy, 1920, 1080, 30), Foot = FootSide.Left });
+
+        var fromText = ReadSidecarSummary(json, out string textError);
+        var fromBytes = ReadSidecarSummary(System.Text.Encoding.UTF8.GetBytes(json), out string byteError);
+
+        Assert.True(fromBytes.HasValue, byteError);
+        Assert.Equal(fromText, fromBytes);
+        Assert.Equal(textError, byteError);
+    }
+
     // 좌우 영상 사이드카의 발과 저장 영역을 읽습니다.
     [Fact]
     public void ReadsFootAndCrop()

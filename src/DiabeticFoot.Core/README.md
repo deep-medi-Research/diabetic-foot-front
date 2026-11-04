@@ -117,7 +117,7 @@
 
 상수는 `CaptureSpec.MaxFrameSide`, `CaptureSpec.MinExposureStep`, `CaptureSpec.MaxExposureStep`, `CaptureSpec.MaxGain`, `CaptureSpec.MaxWhiteBalanceK`입니다. `AllowsLightChange(phase)`는 enum에 멤버를 둘 수 없어 `FlowFunctions`에 있습니다.
 
-`Advance`가 촬영 흐름의 판단을 모두 합니다. 상태와 사건을 받아 다음 상태와 platform이 순서대로 실행할 할 일을 돌려줍니다. 선언 파일 읽기는 `CaptureSpec? ParseCaptureSpec(string json, out string error)`이고 오류 문장과 "n번째 바이트" 위치는 원본과 같습니다(입력을 UTF-8 바이트로 보고 셉니다). 모르는 키가 여럿이면 원본처럼 바이트 순서로 앞선 키를 알립니다. 선언 파일은 `new UTF8Encoding(false).GetString(File.ReadAllBytes(path))`로 읽습니다. `File.ReadAllText`는 UTF-8 BOM을 지워 원본이 거부하는 BOM 붙은 파일을 통과시키고, 잘못된 UTF-8 바이트를 U+FFFD로 바꿉니다.
+`Advance`가 촬영 흐름의 판단을 모두 합니다. 상태와 사건을 받아 다음 상태와 platform이 순서대로 실행할 할 일을 돌려줍니다. 선언 파일 읽기는 `CaptureSpec? ParseCaptureSpec(string json, out string error)`이고 오류 문장과 "n번째 바이트" 위치는 원본과 같습니다(입력을 UTF-8 바이트로 보고 셉니다). 모르는 키가 여럿이면 원본처럼 바이트 순서로 앞선 키를 알립니다. 선언 파일은 `File.ReadAllBytes(path)`로 읽어 `ParseCaptureSpec(ReadOnlySpan<byte>, out string)`에 그대로 넘깁니다. `File.ReadAllText`는 UTF-8 BOM을 지워 원본이 거부하는 BOM 붙은 파일을 통과시키고, 잘못된 UTF-8 바이트를 U+FFFD로 바꿔 오류 위치의 바이트 수가 달라집니다. `ReadSidecarSummary`도 같은 바이트 오버로드가 있습니다.
 
 ## 원본과 달라진 점
 
