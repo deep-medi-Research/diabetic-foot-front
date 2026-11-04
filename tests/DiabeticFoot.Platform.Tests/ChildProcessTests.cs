@@ -274,7 +274,7 @@ public class ChildProcessTests
         Assert.True(before.Elapsed < TimeSpan.FromSeconds(10), before.Elapsed.ToString());
     }
 
-    // Kill은 자식이 띄운 하위 프로세스까지 끝냅니다. 하위 프로세스가 출력 파이프를 쥐고 있어, 남아 있으면 출력이 닫히지 않습니다.
+    // Kill은 자식이 띄운 하위 프로세스까지 끝냅니다. 하위 프로세스가 남아 있는지는 프로세스 번호로 확인합니다.
     [Fact]
     public void KillEndsDescendants()
     {
