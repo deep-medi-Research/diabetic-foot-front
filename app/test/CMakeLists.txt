@@ -27,6 +27,9 @@ endfunction()
 
 hwlab_add_app_test(test_rgb_trace SOURCES test_rgb_trace.cc ../src/rgb_trace.h ../src/rgb_trace.cc)
 
+# 명령줄 인자 표: 검사, --help, 로그에 남기는 인자 가리기
+hwlab_add_app_test(test_cli_args SOURCES test_cli_args.cc ../src/cli_args.h ../src/cli_args.cc)
+
 # 환자 정보 입력의 혈압 검사와, 환자를 바꾸면 혈압 칸을 비우는 동작을 시험합니다.
 hwlab_add_app_test(test_shot_form
   SOURCES test_shot_form.cc

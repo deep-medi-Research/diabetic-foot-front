@@ -1,46 +1,10 @@
-// hwlab_app --spec <선언.json> [--out <폴더>] [--fake] [--no-thermal] [--save-full] [--screenshot <png> --after <ms> [--press-start]]
-//           [--patient <이름> --birth <0000-00-00>] [--arm-pressure <수축기/이완기>]
-//           [--ankle-pressure <수축기/이완기>] [--ankle-level 0|V|D|M|S]
-//           [--pixel-left-foot left|right] [--rgb-regions <x,y,w,h,x,y,w,h>]
-//           [--rgb-area <x,y,w,h>]
-//           [--fake-thermal-absent | --fake-thermal-delay-ms <ms>] [--lens-shading-folder <폴더>]
-//           [--light-port <포트> [--light-percent <%>]] [--light-remember <VID:PID:일련번호>] [--ppg-port <포트>]
-//           [--ppg-remember <VID:PID:일련번호>]
-//           [--analyzer-python <python.exe> --analyzer-script <dfr_worker.py>] [--analyze <촬영 폴더>]
-//           [--no-prestream] [--presegment-threads <n>]
-//   --out: 처음 저장 위치. 화면에서 고른 위치를 기억하고 있으면 그 위치를 씁니다. 설치 바로가기가 문서\DiabeticFoot를 줍니다.
-//   --fake: 장비 없이 가짜 RGB 카메라, 가짜 열화상 카메라, 가짜 PPG 장치(COM6)로 화면을 띄웁니다.
-//   기억한 값: --fake, --screenshot, --close-after, --light-remember, --ppg-remember를 준 시험 실행은 지난 값을 읽지 않고 바꾼 값도 다음 실행에 남기지 않습니다.
-//   --no-thermal: 열화상 카메라를 열지 않고 RGB만 녹화합니다.
-//   --save-full: 좌우 발 영상과 함께 전체 화면 영상도 저장합니다. 기본은 좌우 발 영상만입니다(FFV1 인코딩 수를 줄이기 위함).
-//   --screenshot: 정한 시간 뒤 화면을 이미지로 저장하고 끝납니다. 화면이 없는 SSH 세션에서 화면을 확인할 때 씁니다.
-//     결과 창이 열려 있으면 <이름>_result.<확장자>로 함께 저장합니다.
-//   --patient, --birth: 환자 정보 칸을 채운 채로 시작합니다. 화면 없이 입력 검사와 저장을 시험할 때 씁니다.
-//   --arm-pressure, --ankle-pressure, --ankle-level: 상완과 발목 혈압 칸(예: 120/80)과 발목 혈압 단계를 채운 채로 시작합니다.
-//     혈압 입력 검사를 시험할 때 씁니다.
-//   --pixel-left-foot, --rgb-regions: 화면 왼쪽 상자의 발과 RGB 좌우 영역(화소 왼쪽, 화소 오른쪽)을 정한 채로 시작합니다.
-//     영역은 격자 맞춤 없이 그대로 검사하므로 영역 오류 표시를 시험할 때도 씁니다.
-//   --rgb-area: RGB 패널의 관찰 영역(프레임 화소)을 정한 채로 시작합니다. 관찰 영역 화면을 --screenshot으로 확인할 때 씁니다.
-//   --fake-thermal-absent, --fake-thermal-delay-ms: --fake에서 열화상 장치를 찾지 못하는 상태, 연 뒤 첫 프레임을 기다리는 상태를
-//     만듭니다. 열화상 없이 찍을지 묻는 안내 화면을 시험할 때 씁니다.
-//   --lens-shading-folder: 열화상 렌즈 셰이딩 보정 파일 폴더. 주지 않으면 장비 실행은 앱 데이터 폴더의 thermal을 쓰고,
-//     --fake는 보정 기능이 없는 열화상이 됩니다. 보정 안내와 보정 버튼을 --fake로 시험할 때 씁니다.
-//   --light-port, --light-percent: 시작하면서 LED 포트를 열고 밝기를 보냅니다. 화면 확인용이며 --fake에서는 가짜 포트(COM7)만 열립니다.
-//   --light-remember: 기억한 LED 변환기를 정한 채로 시작합니다. 포트 제안을 시험할 때 쓰며 다음 실행에 남기지 않습니다.
-//   --ppg-port: 시작하면서 PPG 포트를 열고 장치를 시작합니다. 화면 확인용이며 --fake에서는 가짜 PPG 장치(COM6)만 열립니다.
-//   --ppg-remember: 기억한 PPG 변환기를 정한 채로 시작합니다. "지난번 PPG" 표시와 조명 칸의 확인을 시험할 때 쓰며 다음 실행에 남기지 않습니다.
-//   --palette iron|gray|rainbow|high-contrast: 열화상 색상표를 정한 채로 시작합니다. 색상표 화면을 시험할 때 씁니다.
-//   --fake-free-bytes <바이트>: 디스크 여유를 읽지 않고 이 값으로 봅니다. 디스크 부족 거부를 시험할 때 씁니다.
-//   --fake-restore-fails: --fake에서 실행 전 색온도를 자동으로 두고 자동 색온도 명령을 실패시킵니다. 종료 때 복원 불일치 안내를 시험할 때 씁니다.
-//   --close-after <ms>: 정한 시간 뒤 창을 닫습니다(종료 때 카메라 복원 흐름 시험).
-//   --analyzer-python, --analyzer-script: 배포 폴더의 python/, analysis/ 대신 쓸 관류 분석 프로그램(개발용). PATH에서 찾지 않습니다.
-//   --analyze: 시작하자마자 그 촬영 폴더를 분석 대기열에 넣습니다. 촬영 없이 분석 막대를 시험할 때 씁니다.
-//   --no-prestream: 녹화 중 미리 분석(첫 장 발 분할과 영상 미리 읽기)을 쓰지 않고, 화면의 스위치도 숨깁니다.
-//     주지 않으면 화면의 "녹화 중 미리 분석" 스위치로 켜고 끕니다(기본 켬, 기억한 값에 남김).
-//   --presegment-threads: 녹화 중 첫 장 분할에 쓸 스레드 수입니다. 기본 2, 0이면 분석과 같은 모델을 같이 씁니다.
-// hwlab_app --result <촬영 폴더> [--result-position <0~1>] [--result-variant <판>] [--screenshot <png> --after <ms>]
-//   --result: 분석이 끝난 촬영 폴더의 결과 창만 띄웁니다(개발용). 카메라와 열화상을 열지 않고 --spec도 읽지 않습니다.
-//   --result-position: 되감기 막대 위치(0 처음, 1 끝). --result-variant: 보일 판 탭. --screenshot은 결과 창을 저장합니다.
+// hwlab_app: 당뇨발 촬영 앱의 시작점입니다.
+//
+// 명령줄 인자의 이름, 값, 설명은 cli_args.cc의 표 하나가 원본입니다. hwlab_app --help로 전체를 보고, 같은 표가 docs/debugging.md에 들어갑니다.
+// 인자를 더하면 그 표에도 더합니다. 표에 없는 인자는 시작할 때 거절됩니다.
+//
+// 다음 실행에 남기는 "기억한 값"은 --fake, --screenshot, --close-after, --light-remember, --ppg-remember 중 하나라도 준 시험 실행에서는
+// 지난 값을 읽지 않고 바꾼 값도 남기지 않습니다. 장비 PC의 실제 값을 시험이 덮어쓰지 않게 하기 위함입니다(아래 trial).
 #include <QCoreApplication>
 #include <QCryptographicHash>
 #include <QDir>
@@ -64,6 +28,8 @@
 #include "analysis_variants.h"
 #include "app_version.h"
 #include "capture_controller.h"
+#include "cli_args.h"
+#include "console_output.h"
 #include "light_controller.h"
 #include "result_view.h"
 #include "scripted_ppg_device.h"
@@ -136,7 +102,19 @@ int main(int argc, char* argv[]) {
   // 시험하려고 환경 변수를 따로 정한 경우는 그 값을 씁니다. QGuiApplication을 만들기 전에 정해야 합니다.
   if (!qEnvironmentVariableIsSet("QSG_RENDER_LOOP")) qputenv("QSG_RENDER_LOOP", "basic");
 #endif
+  // 명령 프롬프트에서 켰을 때 --help와 오류가 그 콘솔에 보이게 합니다. QGuiApplication이 메시지를 내기 전에 붙습니다.
+  AttachParentConsole();
   QGuiApplication app(argc, argv);
+  const QStringList args = app.arguments();
+  const QString program = QFileInfo(args.value(0)).fileName();
+  if (cli::WantsHelp(args)) {
+    WriteStdout(cli::HelpText(program, QString()));
+    return 0;
+  }
+  if (const auto problems = cli::Check(args)) {
+    WriteStderr(*problems + QStringLiteral("\n모든 인자는 %1 --help로 봅니다.\n").arg(program));
+    return 2;
+  }
   // 기억한 값을 남기는 QSettings의 이름입니다(RememberedValues).
   QGuiApplication::setOrganizationName(QStringLiteral("deepmedi"));
   QGuiApplication::setApplicationName(QStringLiteral("hwlab"));
@@ -160,7 +138,6 @@ int main(int argc, char* argv[]) {
   }
   // font.family를 빠뜨린 글자도 같은 글꼴로 그리도록 기본 글꼴을 정합니다.
   QGuiApplication::setFont(QFont(QStringLiteral("Pretendard")));
-  const QStringList args = app.arguments();
   // 결과 창만 띄우는 개발용 실행입니다. 장치를 열기 전에 끝내 촬영 중인 다른 프로그램의 장치를 건드리지 않습니다.
   if (args.contains(QStringLiteral("--result"))) {
     QQmlApplicationEngine engine;

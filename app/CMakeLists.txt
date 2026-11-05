@@ -66,6 +66,9 @@ install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/../specs DESTINATION .)
 # 환자 정보와 저장 위치 입력
 target_sources(hwlab_app PRIVATE src/shot_form.h src/shot_form.cc src/remembered_values.h src/remembered_values.cc)
 target_sources(hwlab_app PRIVATE src/shutdown_watch.h src/shutdown_watch.cc src/single_instance.h src/single_instance.cc)
+
+# 명령줄 인자 표(검사, --help, 문서)와 콘솔 출력(Windows는 부모 콘솔에 붙음)
+target_sources(hwlab_app PRIVATE src/cli_args.h src/cli_args.cc src/console_output.h src/console_output.cc)
 qt_target_qml_sources(hwlab_app QML_FILES qml/Field.qml)
 
 # 열화상 미리보기와 열화상 SDK DLL. SDK 폴더(-DHWLAB_THERMAL_SDK_DIR)를 주지 않은 빌드는 열화상 없이 동작합니다.
