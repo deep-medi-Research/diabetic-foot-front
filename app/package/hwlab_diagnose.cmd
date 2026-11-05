@@ -117,12 +117,18 @@ Invoke-Section '설치' {
   $running = @(Get-Process -Name hwlab_app -ErrorAction SilentlyContinue)
   Add-Check '설치' '실행 중인 앱' '정보' "$($running.Count)개"
 
+  # Inno Setup으로 만든 다른 프로그램도 같은 이름(Setup Log*.txt)으로 남기므로, 앱 ID, 설치 파일 이름, 앱 실행 파일이 나오는 기록만 고릅니다.
+  $appGuid = $AppId -replace '^\{|\}_is1$', ''
+  $ours = "$([regex]::Escape($appGuid))|HWLab-Setup|\\hwlab_app\.exe"
   $logs = @(Get-ChildItem -LiteralPath $env:TEMP -Filter 'Setup Log*.txt' -ErrorAction SilentlyContinue | Sort-Object LastWriteTime -Descending)
-  if ($logs) {
-    Add-Check '설치' '설치 프로그램 기록' '정보' "$($logs[0].Name) ($($logs[0].LastWriteTime))"
-    Add-Appendix "설치 프로그램 기록 $($logs[0].Name)" (Get-Content -LiteralPath $logs[0].FullName -Tail 80)
+  $mine = @($logs | Where-Object { Select-String -LiteralPath $_.FullName -Pattern $ours -List -Quiet -ErrorAction SilentlyContinue })
+  $others = $logs.Count - $mine.Count
+  $skipped = if ($others -gt 0) { ", 다른 프로그램 기록 $($others)개는 뺌" } else { '' }
+  if ($mine) {
+    Add-Check '설치' '설치 프로그램 기록' '정보' "$($mine[0].Name) ($($mine[0].LastWriteTime))$skipped"
+    Add-Appendix "설치 프로그램 기록 $($mine[0].Name)" (Get-Content -LiteralPath $mine[0].FullName -Tail 80)
   } else {
-    Add-Check '설치' '설치 프로그램 기록' '정보' '없음'
+    Add-Check '설치' '설치 프로그램 기록' '정보' "없음$skipped"
   }
 }
 
@@ -194,7 +200,7 @@ Invoke-Section '저장 공간' {
   if ($shortcut -and $shortcut.Arguments -match '--out\s+"([^"]+)"') { $out = $Matches[1] }
   $exists = Test-Path -LiteralPath $out
   $shots = if ($exists) { @(Get-ChildItem -LiteralPath $out -Directory -ErrorAction SilentlyContinue).Count } else { 0 }
-  Add-Check '저장 공간' '저장 위치' '정보' "$out (있음: $exists, 폴더 $shots개)"
+  Add-Check '저장 공간' '저장 위치' '정보' "$out (있음: $exists, 폴더 ${shots}개)"
   $probe = if ($exists) { $out } else { Split-Path -Qualifier $out }
   $drive = New-Object IO.DriveInfo((Split-Path -Qualifier (Resolve-Path -LiteralPath $probe).ProviderPath))
   $free = $drive.AvailableFreeSpace
