@@ -390,15 +390,17 @@ TEST(AnalyzerOverrides, MakesScriptAbsoluteAgainstStartFolder) {
   using hwlab::platform::ResolveAnalyzerOverrides;
   const auto dir = TempDir("script_abs");
   const std::string cwd = ToUtf8(dir);
+  // 푼 경로는 구분자가 /입니다. Windows의 임시 폴더는 \로 오므로 기대값도 / 모양으로 만듭니다.
+  const std::string root = dir.generic_string();
   EXPECT_EQ(ResolveAnalyzerOverrides("", "tools/fake_analysis/dfr_worker.py", cwd, "").script,
-            cwd + "/tools/fake_analysis/dfr_worker.py");
-  EXPECT_EQ(ResolveAnalyzerOverrides("", "./tools/../tools/dfr_worker.py", cwd, "").script, cwd + "/tools/dfr_worker.py");
+            root + "/tools/fake_analysis/dfr_worker.py");
+  EXPECT_EQ(ResolveAnalyzerOverrides("", "./tools/../tools/dfr_worker.py", cwd, "").script, root + "/tools/dfr_worker.py");
   const std::string absolute = ToUtf8(dir / "elsewhere" / "dfr_worker.py");
   EXPECT_EQ(ResolveAnalyzerOverrides("", absolute, cwd, "").script, FromUtf8(absolute).generic_string());
 
   const ProcessLaunch launch = AnalyzerLaunch("/app", "", ResolveAnalyzerOverrides("", "tools/w.py", cwd, "").script);
-  EXPECT_EQ(launch.working_dir, cwd + "/tools");
-  EXPECT_EQ(launch.arguments[0], cwd + "/tools/w.py");
+  EXPECT_EQ(launch.working_dir, root + "/tools");
+  EXPECT_EQ(launch.arguments[0], root + "/tools/w.py");
 }
 
 // 값을 주지 않으면 비워 두어 배포 폴더의 파이썬과 스크립트를 씁니다.
@@ -442,10 +444,11 @@ TEST(AnalyzerOverrides, ResolvesRelativePythonAgainstStartFolder) {
   std::filesystem::create_directories(dir / ".venv" / "bin");
   WriteExecutable(dir / "bin" / kPythonFile);
   const std::string cwd = ToUtf8(dir);
+  const std::string root = dir.generic_string();
   const auto by_path = hwlab::platform::ResolveAnalyzerOverrides("python3", "", cwd, "bin");
-  EXPECT_EQ(by_path.python, cwd + "/bin/" + kPythonFile);
+  EXPECT_EQ(by_path.python, root + "/bin/" + kPythonFile);
   const auto by_separator = hwlab::platform::ResolveAnalyzerOverrides(".venv/bin/python", "", cwd, "");
-  EXPECT_EQ(by_separator.python, cwd + "/.venv/bin/python");
+  EXPECT_EQ(by_separator.python, root + "/.venv/bin/python");
 }
 
 #ifndef _WIN32
