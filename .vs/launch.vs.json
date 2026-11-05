@@ -1,0 +1,44 @@
+{
+  "version": "0.2.1",
+  "defaults": {},
+  "configurations": [
+    {
+      "type": "default",
+      "project": "CMakeLists.txt",
+      "projectTarget": "hwlab_app.exe (app\\hwlab_app.exe)",
+      "name": "앱: 가짜 장치",
+      "currentDir": "${workspaceRoot}",
+      "args": [
+        "--spec", "${workspaceRoot}\\specs\\see3cam_manual_720p60.json",
+        "--out", "${workspaceRoot}\\build\\shots",
+        "--fake"
+      ]
+    },
+    {
+      "type": "default",
+      "project": "CMakeLists.txt",
+      "projectTarget": "hwlab_app.exe (app\\hwlab_app.exe)",
+      "name": "앱: 가짜 장치와 가짜 분석",
+      "currentDir": "${workspaceRoot}",
+      "args": [
+        "--spec", "${workspaceRoot}\\specs\\see3cam_manual_720p60.json",
+        "--out", "${workspaceRoot}\\build\\shots",
+        "--fake",
+        "--patient", "테스트", "--birth", "1955-11-03",
+        "--arm-pressure", "120/80", "--ankle-pressure", "120/80", "--ankle-level", "0",
+        "--analyzer-python", "python",
+        "--analyzer-script", "${workspaceRoot}\\tools\\fake_analysis\\dfr_worker.py"
+      ]
+    },
+    {
+      "type": "default",
+      "project": "CMakeLists.txt",
+      "projectTarget": "hwlab_app.exe (app\\hwlab_app.exe)",
+      "name": "앱: 결과 창(촬영 폴더를 고쳐 씀)",
+      "currentDir": "${workspaceRoot}",
+      "args": [
+        "--result", "${workspaceRoot}\\build\\shots\\테스트_19551103\\0\\<날짜_시각 폴더>"
+      ]
+    }
+  ]
+}

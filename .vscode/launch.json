@@ -1,0 +1,66 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "앱: 가짜 장치 (Windows)",
+      "type": "cppvsdbg",
+      "request": "launch",
+      "program": "${command:cmake.launchTargetPath}",
+      "cwd": "${workspaceFolder}",
+      "args": [
+        "--spec", "specs/see3cam_manual_720p60.json",
+        "--out", "build/shots",
+        "--fake"
+      ]
+    },
+    {
+      "name": "앱: 가짜 장치와 가짜 분석 (Windows)",
+      "type": "cppvsdbg",
+      "request": "launch",
+      "program": "${command:cmake.launchTargetPath}",
+      "cwd": "${workspaceFolder}",
+      "args": [
+        "--spec", "specs/see3cam_manual_720p60.json",
+        "--out", "build/shots",
+        "--fake",
+        "--patient", "테스트", "--birth", "1955-11-03",
+        "--arm-pressure", "120/80", "--ankle-pressure", "120/80", "--ankle-level", "0",
+        "--analyzer-python", "python",
+        "--analyzer-script", "tools/fake_analysis/dfr_worker.py"
+      ]
+    },
+    {
+      "name": "앱: 결과 창 (Windows)",
+      "type": "cppvsdbg",
+      "request": "launch",
+      "program": "${command:cmake.launchTargetPath}",
+      "cwd": "${workspaceFolder}",
+      "args": ["--result", "${input:shotFolder}"]
+    },
+    {
+      "name": "앱: 가짜 장치와 가짜 분석 (macOS)",
+      "type": "cppdbg",
+      "MIMode": "lldb",
+      "request": "launch",
+      "program": "${command:cmake.launchTargetPath}",
+      "cwd": "${workspaceFolder}",
+      "args": [
+        "--spec", "specs/see3cam_manual_720p60.json",
+        "--out", "build/shots",
+        "--fake",
+        "--patient", "테스트", "--birth", "1955-11-03",
+        "--arm-pressure", "120/80", "--ankle-pressure", "120/80", "--ankle-level", "0",
+        "--analyzer-python", "python3",
+        "--analyzer-script", "tools/fake_analysis/dfr_worker.py"
+      ]
+    }
+  ],
+  "inputs": [
+    {
+      "id": "shotFolder",
+      "type": "promptString",
+      "description": "분석이 끝난 촬영 폴더",
+      "default": "build/shots/테스트_19551103/0/"
+    }
+  ]
+}

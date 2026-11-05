@@ -1,7 +1,9 @@
 build/
 .DS_Store
 *.user
-.vs/
+# Visual Studio가 만드는 파일은 넣지 않고, 실행 설정(launch.vs.json)만 넣습니다.
+.vs/*
+!.vs/launch.vs.json
 # 내 PC의 Qt, FFmpeg 경로를 담는 프리셋입니다. CMakeUserPresets.json.example을 복사해 만듭니다.
 CMakeUserPresets.json
 
