@@ -7,6 +7,7 @@
 #include <QTest>
 
 #include <atomic>
+#include <chrono>
 #include <future>
 #include <mutex>
 #include <thread>

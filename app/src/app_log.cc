@@ -6,6 +6,7 @@
 
 #include <atomic>
 #include <chrono>
+#include <iterator>
 
 #include "console_output.h"
 

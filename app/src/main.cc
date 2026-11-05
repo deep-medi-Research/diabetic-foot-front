@@ -157,8 +157,6 @@ int main(int argc, char* argv[]) {
   // 시험하려고 환경 변수를 따로 정한 경우는 그 값을 씁니다. QGuiApplication을 만들기 전에 정해야 합니다.
   if (!qEnvironmentVariableIsSet("QSG_RENDER_LOOP")) qputenv("QSG_RENDER_LOOP", "basic");
 #endif
-  // 명령 프롬프트에서 켰을 때 --help와 오류가 그 콘솔에 보이게 합니다. QGuiApplication이 메시지를 내기 전에 붙습니다.
-  AttachParentConsole();
   QGuiApplication app(argc, argv);
   const QStringList args = app.arguments();
   const QString program = QFileInfo(args.value(0)).fileName();
