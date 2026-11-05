@@ -24,6 +24,7 @@ add_library(hwlab_platform STATIC
   src/frame_pool.cc
   src/avi_file.cc
   src/reconcile.cc
+  src/rgb_camera_message.cc
   src/video_writer.cc)
 target_include_directories(hwlab_platform PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(hwlab_platform PUBLIC hwlab_flow hwlab_record hwlab_pixel hwlab_timing)
@@ -123,6 +124,14 @@ if(HWLAB_PLATFORM_TESTS)
   target_link_libraries(test_shot_folder PRIVATE hwlab_platform GTest::gtest_main)
   target_compile_options(test_shot_folder PRIVATE ${HWLAB_WARNINGS})
   gtest_discover_tests(test_shot_folder)
+endif()
+
+# RGB 카메라를 열지 못한 이유를 사용자에게 말하는 문구. 장치 없이 모든 OS에서 테스트합니다.
+if(HWLAB_PLATFORM_TESTS)
+  add_executable(test_rgb_camera_message test/test_rgb_camera_message.cc)
+  target_link_libraries(test_rgb_camera_message PRIVATE hwlab_platform GTest::gtest_main)
+  target_compile_options(test_rgb_camera_message PRIVATE ${HWLAB_WARNINGS})
+  gtest_discover_tests(test_rgb_camera_message)
 endif()
 
 # 자식 프로세스 실행(관류 분석 프로그램)과 관류 분석 프로그램 출력 줄 해석입니다. 가짜 관류 분석 프로그램으로 macOS와 Windows에서 시험합니다.

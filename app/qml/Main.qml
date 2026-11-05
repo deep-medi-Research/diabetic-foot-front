@@ -457,7 +457,7 @@ ApplicationWindow {
                         visible: capture.measuredFps <= 0
                         horizontalAlignment: Text.AlignHCenter
                         wrapMode: Text.Wrap
-                        // 장치를 찾았지만 형식을 열지 못했으면(USB 2 포트 등) 그 이유를 보입니다. 다시 꽂으면 저절로 이어집니다.
+                        // 장치를 찾았지만 형식을 열지 못했으면(USB 2 속도 연결 등) 그 이유를 보입니다. 다시 꽂으면 저절로 이어집니다.
                         text: capture.cameraProblem !== ""
                               ? "RGB 카메라(" + capture.deviceName + ")를 열지 못했습니다.\n" + capture.cameraProblem
                               : "RGB 카메라(" + capture.deviceName + ")를 찾는 중입니다.\nUSB 케이블과 허브 전원을 확인하십시오. 연결되면 자동으로 이어집니다."

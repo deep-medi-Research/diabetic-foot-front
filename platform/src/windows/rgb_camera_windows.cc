@@ -7,7 +7,6 @@
 #include <mfreadwrite.h>
 
 #include <atomic>
-#include <cstdio>
 #include <memory>
 #include <mutex>
 #include <string>
@@ -413,7 +412,8 @@ class WindowsRgbCamera final : public RgbCamera {
   // 크기가 맞는 UYVY 형식 중 frame_rate를 낼 수 있고 최대 fps가 가장 낮은 형식을 엽니다. MJPEG나 다른 크기로 대신 열지 않습니다.
   // 첫 형식을 열면 1280x720은 60~120fps 형식이 120fps로 돌았습니다(2026-11-03 실측 119.2fps, SDK fps 60으로도 그대로).
   // fps 범위를 알려 주는 형식은 frame_rate로 맞춰 엽니다.
-  // 같은 카메라도 USB 2 포트에서는 형식마다 최대 fps가 낮게 나옵니다(데이터시트 UYVY 1920x1200: USB 3 55fps, USB 2 6fps).
+  // 같은 카메라도 USB 2 속도로 연결되면 형식마다 최대 fps가 낮게 나옵니다(데이터시트 UYVY 1920x1200: USB 3 55fps, USB 2 6fps).
+  // USB 3 포트에 꽂아도 케이블, 허브, Type-C 방향 때문에 USB 2 속도가 될 수 있습니다(2026-11-04 고객사, UYVY 1280x720 최대 15fps).
   bool SelectUyvy(int32_t width, int32_t height, int32_t frame_rate, std::string* error) {
     const std::string size = "UYVY " + std::to_string(width) + "x" + std::to_string(height);
     bool sized = false;     // 크기가 맞는 UYVY 형식이 있음
@@ -460,17 +460,13 @@ class WindowsRgbCamera final : public RgbCamera {
         return true;
       }
     }
-    char text[200];
     if (!sized) {
-      std::snprintf(text, sizeof(text), "카메라에 %s 형식이 없습니다", size.c_str());
+      *error = "카메라에 " + size + " 형식이 없습니다";
     } else if (max_fps > 0.0 && max_fps + 0.5 < frame_rate) {
-      std::snprintf(text, sizeof(text),
-                    "%s 형식이 최대 %.0ffps라 %dfps로 찍을 수 없습니다. 카메라를 USB 3 포트(파란 단자)에 꽂으십시오",
-                    size.c_str(), max_fps, frame_rate);
+      *error = LowFrameRateMessage(size, max_fps, frame_rate);
     } else {
-      std::snprintf(text, sizeof(text), "%s 형식을 열지 못했습니다", size.c_str());
+      *error = size + " 형식을 열지 못했습니다";
     }
-    *error = text;
     return false;
   }
 
