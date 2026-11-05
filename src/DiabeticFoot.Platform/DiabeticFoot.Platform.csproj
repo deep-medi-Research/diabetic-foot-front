@@ -12,10 +12,6 @@
     <InternalsVisibleTo Include="DiabeticFoot.Platform.Tests" />
   </ItemGroup>
 
-  <ItemGroup>
-    <InternalsVisibleTo Include="DiabeticFoot.Platform.Tests" />
-  </ItemGroup>
-
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
