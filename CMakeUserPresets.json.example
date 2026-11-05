@@ -7,7 +7,7 @@
       "inherits": "windows-debug",
       "environment": {
         "HWLAB_QT_DIR": "C:/Qt/6.8.1/msvc2022_64",
-        "HWLAB_FFMPEG_DIR": "C:/ffmpeg/ffmpeg-N-127790-g56dbd4cd37-win64-lgpl-shared"
+        "HWLAB_FFMPEG_DIR": "C:/ffmpeg/ffmpeg-master-latest-win64-lgpl-shared"
       }
     }
   ],
