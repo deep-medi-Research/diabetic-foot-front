@@ -61,7 +61,7 @@ inline constexpr int32_t kMaxBloodPressureMmhg = 300;
  * 발목 혈압 단계의 이름입니다. 화면의 버튼 순서와 같습니다.
  *
  * 0은 0mmHg, V는 발목 이완기 - 50, D는 발목 이완기, M은 (발목 수축기 + 발목 이완기) / 2, S는 발목 수축기입니다.
- * @note 관류 분석 프로그램이 내는 커프 단계(`cuff_level.level`, #72)와 같은 글자입니다. 대소문자를 구분합니다.
+ * @note 관류 분석 프로그램이 내는 커프 단계(`cuff_level.level`)와 같은 글자입니다. 대소문자를 구분합니다.
  */
 inline constexpr std::array<std::string_view, 5> kAnkleLevels = {"0", "V", "D", "M", "S"};
 
@@ -71,7 +71,7 @@ inline constexpr std::array<std::string_view, 5> kAnkleLevels = {"0", "V", "D", 
  * @param level 단계 이름. kAnkleLevels 중 하나
  * @param ankle 발목에서 잰 혈압
  * @return 압력(mmHg). M은 0.5 단위일 수 있습니다. level이 목록에 없으면 nullopt
- * @note 계산식은 분석 쪽 요청(2026-10-29, #68)입니다. V는 발목 이완기가 50mmHg보다 낮으면 음수입니다.
+ * @note 계산식은 분석 쪽 요청(2026-10-29)입니다. V는 발목 이완기가 50mmHg보다 낮으면 음수입니다.
  */
 std::optional<double> AnkleLevelMmhg(std::string_view level, const BloodPressure& ankle);
 
