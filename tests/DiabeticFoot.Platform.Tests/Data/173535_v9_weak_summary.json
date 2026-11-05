@@ -1,0 +1,295 @@
+{
+ "name": "0_20261030_173535",
+ "videos": {
+  "left": "20261030_173535_left.avi",
+  "right": "20261030_173535_right.avi"
+ },
+ "fps": 30.0,
+ "n_frames": 900,
+ "window_s": 10,
+ "window_stride_s": 2,
+ "n_windows": 11,
+ "template": "v106w-foot",
+ "cuff_side": "left",
+ "pi_left": 0.12303398235099666,
+ "pi_right": 0.14567598398799608,
+ "template_corr_lr": 0.9658569800862128,
+ "per_side": {
+  "left": {
+   "pi": 0.12303398235099666,
+   "pi_toes": 0.15407639676781482,
+   "pi_fore": 0.13771236368940806,
+   "pi_mid": 0.1549262241223966,
+   "pi_heel": 0.07558024495574166
+  },
+  "right": {
+   "pi": 0.14567598398799608,
+   "pi_toes": 0.15111400977281605,
+   "pi_fore": 0.2481837346899211,
+   "pi_mid": 0.12086975488736401,
+   "pi_heel": 0.0855587967005243
+  }
+ },
+ "pi_ratio_left_right": 0.8445728594572929,
+ "pi_ratio_cuffed_other": 0.8445728594572929,
+ "classification": null,
+ "cuff_level": {
+  "level": null,
+  "level_ko": null,
+  "pad": null,
+  "pad_probability": 0.0001,
+  "level_if_quality_ignored": "0",
+  "quality_ok": false,
+  "state_probabilities": {
+   "0": 0.7972,
+   "V": 0.2027,
+   "D": 0.0001,
+   "O": 0.0
+  },
+  "rule": "one network: P(PAD) 0.00; states 0 0.80 V 0.20 D 0.00 O 0.00 -> 0 \uc815\uc0c1",
+  "features": {
+   "pi_ratio": 0.854,
+   "delay2_30": -1.3317,
+   "h1re_30": 0.8657,
+   "hi_snr1_30": 10.6,
+   "lower_side": "left",
+   "n_common_cells": 91
+  },
+  "quality_snr_db": 11.5,
+  "label_scheme": "cuff state 0 / V / D / O: none, venous only (V, old 40 %), partial arterial (D, old 80 %), occluded (O = M + S, old 120 %) (pad_clf/cuff_dl.py)",
+  "model": "models\\pad_cuff_level\\bundle.json",
+  "setting": {
+   "mode": "manual",
+   "exposure_step": -9,
+   "gain": 1
+  },
+  "template": "v106w-foot v14f (models/v106w_foot)",
+  "applicable": false,
+  "note": "insufficient pulse quality (higher-foot SNR 10.6 dB < 11.5): no level"
+ },
+ "qc": {
+  "version": 2,
+  "status": "check",
+  "status_ko": "\uce21\uc815 \uc644\ub8cc (\ud655\uc778 \ud544\uc694)",
+  "action_ko": "\uc870\uba85 \ubc30\ud130\ub9ac\ub97c \ucda9\uc804\ud558\uace0 \uce74\uba54\ub77c USB \uc5f0\uacb0\uc744 \ud655\uc778\ud558\uc138\uc694.",
+  "items": [
+   {
+    "code": "camera_setting",
+    "name_ko": "\uce74\uba54\ub77c \uc124\uc815",
+    "severity": "ok",
+    "value": "manual, \ub178\ucd9c -9, \uac8c\uc778 1",
+    "unit": "",
+    "threshold": "\uc218\ub3d9, \uac8c\uc778 1, \ub178\ucd9c -5 \ub610\ub294 -9",
+    "message_ko": "",
+    "action_ko": "",
+    "reason": null
+   },
+   {
+    "code": "foot_found",
+    "name_ko": "\ubc1c \ucc3e\uae30",
+    "severity": "ok",
+    "value": "\uc591\ubc1c",
+    "unit": "",
+    "threshold": "\ubd84\ud560 \ubaa8\ub378\uc774 \ub450 \ubc1c\uc744 \ucc3e\uc74c",
+    "message_ko": "",
+    "action_ko": "",
+    "reason": null
+   },
+   {
+    "code": "common_cells",
+    "name_ko": "\ub450 \ubc1c \uacf5\ud1b5 \uc140",
+    "severity": "ok",
+    "value": 91,
+    "unit": "\uac1c",
+    "threshold": "60\uac1c \uc774\uc0c1 (100\uac1c \uc911)",
+    "message_ko": "",
+    "action_ko": "",
+    "reason": null
+   },
+   {
+    "code": "brightness",
+    "name_ko": "\ubc1c \ubc1d\uae30 (\ub179\uc0c9)",
+    "severity": "ok",
+    "value": "86 / 85",
+    "unit": "",
+    "threshold": "40~230",
+    "message_ko": "",
+    "action_ko": "",
+    "reason": null
+   },
+   {
+    "code": "noise_floor",
+    "name_ko": "\uce21\uc815 \uc7a1\uc74c",
+    "severity": "ok",
+    "value": 0.0192,
+    "unit": "%",
+    "threshold": "0.04 \uc774\ud558",
+    "message_ko": "",
+    "action_ko": "",
+    "reason": null
+   },
+   {
+    "code": "pulse",
+    "name_ko": "\ub9e5\ubc15 \uc2e0\ud638",
+    "severity": "ok",
+    "value": 17.9868,
+    "unit": "dB",
+    "threshold": "11.5 \uc774\uc0c1 (\uac15\ud55c \ubc1c)",
+    "message_ko": "",
+    "action_ko": "",
+    "reason": null
+   },
+   {
+    "code": "foot_warmth",
+    "name_ko": "\ubc1c \uc628\ub3c4 (\uc5f4\ud654\uc0c1 \ub300\ube44)",
+    "severity": "ok",
+    "value": "143 / 147",
+    "unit": "counts",
+    "threshold": "60 \uc774\uc0c1 (\ubc1c - \ubc30\uacbd, \uc6d0\uc2dc\uac12)",
+    "message_ko": "",
+    "action_ko": "",
+    "reason": null
+   },
+   {
+    "code": "heart_rate",
+    "name_ko": "\ub9e5\ubc15\uc218 \uc77c\uce58 (\ubc1c / \uc190\uac00\ub77d)",
+    "severity": "ok",
+    "value": "65 / 65",
+    "unit": "bpm",
+    "threshold": "\ucc28\uc774 5 bpm \uc774\ud558",
+    "message_ko": "",
+    "action_ko": "",
+    "reason": null
+   },
+   {
+    "code": "pulse_timing",
+    "name_ko": "\ub9e5\ubc15 \ud0c0\uc774\ubc0d \uae30\uc900",
+    "severity": "ok",
+    "value": "v106w-foot right",
+    "unit": "",
+    "threshold": "\ubc1c \uc601\uc0c1 \ud15c\ud50c\ub9bf \ub610\ub294 \uc190\uac00\ub77d PPG",
+    "message_ko": "",
+    "action_ko": "",
+    "reason": null
+   },
+   {
+    "code": "light_flicker",
+    "name_ko": "\uc870\uba85/\uce74\uba54\ub77c \uae5c\ube61\uc784 (1 Hz)",
+    "severity": "warn",
+    "value": 0.2845,
+    "unit": "%",
+    "threshold": "0.1 \uc774\ud558",
+    "message_ko": "\ud654\uba74 \uc804\uccb4 \ubc1d\uae30\uac00 1\ucd08 \uc8fc\uae30\ub85c \ud754\ub4e4\ub9bd\ub2c8\ub2e4. \ub9e5\ubc15\uc218\uac00 1 Hz\uc5d0 \uac00\uae4c\uc6cc \ubcf4\uc815\ud558\uc9c0 \ubabb\ud588\uc2b5\ub2c8\ub2e4.",
+    "action_ko": "\uc870\uba85 \ubc30\ud130\ub9ac\ub97c \ucda9\uc804\ud558\uace0 \uce74\uba54\ub77c USB \uc5f0\uacb0\uc744 \ud655\uc778\ud558\uc138\uc694.",
+    "reason": "equipment"
+   }
+  ],
+  "pulse": {
+   "f0_hz": 1.0913,
+   "left": {
+    "amp_pct": 0.1323,
+    "floor_pct": 0.0167,
+    "snr_db": 17.9868
+   },
+   "right": {
+    "amp_pct": 0.1518,
+    "floor_pct": 0.0192,
+    "snr_db": 17.9543
+   }
+  },
+  "thermal_contrast": {
+   "left": 142.6,
+   "right": 147.4
+  },
+  "contact_ppg_hr_bpm": 65.5
+ },
+ "pulse_reference": {
+  "source": "v106w-foot right",
+  "rule": "video",
+  "f0_hz": 1.0839,
+  "ppg_hr_bpm": 64.9,
+  "ppg_fits_feet": true,
+  "templates_hz": {
+   "v106w-foot left": 1.0842,
+   "v106w-foot right": 1.0839,
+   "contact PPG": 1.0822
+  },
+  "line_hz": 1.001,
+  "line_pct": 0.2845,
+  "line_db": 13.6,
+  "line_regressed": false,
+  "line_overlaps_pulse": true
+ },
+ "foot_mask": {
+  "left": {
+   "method": "footseg_dl",
+   "score": 0.9852084517478943,
+   "det_score": 0.9852084517478943,
+   "sam_iou": 0.9852084517478943,
+   "parts": 6,
+   "mask_px": 162221,
+   "blocks": 120,
+   "cells": 100,
+   "crop_box": [
+    22,
+    875,
+    219,
+    640
+   ]
+  },
+  "right": {
+   "method": "footseg_dl",
+   "score": 0.9852427840232849,
+   "det_score": 0.9852427840232849,
+   "sam_iou": 0.9852427840232849,
+   "parts": 5,
+   "mask_px": 165739,
+   "blocks": 128,
+   "cells": 100,
+   "crop_box": [
+    33,
+    907,
+    11,
+    426
+   ]
+  }
+ },
+ "foot_cells": {
+  "grid": [
+   20,
+   5
+  ],
+  "map_grid": [
+   40,
+   15
+  ],
+  "common": 91,
+  "used": 91,
+  "noisy": 0,
+  "map_cells": 488,
+  "regions_u": {
+   "toes": [
+    0.0,
+    0.2
+   ],
+   "fore": [
+    0.2,
+    0.45
+   ],
+   "mid": [
+    0.45,
+    0.7
+   ],
+   "heel": [
+    0.7,
+    1.0
+   ]
+  }
+ },
+ "n_light_ref_min": 6,
+ "pi_method": "foot_cells_light_ref",
+ "dfr": {
+  "variant": "v9",
+  "upstream_commit": "3056dd9a804898a2877438aa471c46b2ea8aec0e"
+ }
+}
