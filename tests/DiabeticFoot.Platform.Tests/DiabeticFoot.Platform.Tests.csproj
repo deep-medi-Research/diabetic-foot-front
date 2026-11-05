@@ -21,15 +21,15 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Update="Data\**" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\..\src\DiabeticFoot.Platform\DiabeticFoot.Platform.csproj" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\DiabeticFoot.TestWorker\DiabeticFoot.TestWorker.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <None Update="Data\**" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
 </Project>
