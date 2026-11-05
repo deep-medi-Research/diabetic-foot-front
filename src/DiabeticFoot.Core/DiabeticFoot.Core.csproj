@@ -10,6 +10,7 @@
 
   <ItemGroup>
     <InternalsVisibleTo Include="DiabeticFoot.Core.Tests" />
+    <InternalsVisibleTo Include="DiabeticFoot.Platform" />
   </ItemGroup>
 
 </Project>
