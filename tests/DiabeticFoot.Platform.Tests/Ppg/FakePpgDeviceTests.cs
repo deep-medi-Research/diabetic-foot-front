@@ -1,4 +1,7 @@
+using System.Globalization;
 using System.Text;
+using DiabeticFoot.Core;
+using DiabeticFoot.Core.Record;
 
 namespace DiabeticFoot.Platform.Tests;
 
@@ -229,5 +232,49 @@ public class FakePpgDeviceTests
             ushort value = FakePpgDevice.WaveAt(i);
             Assert.InRange(value, 1648, 2448);
         }
+    }
+
+    // 가짜 장치의 맥파가 촬영 기록에 그대로 들어가고, 기록 중 받은 상태와 통신 집계가 기록과 사이드카에 남습니다.
+    [Fact]
+    public void FeedsShotRecordAndSidecar()
+    {
+        var line = new FakeSerialLine();
+        var device = new FakePpgDevice(line);
+        using var link = new PpgLink();
+        Assert.True(link.Open(FakeSerialPort.Opener("COM6", line), "COM6", out string error), error);
+        Assert.True(link.Restart(out error), error);
+        var record = new PpgShotRecord(new Timestamp(0));
+        link.Attach(record);
+        device.HandleCommands();
+        device.EmitMeasurement(24, 0, 0);
+        device.EmitMeasurement(24, 72, 98, (byte)'f');
+        device.EmitStatus(PpgStatus.Measuring);
+        PpgTestSupport.PumpUntil(link, x => x.Samples == 48 && x.Status == 's');
+        record.Close(new Timestamp(long.MaxValue));
+        PpgRecord result = record.Finish();
+
+        Assert.Equal(48, result.Values.Count);
+        for (int i = 0; i < result.Values.Count; ++i) Assert.Equal(FakePpgDevice.WaveAt(i), result.Values[i]);
+        Assert.Equal(2, result.Events.Count);
+        Assert.Equal((byte)'v', result.Events[0].Value);
+        Assert.Equal((byte)'s', result.Events[1].Value);
+        Assert.Equal(4, result.Counts.Messages);
+        Assert.Equal(0, result.Counts.SkippedBytes);
+
+        string path = Path.Combine(PpgTestSupport.TestFolder(), "fake_ppg.json");
+        // RGB 녹화 구간이 두 번째 측정 데이터의 표본 12개만 덮는 경우입니다.
+        PpgErrorWindow window = RecordFunctions.SummarizePpgErrors(
+            result.CommonTime, result.MeasureError, result.CommonTime[30], result.CommonTime[41]);
+        Assert.True(PpgFunctions.WritePpgSidecar(path, result, "fake_ppg.csv", "COM6", window, out error), error);
+        string json = File.ReadAllText(path);
+        Assert.Contains("\"measure_error\": 24", json);
+        Assert.Contains("\"code\": \"s\",\n      \"value\": \"s\"", json);
+        // 측정 오류 구간은 기록 전체에서 찾으므로 두 번째 측정 데이터 24개입니다. 측정 데이터 둘은 한 식(속도 1)으로 맞춥니다.
+        string span = "\"code\": \"f\",\n        \"begin_us\": " + result.CommonTime[24].Us.ToString(CultureInfo.InvariantCulture) +
+                      ",\n        \"end_us\": " + result.CommonTime[47].Us.ToString(CultureInfo.InvariantCulture) +
+                      ",\n        \"samples\": 24,\n        \"rgb_begin_s\": -0.012,\n        \"rgb_end_s\": 0.034\n";
+        Assert.Contains(span, json);
+        Assert.Contains("\"samples\": 12,\n      \"codes\": [\n        {\n          \"code\": \"f\",\n" +
+                        "          \"samples\": 12,\n          \"longest_samples\": 12,\n          \"runs\": 1\n", json);
     }
 }
