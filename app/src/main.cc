@@ -124,6 +124,30 @@ void LogStartup(const QStringList& args, const QString& data_dir, const profile:
   qInfo("로그 파일: %s", log_file.isEmpty() ? "없음(로그 폴더를 만들지 못함)" : qPrintable(QDir::toNativeSeparators(log_file)));
 }
 
+// 촬영 단계, 저장, 오류, 분석 끝을 로그에 남깁니다. 모두 화면 스레드에서 받는 신호이고 프레임마다 오는 신호는 쓰지 않습니다.
+void LogEvents(CaptureController* controller, AnalysisVariants* analysis, QObject* context) {
+  QObject::connect(controller, &CaptureController::phaseChanged, context,
+                   [controller] { qInfo("촬영 단계: %s", qPrintable(controller->phase())); });
+  QObject::connect(controller, &CaptureController::errorChanged, context, [controller] {
+    if (!controller->error().isEmpty()) qWarning("촬영 오류: %s", qPrintable(controller->error()));
+  });
+  QObject::connect(controller, &CaptureController::rgbSaved, context, [](const QString& folder, bool ready) {
+    qInfo("RGB 영상 저장 끝: %s (분석 입력 %s)", qPrintable(QDir::toNativeSeparators(folder)), ready ? "통과" : "통과하지 못함");
+  });
+  QObject::connect(controller, &CaptureController::shotSaved, context, [](const QString& folder, bool ready) {
+    qInfo("촬영 저장 끝: %s (분석 입력 %s)", qPrintable(QDir::toNativeSeparators(folder)), ready ? "통과" : "통과하지 못함");
+  });
+  QObject::connect(analysis, &AnalysisVariants::finished, context,
+                   [](const QString& folder, bool ok, const QString& summary, const QString& variant) {
+    if (ok) {
+      qInfo("분석 성공(%s판): %s", qPrintable(variant), qPrintable(QDir::toNativeSeparators(summary)));
+    } else {
+      qWarning("분석 실패(%s판): %s. 분석 프로그램 출력은 그 폴더의 perfusion 아래 analyzer_log.txt에 있습니다", qPrintable(variant),
+               qPrintable(QDir::toNativeSeparators(folder)));
+    }
+  });
+}
+
 }  // namespace
 
 int main(int argc, char* argv[]) {
@@ -468,6 +492,7 @@ int main(int argc, char* argv[]) {
   QObject::connect(&controller, &CaptureController::phaseChanged, &analysis,
                    [&] { analysis.setHold(controller.recording() || controller.settling()); });
   analysis.Start();
+  LogEvents(&controller, &analysis, &app);
   if (args.contains(QStringLiteral("--analyze"))) analysis.onShotSaved(Arg(args, QStringLiteral("--analyze")), true);
 
   QQmlApplicationEngine engine;
