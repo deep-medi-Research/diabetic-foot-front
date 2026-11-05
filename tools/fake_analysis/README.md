@@ -4,27 +4,27 @@
 
 ## 앱에서 실행
 
-앱 인자 `--analyzer-python`과 `--analyzer-script`에 파이썬 실행 파일과 `dfr_worker.py`의 전체 경로를 줍니다. 앱이 분석 프로그램을 스크립트 폴더에서 띄우므로, 상대 경로를 주면 앱이 "준비 전에 끝났습니다(종료 코드 2)"로 실패 처리합니다.
+앱 인자 `--analyzer-python`에 파이썬(`python3` 같은 이름이나 경로), `--analyzer-script`에 `dfr_worker.py` 경로를 줍니다. 상대 경로는 앱을 띄운 폴더 기준이고, 이름만 준 파이썬은 PATH에서 찾습니다.
 
 macOS(레포 폴더에서)
 
 ```bash
 build/app/hwlab_app --spec specs/see3cam_manual_720p60.json --out /tmp/shots --fake \
-  --analyzer-python "$(command -v python3)" \
-  --analyzer-script "$PWD/tools/fake_analysis/dfr_worker.py"
+  --analyzer-python python3 \
+  --analyzer-script tools/fake_analysis/dfr_worker.py
 ```
 
 Windows(명령 프롬프트, 레포 폴더에서)
 
 ```bat
 <배포 폴더>\bin\hwlab_app.exe --spec <배포 폴더>\specs\see3cam_manual_720p60.json --out C:\temp\shots --fake ^
-  --analyzer-python C:\Python311\python.exe ^
-  --analyzer-script %CD%\tools\fake_analysis\dfr_worker.py
+  --analyzer-python python ^
+  --analyzer-script tools\fake_analysis\dfr_worker.py
 ```
 
 이름, 생년월일, 상완 혈압, 발목 혈압, 발목 혈압 단계를 채우고 촬영을 누릅니다. 녹화가 끝나면 결과 창이 열리고, 분석 막대는 1~2초 안에 "분석 완료"가 됩니다. 판 이름은 `fake`이고 결과는 `<촬영 폴더>/perfusion/fake/`에 생깁니다.
 
-- **python.exe 경로**<br>`where python`으로 확인합니다
+- **파이썬을 찾지 못하면**<br>분석 칸에 "파이썬 없음: python (PATH에서 찾지 못했습니다)"가 보입니다. `where python`으로 위치를 확인해 `C:\Python311\python.exe`처럼 전체 경로를 줍니다
 - **설치 폴더에 넣기**<br>구성할 때 `-DHWLAB_ANALYZER_DIR=<레포 전체 경로>/tools/fake_analysis`를 주면 `cmake --install`이 `bin/analysis`로 설치합니다. 앱은 `bin/python`의 파이썬을 쓰므로 Windows는 `HWLAB_PYTHON_DIR`도 줍니다
 - **분석 시간 늘리기**<br>환경 변수 `FAKE_ANALYSIS_STAGE_MS`(기본 200)가 진행 단계 사이 대기 밀리초입니다. 앱이 분석 프로그램에 인자를 더 줄 수 없어 환경 변수로 받습니다
 
@@ -35,7 +35,7 @@ Windows(명령 프롬프트, 레포 폴더에서)
 ```bash
 build/app/hwlab_app --spec specs/see3cam_manual_720p60.json --out /tmp/shots --fake \
   --patient 테스트 --birth 1955-11-03 --arm-pressure 120/80 --ankle-pressure 120/80 --ankle-level 0 \
-  --analyzer-python "$(command -v python3)" --analyzer-script "$PWD/tools/fake_analysis/dfr_worker.py" \
+  --analyzer-python python3 --analyzer-script tools/fake_analysis/dfr_worker.py \
   --press-start --after 100000 --screenshot /tmp/main.png
 ```
 

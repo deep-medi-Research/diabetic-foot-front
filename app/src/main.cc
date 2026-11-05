@@ -33,7 +33,9 @@
 //   --fake-free-bytes <바이트>: 디스크 여유를 읽지 않고 이 값으로 봅니다. 디스크 부족 거부를 시험할 때 씁니다.
 //   --fake-restore-fails: --fake에서 실행 전 색온도를 자동으로 두고 자동 색온도 명령을 실패시킵니다. 종료 때 복원 불일치 안내를 시험할 때 씁니다.
 //   --close-after <ms>: 정한 시간 뒤 창을 닫습니다(종료 때 카메라 복원 흐름 시험).
-//   --analyzer-python, --analyzer-script: 배포 폴더의 python/, analysis/ 대신 쓸 관류 분석 프로그램(개발용). PATH에서 찾지 않습니다.
+//   --analyzer-python, --analyzer-script: 배포 폴더의 python/, analysis/ 대신 쓸 관류 분석 프로그램(개발용).
+//     스크립트의 상대 경로는 앱을 띄운 폴더 기준이고, 경로 구분자가 없는 파이썬 이름(python3)은 PATH에서 찾습니다. 못 찾으면 분석 칸이 그 이름을 보입니다.
+//     값을 주지 않으면 PATH의 파이썬으로 물러나지 않고 배포 폴더의 python/을 씁니다.
 //   --analyze: 시작하자마자 그 촬영 폴더를 분석 대기열에 넣습니다. 촬영 없이 분석 막대를 시험할 때 씁니다.
 //   --no-prestream: 녹화 중 미리 분석(첫 장 발 분할과 영상 미리 읽기)을 쓰지 않고, 화면의 스위치도 숨깁니다.
 //     주지 않으면 화면의 "녹화 중 미리 분석" 스위치로 켜고 끕니다(기본 켬, 기억한 값에 남김).
@@ -421,10 +423,13 @@ int main(int argc, char* argv[]) {
   if (args.contains(QStringLiteral("--ppg-port"))) ppg.connectPort(Arg(args, QStringLiteral("--ppg-port")));
 
   // 관류 분석 프로그램. 촬영이 저장되면 분석 입력 확인을 통과한 촬영을 자동으로 분석하고, 안정화와 녹화 중에는 새 요청을 보내지 않습니다.
-  hwlab::platform::ProcessLaunch analyzer_launch =
-      hwlab::platform::AnalyzerLaunch(QCoreApplication::applicationDirPath().toStdString(),
-                                      Arg(args, QStringLiteral("--analyzer-python")).toStdString(),
-                                      Arg(args, QStringLiteral("--analyzer-script")).toStdString());
+  // 분석 프로그램은 스크립트 폴더를 작업 폴더로 띄우므로, 개발용 인자의 상대 경로와 파이썬 이름은 지금 풀어 둡니다.
+  const hwlab::platform::AnalyzerOverrides analyzer_overrides = hwlab::platform::ResolveAnalyzerOverrides(
+      Arg(args, QStringLiteral("--analyzer-python")).toStdString(),
+      Arg(args, QStringLiteral("--analyzer-script")).toStdString(), QDir::currentPath().toStdString(),
+      qEnvironmentVariable("PATH").toStdString());
+  hwlab::platform::ProcessLaunch analyzer_launch = hwlab::platform::AnalyzerLaunch(
+      QCoreApplication::applicationDirPath().toStdString(), analyzer_overrides.python, analyzer_overrides.script);
   // 녹화 중 첫 장 미리 분할은 노트북에서 프레임 누락이 늘지 않는지 실측하기 전까지 인자로만 켭니다.
   // 녹화 중 영상 미리 읽기는 미리 분할한 발 상자를 쓰므로 미리 분할도 켭니다. 같은 첫 장 신호로 시작합니다.
   // 녹화 중 미리 분석은 관류 분석 프로그램이 늘 할 수 있게 띄우고, 실제로 요청할지는 화면 스위치가 정합니다.
