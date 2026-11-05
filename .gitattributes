@@ -1,3 +1,8 @@
+# 글 파일은 모든 OS에서 LF로 풉니다. Windows 복제본의 core.autocrlf 설정과 관계없습니다.
+# 앱은 촬영 선언 파일(specs/*.json)의 바이트로 SHA-256을 구해 매니페스트 spec.sha256에 남기므로,
+# 줄 끝이 복제본마다 다르면 같은 선언이 다른 값이 됩니다. 이진 파일은 git이 내용으로 알아봅니다.
+* text=auto eol=lf
+
 # Windows 배치 파일은 줄 끝이 CRLF여야 레이블(goto)이 바르게 동작합니다.
 *.cmd text eol=crlf
 
