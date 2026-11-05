@@ -38,7 +38,7 @@ public static class VideoWriters
     /// <param name="codec">코덱</param>
     /// <param name="ffmpegDirectory">FFmpeg 공유 라이브러리가 있는 폴더. null이면 운영체제의 기본 검색 경로입니다. 무압축 AVI는 쓰지 않습니다</param>
     /// <param name="error">실패하면 이유를 씁니다</param>
-    /// <returns>쓰기 객체. FFV1인데 FFmpeg 7.1 공유 라이브러리를 불러오지 못하면 null입니다</returns>
+    /// <returns>쓰기 객체. FFV1인데 FFmpeg 공유 라이브러리(libavcodec 63, libavformat 63, libavutil 61)를 불러오지 못하면 null입니다</returns>
     public static IVideoWriter? Create(VideoCodec codec, string? ffmpegDirectory, out string error)
     {
         error = "";

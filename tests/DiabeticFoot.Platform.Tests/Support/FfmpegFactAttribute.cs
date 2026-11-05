@@ -2,13 +2,13 @@ using DiabeticFoot.Platform;
 
 namespace DiabeticFoot.Platform.Tests;
 
-/// <summary>FFmpeg 7.1 공유 라이브러리가 있는 컴퓨터에서만 돌리는 시험입니다. 환경 변수 DIABETICFOOT_FFMPEG_DIR로 폴더를 줄 수 있습니다.</summary>
+/// <summary>FFmpeg 공유 라이브러리(libavcodec 63, libavformat 63, libavutil 61)가 있는 컴퓨터에서만 돌리는 시험입니다. 주 버전이 다르면 건너뜁니다. 환경 변수 DIABETICFOOT_FFMPEG_DIR로 폴더를 줄 수 있습니다.</summary>
 public sealed class FfmpegFactAttribute : FactAttribute
 {
     public FfmpegFactAttribute()
     {
         if (FfmpegTestLibraries.Create() is { } reader) reader.Dispose();
-        else Skip = "FFmpeg 7.1 공유 라이브러리를 찾지 못했습니다(DIABETICFOOT_FFMPEG_DIR)";
+        else Skip = "FFmpeg 공유 라이브러리(libavcodec 63, libavformat 63, libavutil 61)를 찾지 못했습니다(DIABETICFOOT_FFMPEG_DIR)";
     }
 }
 

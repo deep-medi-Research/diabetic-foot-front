@@ -36,7 +36,7 @@ public interface IVideoReader : IDisposable
 public static class VideoReaders
 {
     /// <summary>
-    /// 영상 읽기 객체를 만듭니다. FFmpeg 7.1(libavcodec 61, libavformat 61) 공유 라이브러리를 불러오지 못하면 null이고 error에 이유를 씁니다.
+    /// 영상 읽기 객체를 만듭니다. FFmpeg 공유 라이브러리(libavcodec 63, libavformat 63, libavutil 61)를 불러오지 못하면 null이고 error에 이유를 씁니다.
     /// </summary>
     /// <param name="ffmpegDirectory">공유 라이브러리가 있는 폴더. null이면 운영체제의 기본 검색 경로(Windows는 실행 파일 폴더)입니다</param>
     public static IVideoReader? Create(string? ffmpegDirectory, out string error)
