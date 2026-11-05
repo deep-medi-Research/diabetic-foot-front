@@ -196,6 +196,23 @@ class AppLogTest : public QObject {
     QVERIFY(!lines.join(QLatin1Char('\n')).contains(QStringLiteral("줄 19 ")));
   }
 
+  // 파일에만 남기는 줄은 콘솔에 보내지 않고 파일에는 범주 없이 남습니다.
+  void FileOnlyEntriesSkipTheConsole() {
+    QTemporaryDir dir;
+    QString console;
+    app_log::SinkOptions options;
+    options.dir = dir.path();
+    options.console = [&](const QString& text) { console += text; };
+    app_log::Sink sink(options);
+    Entry detail = Info(QStringLiteral("시작 정보"));
+    detail.file_only = true;
+    sink.Submit(detail);
+    sink.Submit(Info(QStringLiteral("경고도 아닌 일반 줄")));
+    sink.Stop(5000);
+    QCOMPARE(console, QStringLiteral("경고도 아닌 일반 줄\n"));
+    QCOMPARE(ReadLines(TodayFile(dir.path())).size(), 2);
+  }
+
   // 콘솔이 멈춰 있어도(쓰기 스레드가 콘솔에서 돌아오지 않아도) 메시지를 내는 쪽은 기다리지 않습니다. 대기열은 정한 크기까지만
   // 쌓고 나머지는 버리며, 버린 수를 알립니다. 촬영과 화면 스레드가 로그 때문에 멈추지 않는다는 근거입니다.
   void ProducersDoNotWaitForAStuckConsole() {
@@ -269,6 +286,7 @@ class AppLogTest : public QObject {
     app_log::Install(logs);
     QCOMPARE(app_log::CurrentFilePath(), QDir(logs).filePath(app_log::FileNameFor(QDate::currentDate())));
     qInfo("메인 스레드 메시지");
+    app_log::InfoToFileOnly(QStringLiteral("파일에만 남는 줄"));
     std::vector<std::thread> threads;
     for (int t = 0; t < 3; ++t) {
       threads.emplace_back([t] {
@@ -279,10 +297,11 @@ class AppLogTest : public QObject {
     app_log::Shutdown();
 
     const QStringList lines = ReadLines(TodayFile(logs));
-    QCOMPARE(lines.size(), 61);
-    QVERIFY(lines.filter(QStringLiteral(" I [")).size() == 1);
+    QCOMPARE(lines.size(), 62);
+    QCOMPARE(lines.filter(QStringLiteral(" I [")).size(), 2);
+    QCOMPARE(lines.filter(QRegularExpression(QStringLiteral(R"( I \[\d+\] 파일에만 남는 줄$)"))).size(), 1);
     QCOMPARE(lines.filter(QStringLiteral(" W [")).size(), 60);
-    QVERIFY(lines.contains(QRegularExpression(QStringLiteral(R"(^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d\.\d{3} I \[\d+\] 메인 스레드 메시지$)"))));
+    QCOMPARE(lines.filter(QRegularExpression(QStringLiteral(R"(^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d\.\d{3} I \[\d+\] 메인 스레드 메시지$)"))).size(), 1);
     QVERIFY(app_log::CurrentFilePath().isEmpty() == false);
   }
 

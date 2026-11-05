@@ -48,6 +48,7 @@ struct Entry {
   QtMsgType type = QtInfoMsg;
   QString category;  // 기본 범주는 비어 있습니다
   QString message;
+  bool file_only = false;  // 콘솔에는 쓰지 않고 로그 파일에만 남깁니다
 };
 
 /** 파일 한 줄입니다: "2026-11-05T14:03:22.123 W [1234] 메시지". 여러 줄 메시지는 이어지는 줄을 들여 씁니다. */
@@ -133,6 +134,9 @@ class Sink {
 };
 
 // ---- 앱에 거는 부분 ----
+
+/** 로그 파일에만 남기는 정보 메시지입니다. 콘솔에는 나오지 않습니다(시작 정보처럼 파일에서만 필요한 줄). */
+void InfoToFileOnly(const QString& message);
 
 /** 앱 데이터 폴더 아래의 로그 폴더입니다. */
 QString LogDirectory(const QString& data_dir);

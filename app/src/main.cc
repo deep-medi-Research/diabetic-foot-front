@@ -108,20 +108,25 @@ bool IsTrialRun(const QStringList& args) {
 }
 
 // 로그 맨 앞에 남기는 시작 정보입니다. 이 로그가 어느 빌드의 어떤 실행이고 설정과 기록이 어디에 있는지 보입니다.
+// 콘솔에는 로그 파일 경로 한 줄만 보이고 나머지는 파일에만 남습니다(명령 프롬프트에서 켠 오류 메시지가 묻히지 않게 하기 위함).
 void LogStartup(const QStringList& args, const QString& data_dir, const profile::Choice& profile) {
+  const auto detail = [](const QString& text) { app_log::InfoToFileOnly(text); };
   const QString version = QGuiApplication::applicationVersion();
-  qInfo("hwlab_app %s 시작(PID %lld)", qUtf8Printable(version.isEmpty() ? QStringLiteral("(버전 없음)") : version),
-        static_cast<long long>(QCoreApplication::applicationPid()));
-  qInfo("실행 파일: %s", qUtf8Printable(QDir::toNativeSeparators(QCoreApplication::applicationFilePath())));
-  qInfo("인자: %s", qUtf8Printable(cli::MaskedForLog(args).mid(1).join(QLatin1Char(' '))));
-  qInfo("Qt %s, 화면 플랫폼 %s, %s", qVersion(), qUtf8Printable(QGuiApplication::platformName()),
-        qUtf8Printable(QSysInfo::prettyProductName()));
-  qInfo("프로필: %s", qUtf8Printable(profile::Describe(profile)));
-  qInfo("앱 데이터 폴더: %s", qUtf8Printable(QDir::toNativeSeparators(data_dir)));
-  qInfo("설정 위치: %s%s", qUtf8Printable(QDir::toNativeSeparators(QSettings().fileName())),
-        IsTrialRun(args) ? " (시험 실행이라 이번에는 읽지도 쓰지도 않음)" : "");
+  detail(QStringLiteral("hwlab_app %1 시작(PID %2)")
+             .arg(version.isEmpty() ? QStringLiteral("(버전 없음)") : version)
+             .arg(QCoreApplication::applicationPid()));
+  detail(QStringLiteral("실행 파일: %1").arg(QDir::toNativeSeparators(QCoreApplication::applicationFilePath())));
+  detail(QStringLiteral("인자: %1").arg(cli::MaskedForLog(args).mid(1).join(QLatin1Char(' '))));
+  detail(QStringLiteral("Qt %1, 화면 플랫폼 %2, %3")
+             .arg(QString::fromLatin1(qVersion()), QGuiApplication::platformName(), QSysInfo::prettyProductName()));
+  detail(QStringLiteral("프로필: %1").arg(profile::Describe(profile)));
+  detail(QStringLiteral("앱 데이터 폴더: %1").arg(QDir::toNativeSeparators(data_dir)));
+  detail(QStringLiteral("설정 위치: %1%2")
+             .arg(QDir::toNativeSeparators(QSettings().fileName()),
+                  IsTrialRun(args) ? QStringLiteral(" (시험 실행이라 이번에는 읽지도 쓰지도 않음)") : QString()));
   const QString log_file = app_log::CurrentFilePath();
-  qInfo("로그 파일: %s", log_file.isEmpty() ? "없음(로그 폴더를 만들지 못함)" : qUtf8Printable(QDir::toNativeSeparators(log_file)));
+  qInfo("로그 파일: %s",
+        log_file.isEmpty() ? "없음(로그 폴더를 만들지 못함)" : qUtf8Printable(QDir::toNativeSeparators(log_file)));
 }
 
 // 촬영 단계, 저장, 오류, 분석 끝을 로그에 남깁니다. 모두 화면 스레드에서 받는 신호이고 프레임마다 오는 신호는 쓰지 않습니다.

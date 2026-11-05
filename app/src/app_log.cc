@@ -16,6 +16,7 @@ namespace {
 
 constexpr char kPrefix[] = "hwlab_app-";
 constexpr char kSuffix[] = ".log";
+constexpr char kFileOnlyCategory[] = "hwlab.file";  // InfoToFileOnly가 붙이는 범주. 처리기가 떼어 냅니다
 
 QChar LevelChar(QtMsgType type) {
   switch (type) {
@@ -41,8 +42,12 @@ void Handler(QtMsgType type, const QMessageLogContext& context, const QString& m
   Sink* sink = g_sink.load(std::memory_order_acquire);
   if (sink == nullptr) return;
   QString category;
-  if (context.category != nullptr && qstrcmp(context.category, "default") != 0) category = QString::fromUtf8(context.category);
-  sink->Submit(Entry{QDateTime::currentDateTime(), type, category, message});
+  bool file_only = false;
+  if (context.category != nullptr && qstrcmp(context.category, "default") != 0) {
+    file_only = qstrcmp(context.category, kFileOnlyCategory) == 0;
+    if (!file_only) category = QString::fromUtf8(context.category);
+  }
+  sink->Submit(Entry{QDateTime::currentDateTime(), type, category, message, file_only});
   // qFatal은 처리기가 돌아오면 바로 프로세스를 끝내므로, 이 줄까지는 쓰인 뒤에 돌아갑니다.
   if (type == QtFatalMsg) sink->Flush(2000);
 }
@@ -172,8 +177,10 @@ void Sink::Write(const MessageQueue::Batch& batch) {
   if (entries.empty()) return;
   if (options_.console) {
     QString text;
-    for (const Entry& entry : entries) text += ConsoleText(entry) + QLatin1Char('\n');
-    options_.console(text);
+    for (const Entry& entry : entries) {
+      if (!entry.file_only) text += ConsoleText(entry) + QLatin1Char('\n');
+    }
+    if (!text.isEmpty()) options_.console(text);
   }
   if (options_.dir.isEmpty()) return;
   QDate date;
@@ -211,6 +218,10 @@ void Sink::RemoveExpiredFiles() const {
   QDir dir(options_.dir);
   const QStringList names = dir.entryList({QStringLiteral("hwlab_app-*.log")}, QDir::Files);
   for (const QString& name : ExpiredFileNames(names, QDate::currentDate(), options_.keep_days)) dir.remove(name);
+}
+
+void InfoToFileOnly(const QString& message) {
+  QMessageLogger(nullptr, 0, nullptr, kFileOnlyCategory).info("%s", qUtf8Printable(message));
 }
 
 QString LogDirectory(const QString& data_dir) { return QDir(data_dir).filePath(QStringLiteral("logs")); }
