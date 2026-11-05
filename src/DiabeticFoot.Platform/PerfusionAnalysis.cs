@@ -1,4 +1,5 @@
 using System.Text;
+using DiabeticFoot.Core.Record;
 
 namespace DiabeticFoot.Platform;
 
@@ -251,6 +252,100 @@ public static class PerfusionAnalysis
         var output = JoinPath(dir, PerfusionFolderName);
         return variant.Length == 0 ? output : JoinPath(output, variant);
     }
+
+    /// <summary>
+    /// 촬영 폴더의 매니페스트와 좌우 영상 사이드카로 분석 요청을 만듭니다.
+    /// </summary>
+    /// <param name="folder">촬영 폴더. 끝의 경로 구분자는 무시합니다</param>
+    /// <param name="error">만들지 못하면 이유를 씁니다. 만들었으면 빈 문자열입니다</param>
+    /// <returns>
+    /// RecordingDir는 folder, 영상 경로는 `&lt;folder&gt;/&lt;파일 이름&gt;`, OutputDir는 `&lt;folder&gt;/perfusion`, Name은 폴더 이름입니다.
+    /// 매니페스트나 사이드카를 읽지 못하거나 좌우 영상 이름이 없으면 null입니다
+    /// </returns>
+    /// <remarks>
+    /// 매니페스트는 `&lt;촬영 폴더&gt;/&lt;폴더 이름&gt;_shot.json`이고, 그 `files`의 `left_video`, `right_video`,
+    /// `left_sidecar`, `right_sidecar` 이름을 씁니다. 장 수는 사이드카의 `frames.written`입니다.
+    /// 결과 이름을 촬영 폴더 이름으로 정합니다. 기존 앱은 이름_생년월일_기준_시각으로 지었지만, 촬영 폴더 안에
+    /// 결과를 두므로 폴더 이름으로 충분하고 경로 길이(Windows 259자)를 줄입니다.
+    /// </remarks>
+    public static PerfusionRequest? PerfusionRequestForShot(string folder, out string error)
+    {
+        error = "";
+        var dir = folder;
+        while (dir.Length > 1 && (dir[^1] == '/' || dir[^1] == '\\')) dir = dir[..^1];
+        var cut = dir.LastIndexOfAny(['/', '\\']);
+        var stem = cut < 0 ? dir : dir[(cut + 1)..];
+        if (stem.Length == 0)
+        {
+            error = "촬영 폴더 이름이 비어 있습니다: " + folder;
+            return null;
+        }
+        var manifestPath = JoinPath(dir, stem + "_shot.json");
+        if (ReadWholeFile(manifestPath) is not { } manifest)
+        {
+            error = "매니페스트를 열지 못했습니다: " + manifestPath;
+            return null;
+        }
+        string FileName(string role) => new JsonReader(manifest).FindString("files", role) ?? "";
+        var leftName = FileName("left_video");
+        var rightName = FileName("right_video");
+        if (leftName.Length == 0 || rightName.Length == 0)
+        {
+            error = "매니페스트에 좌우 영상이 없습니다: " + manifestPath;
+            return null;
+        }
+        var leftSidecar = FileName("left_sidecar");
+        var rightSidecar = FileName("right_sidecar");
+        if (leftSidecar.Length == 0 || rightSidecar.Length == 0)
+        {
+            error = "매니페스트에 좌우 사이드카가 없습니다: " + manifestPath;
+            return null;
+        }
+        long? Written(string name, out string failure)
+        {
+            failure = "";
+            var path = JoinPath(dir, name);
+            var why = "";
+            var summary = ReadWholeBytes(path) is { } json ? RecordFunctions.ReadSidecarSummary(json, out why) : null;
+            if (summary is not { } found)
+            {
+                failure = "사이드카를 읽지 못했습니다: " + path + (why.Length == 0 ? "" : " (" + why + ")");
+                return null;
+            }
+            return found.WrittenFrames;
+        }
+        var leftFrames = Written(leftSidecar, out error);
+        if (leftFrames == null) return null;
+        var rightFrames = Written(rightSidecar, out error);
+        if (rightFrames == null) return null;
+        return new PerfusionRequest
+        {
+            RecordingDir = dir,
+            LeftVideo = JoinPath(dir, leftName),
+            RightVideo = JoinPath(dir, rightName),
+            LeftFrames = leftFrames,
+            RightFrames = rightFrames,
+            OutputDir = JoinPath(dir, PerfusionFolderName),
+            Name = stem,
+        };
+    }
+
+    public static PerfusionRequest? PerfusionRequestForShot(string folder) => PerfusionRequestForShot(folder, out _);
+
+    // 매니페스트와 사이드카를 바이트 그대로 읽습니다. File.ReadAllText는 BOM을 지워 원본이 거부하는 파일을 통과시킵니다.
+    private static byte[]? ReadWholeBytes(string path)
+    {
+        try
+        {
+            return File.ReadAllBytes(path);
+        }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException or ArgumentException or NotSupportedException)
+        {
+            return null;
+        }
+    }
+
+    private static string? ReadWholeFile(string path) => ReadWholeBytes(path) is { } bytes ? new UTF8Encoding(false).GetString(bytes) : null;
 
     internal static string JoinPath(string dir, string name) =>
         dir.Length == 0 || dir[^1] == '/' || dir[^1] == '\\' ? dir + name : dir + "/" + name;
