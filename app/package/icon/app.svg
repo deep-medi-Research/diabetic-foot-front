@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#1c1f26"/>
+      <stop offset="1" stop-color="#0b0c0e"/>
+    </linearGradient>
+    <linearGradient id="heat" gradientUnits="userSpaceOnUse" x1="0" y1="40" x2="0" y2="214">
+      <stop offset="0" stop-color="#ff6a3d"/>
+      <stop offset="0.5" stop-color="#ffb020"/>
+      <stop offset="1" stop-color="#5ac8fa"/>
+    </linearGradient>
+  </defs>
+  <rect x="8" y="8" width="240" height="240" rx="56" fill="url(#bg)"/>
+  <rect x="8.5" y="8.5" width="239" height="239" rx="55.5" fill="none" stroke="#ffffff" stroke-opacity="0.08"/>
+  <!-- 발바닥: 앞발과 뒤꿈치, 발가락 다섯 개. 위가 발가락입니다 -->
+  <g fill="url(#heat)">
+    <path d="M118 76 C146 72 166 92 164 122 C162 146 150 158 146 176 C142 196 134 214 112 214 C90 214 82 196 84 176 C86 158 92 148 90 128 C88 100 96 80 118 76 Z"/>
+    <ellipse cx="152" cy="62" rx="13" ry="16"/>
+    <ellipse cx="128" cy="52" rx="10" ry="12"/>
+    <ellipse cx="108" cy="54" rx="8.5" ry="10"/>
+    <ellipse cx="92" cy="62" rx="7.5" ry="9"/>
+    <ellipse cx="80" cy="75" rx="6.5" ry="7.5"/>
+  </g>
+  <!-- 맥박 파형. 아래에 배경색 선을 깔아 발과 겹치는 곳을 끊어 보이게 합니다 -->
+  <path d="M30 150 H84 L96 128 L110 178 L124 108 L136 150 H226" fill="none" stroke="#111318" stroke-width="22" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M30 150 H84 L96 128 L110 178 L124 108 L136 150 H226" fill="none" stroke="#f2f3f5" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

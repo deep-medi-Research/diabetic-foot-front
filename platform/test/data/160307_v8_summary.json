@@ -1,0 +1,164 @@
+{
+ "name": "20261028_160307",
+ "videos": {
+  "left": "20261028_160307_left.mkv",
+  "right": "20261028_160307_right.mkv"
+ },
+ "fps": 30.0,
+ "n_frames": 900,
+ "window_s": 10,
+ "window_stride_s": 2,
+ "n_windows": 11,
+ "template": "v106w-foot",
+ "cuff_side": "none",
+ "pi_left": 0.03493811350089473,
+ "pi_right": 0.10729357930758017,
+ "template_corr_lr": 0.4712487600348952,
+ "per_side": {
+  "left": {
+   "pi": 0.03493811350089473,
+   "pi_toes": 0.05912001264296091,
+   "pi_fore": 0.03731330514539128,
+   "pi_mid": 0.04727800117640235,
+   "pi_heel": 0.025689333154924866
+  },
+  "right": {
+   "pi": 0.10729357930758017,
+   "pi_toes": 0.16506915949487008,
+   "pi_fore": 0.10929438995750514,
+   "pi_mid": 0.09811912968841012,
+   "pi_heel": 0.07952862046109266
+  }
+ },
+ "pi_ratio_left_right": 0.32563098114880756,
+ "classification": null,
+ "cuff_level": {
+  "level_pct_sbp": 40,
+  "level_if_quality_ignored": 40,
+  "rule": "pi_ratio 0.36 < 0.69",
+  "quality_ok": true,
+  "features": {
+   "pi_ratio": 0.3591,
+   "delay2_30": -33.134,
+   "h1re_30": 0.3009,
+   "hi_snr1_30": 19.8368,
+   "lower_side": "left",
+   "n_common_cells": 95
+  },
+  "thresholds": {
+   "h1re_30": 0.2491,
+   "delay2_30": 28.71,
+   "pi_ratio": 0.689
+  },
+  "quality_snr_db": 11.5,
+  "model": "models/pad_cuff_level/bundle.json",
+  "setting": {
+   "mode": "manual",
+   "exposure_step": -9,
+   "gain": 1
+  },
+  "template": "v106w-foot v9 (models/v106w_foot)",
+  "applicable": false,
+  "note": "NOT the fixed camera setting the thresholds were fitted to: indicative only"
+ },
+ "foot_mask": {
+  "left": {
+   "method": "footseg_dl",
+   "score": 0.9846497774124146,
+   "det_score": 0.9846497774124146,
+   "sam_iou": 0.9846497774124146,
+   "parts": 3,
+   "mask_px": 185089,
+   "blocks": 113,
+   "cells": 100,
+   "crop_box": [
+    5,
+    929,
+    230,
+    657
+   ]
+  },
+  "right": {
+   "method": "footseg_dl",
+   "score": 0.9844974279403687,
+   "det_score": 0.9844974279403687,
+   "sam_iou": 0.9844974279403687,
+   "parts": 3,
+   "mask_px": 184429,
+   "blocks": 111,
+   "cells": 100,
+   "crop_box": [
+    2,
+    925,
+    123,
+    589
+   ]
+  }
+ },
+ "foot_cells": {
+  "grid": [
+   20,
+   5
+  ],
+  "map_grid": [
+   40,
+   15
+  ],
+  "common": 95,
+  "used": 95,
+  "noisy": 0,
+  "map_cells": 518,
+  "regions_u": {
+   "toes": [
+    0.0,
+    0.2
+   ],
+   "fore": [
+    0.2,
+    0.45
+   ],
+   "mid": [
+    0.45,
+    0.7
+   ],
+   "heel": [
+    0.7,
+    1.0
+   ]
+  }
+ },
+ "n_light_ref_min": 6,
+ "pi_method": "foot_cells_light_ref",
+ "dfr": {
+  "variant": "v8",
+  "upstream_commit": "92c1416d962b20423f9d3b0ac140c880c7b6e927",
+  "segmenter_files": [
+   "footseg_dl.onnx"
+  ],
+  "models": null,
+  "requested_template": "v106w",
+  "requested_classify": true,
+  "requested_pad_classifier": false,
+  "padded_frames": 0,
+  "presegment": {
+   "enabled": false
+  },
+  "timing": {
+   "stages_s": {
+    "0": 0.33,
+    "1": 0.33,
+    "2": 11.73,
+    "3": 15.93,
+    "4": 16.55,
+    "5": 16.67
+   },
+   "done_s": 16.7,
+   "parallel_templates": true,
+   "deferred_figures": true,
+   "figures_s": 21.76
+  },
+  "prestream": {
+   "enabled": false
+  }
+ }
+}

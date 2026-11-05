@@ -1,0 +1,21 @@
+이 폴더는 배포 패키지에 들어 있는 제3자 구성 요소의 라이선스 고지입니다.
+
+구성 요소                     라이선스                 고지 파일
+Qt 6 (Quick, QuickControls2)  LGPL-3.0                 LGPL-3.0.txt, GPL-3.0.txt
+FFmpeg (avcodec, avformat,    LGPL-3.0 이상            FFmpeg-LICENSE.txt, GPL-3.0.txt
+  avutil, swresample, swscale)
+Pretendard 글꼴               SIL OFL 1.1              Pretendard-LICENSE.txt
+Python 3.11 (임베디드)        PSF License              bin/python/LICENSE.txt
+Python 패키지                 패키지별                 bin/python/Lib/site-packages/*.dist-info
+Microsoft Visual C++ 런타임   Visual Studio 재배포 조건
+
+Qt와 FFmpeg는 실행 파일 옆의 DLL로 동적 연결합니다. 사용자는 같은 이름의 호환 DLL로 바꿔 실행할 수 있습니다.
+Qt 소스는 https://download.qt.io/archive/qt/ 에서, FFmpeg 소스는 https://ffmpeg.org/download.html 에서 받을 수 있습니다.
+FFmpeg는 --enable-version3로 구성되었고 --enable-gpl과 --enable-nonfree 없이 빌드된 공유 라이브러리입니다
+(libavutil이 보고하는 라이선스: "LGPL version 3 or later").
+
+관류 분석 프로그램(bin/analysis)과 모델의 고지는 분석 프로그램을 함께 배포하는 패키지가 따로 붙입니다.
+
+카메라 제조사 DLL(eCAMFwSw.dll, e-con Systems)과 열화상 SDK DLL(i3system_*.dll, Copyright (c) 2020 i3system Inc.),
+열화상 카메라 USB 드라이버(drivers/thermal의 i3usbdrv.inf, i3usbdrv.cat, i3usbdrv.sys, i3system 장치용 Devguru 드라이버 1.0.4.0)는
+제조사의 재배포 허락을 받아 함께 배포합니다.

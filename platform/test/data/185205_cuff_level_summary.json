@@ -1,0 +1,93 @@
+{
+ "name": "185205",
+ "videos": {
+  "left": "185205_left.mkv",
+  "right": "185205_right.mkv"
+ },
+ "fps": 30.0,
+ "n_frames": 900,
+ "window_s": 10,
+ "window_stride_s": 2,
+ "n_windows": 11,
+ "template": "v106w-foot",
+ "cuff_side": "left",
+ "pi_left": 0.027625533520584944,
+ "pi_right": 0.02445496967151312,
+ "template_corr_lr": 0.450491057290899,
+ "per_side": {
+  "left": {
+   "pi": 0.027625533520584944,
+   "pi_fore": 0.03565914610656278,
+   "pi_green_legacy": 0.5815529620404495,
+   "pi_heel": 0.029312747810366788,
+   "pi_mid": 0.01609809991909296,
+   "pi_pos_lockin": 0.04708341740799949,
+   "pi_pos_std": 0.23145835706303342,
+   "pi_ref_std": 0.06646493167024788,
+   "pi_toes": 0.06387636465630565
+  },
+  "right": {
+   "pi": 0.02445496967151312,
+   "pi_fore": 0.033249640789243605,
+   "pi_green_legacy": 0.596545898845937,
+   "pi_heel": 0.024695311884554594,
+   "pi_mid": 0.01955709418043218,
+   "pi_pos_lockin": 0.03835865920426485,
+   "pi_pos_std": 0.22708977732443103,
+   "pi_ref_std": 0.07193875088858763,
+   "pi_toes": 0.055566744441479334
+  }
+ },
+ "pi_ratio_left_right": 1.1296490607700538,
+ "pi_ratio_cuffed_other": 1.1296490607700538,
+ "classification": null,
+ "cuff_level": {
+  "model": "models/pad_ordinal_fixed/model.joblib",
+  "level_pct_sbp": 0,
+  "E": 0.8996127605457414,
+  "p_ge40": 0.631820766754919,
+  "p_ge80": 0.25753951859565205,
+  "p_120": 0.01025247519517023,
+  "cuts": [
+   1.0604571884017018,
+   1.635827233963016,
+   2.4231874752371527
+  ],
+  "n_windows": 5,
+  "setting": {
+   "mode": "auto",
+   "exposure_step": null,
+   "gain": 4
+  },
+  "template": "v106w-foot",
+  "applicable": false,
+  "note": "NOT the fixed camera setting the cut points were fitted to: indicative only"
+ },
+ "foot_mask": {
+  "left": {
+   "method": "segmentation",
+   "det_score": 0.7613375782966614,
+   "sam_iou": 0.9798475503921509,
+   "blocks": 154
+  },
+  "right": {
+   "method": "segmentation",
+   "det_score": 0.8146215081214905,
+   "sam_iou": 0.9719480872154236,
+   "blocks": 163
+  }
+ },
+ "n_light_ref_min": 6,
+ "pi_method": "light_ref_green",
+ "dfr": {
+  "upstream_commit": "3a94d68f24b0d7af8bacc2b7a08267b976ad8fa8",
+  "detector_edge": 400,
+  "models": null,
+  "requested_template": "v106w",
+  "requested_classify": true,
+  "requested_pad_classifier": false,
+  "segmentation_files": "compact",
+  "thermal_skipped": null,
+  "padded_frames": 0
+ }
+}

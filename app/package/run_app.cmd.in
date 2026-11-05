@@ -1,0 +1,2 @@
+@echo off
+start "" /D "%~dp0" "%~dp0bin\hwlab_app.exe" --spec "%~dp0specs\@HWLAB_RUN_SPEC@" %*

@@ -1,0 +1,278 @@
+{
+ "name": "20261028_160307",
+ "videos": {
+  "left": "20261028_160307_left.mkv",
+  "right": "20261028_160307_right.mkv"
+ },
+ "fps": 30.0,
+ "n_frames": 900,
+ "window_s": 10,
+ "window_stride_s": 2,
+ "n_windows": 11,
+ "template": "v106w-foot",
+ "cuff_side": "none",
+ "pi_left": 0.03493811350089473,
+ "pi_right": 0.10729357930758017,
+ "template_corr_lr": 0.4712487600348952,
+ "per_side": {
+  "left": {
+   "pi": 0.03493811350089473,
+   "pi_toes": 0.05912001264296091,
+   "pi_fore": 0.03731330514539128,
+   "pi_mid": 0.04727800117640235,
+   "pi_heel": 0.025689333154924866
+  },
+  "right": {
+   "pi": 0.10729357930758017,
+   "pi_toes": 0.16506915949487008,
+   "pi_fore": 0.10929438995750514,
+   "pi_mid": 0.09811912968841012,
+   "pi_heel": 0.07952862046109266
+  }
+ },
+ "pi_ratio_left_right": 0.32563098114880756,
+ "classification": null,
+ "cuff_level": {
+  "level_pct_sbp": 40,
+  "level_if_quality_ignored": 40,
+  "rule": "pi_ratio 0.36 < 0.69",
+  "quality_ok": true,
+  "features": {
+   "pi_ratio": 0.3591,
+   "delay2_30": -33.134,
+   "h1re_30": 0.3009,
+   "hi_snr1_30": 19.8368,
+   "lower_side": "left",
+   "n_common_cells": 95
+  },
+  "thresholds": {
+   "h1re_30": 0.2491,
+   "delay2_30": 28.71,
+   "pi_ratio": 0.689
+  },
+  "quality_snr_db": 11.5,
+  "model": "models/pad_cuff_level/bundle.json",
+  "setting": {
+   "mode": "manual",
+   "exposure_step": -9,
+   "gain": 1
+  },
+  "template": "v106w-foot v9 (models/v106w_foot)",
+  "applicable": true,
+  "note": ""
+ },
+ "qc": {
+  "version": 1,
+  "status": "check",
+  "status_ko": "측정 완료 (확인 필요)",
+  "action_ko": "양말을 신고 5~10분 기다린 뒤 측정하세요.",
+  "items": [
+   {
+    "code": "camera_setting",
+    "name_ko": "카메라 설정",
+    "severity": "ok",
+    "value": "manual, 노출 -9, 게인 1",
+    "unit": "",
+    "threshold": "수동, 게인 1, 노출 -5 또는 -9",
+    "message_ko": "",
+    "action_ko": "",
+    "reason": null
+   },
+   {
+    "code": "foot_found",
+    "name_ko": "발 찾기",
+    "severity": "ok",
+    "value": "양발",
+    "unit": "",
+    "threshold": "분할 모델이 두 발을 찾음",
+    "message_ko": "",
+    "action_ko": "",
+    "reason": null
+   },
+   {
+    "code": "common_cells",
+    "name_ko": "두 발 공통 셀",
+    "severity": "ok",
+    "value": 95,
+    "unit": "개",
+    "threshold": "60개 이상 (100개 중)",
+    "message_ko": "",
+    "action_ko": "",
+    "reason": null
+   },
+   {
+    "code": "brightness",
+    "name_ko": "발 밝기 (녹색)",
+    "severity": "ok",
+    "value": "53 / 67",
+    "unit": "",
+    "threshold": "40~230",
+    "message_ko": "",
+    "action_ko": "",
+    "reason": null
+   },
+   {
+    "code": "noise_floor",
+    "name_ko": "측정 잡음",
+    "severity": "ok",
+    "value": 0.0105,
+    "unit": "%",
+    "threshold": "0.04 이하",
+    "message_ko": "",
+    "action_ko": "",
+    "reason": null
+   },
+   {
+    "code": "pulse",
+    "name_ko": "맥박 신호",
+    "severity": "ok",
+    "value": 19.8119,
+    "unit": "dB",
+    "threshold": "11.5 이상 (강한 발)",
+    "message_ko": "",
+    "action_ko": "",
+    "reason": null
+   },
+   {
+    "code": "foot_warmth",
+    "name_ko": "발 온도 (열화상 대비)",
+    "severity": "warn",
+    "value": "59 / 66",
+    "unit": "counts",
+    "threshold": "60 이상 (발 - 배경, 원시값)",
+    "message_ko": "왼발이 차갑습니다(배경과 온도 차이가 작음). 혈류 신호가 약해질 수 있습니다.",
+    "action_ko": "양말을 신고 5~10분 기다린 뒤 측정하세요.",
+    "reason": "subject"
+   },
+   {
+    "code": "heart_rate",
+    "name_ko": "맥박수 일치 (발 / 손가락)",
+    "severity": "na",
+    "value": null,
+    "unit": "",
+    "threshold": "",
+    "message_ko": "접촉식 PPG 자료가 없습니다.",
+    "action_ko": "",
+    "reason": null
+   }
+  ],
+  "pulse": {
+   "f0_hz": 1.2744,
+   "left": {
+    "amp_pct": 0.0346,
+    "floor_pct": 0.0104,
+    "snr_db": 10.4605
+   },
+   "right": {
+    "amp_pct": 0.1023,
+    "floor_pct": 0.0105,
+    "snr_db": 19.8119
+   }
+  },
+  "thermal_contrast": {
+   "left": 59.3,
+   "right": 66.2
+  },
+  "contact_ppg_hr_bpm": null
+ },
+ "foot_mask": {
+  "left": {
+   "method": "footseg_dl",
+   "score": 0.9846497774124146,
+   "det_score": 0.9846497774124146,
+   "sam_iou": 0.9846497774124146,
+   "parts": 3,
+   "mask_px": 185089,
+   "blocks": 113,
+   "cells": 100,
+   "crop_box": [
+    5,
+    929,
+    230,
+    657
+   ]
+  },
+  "right": {
+   "method": "footseg_dl",
+   "score": 0.9844974279403687,
+   "det_score": 0.9844974279403687,
+   "sam_iou": 0.9844974279403687,
+   "parts": 3,
+   "mask_px": 184429,
+   "blocks": 111,
+   "cells": 100,
+   "crop_box": [
+    2,
+    925,
+    123,
+    589
+   ]
+  }
+ },
+ "foot_cells": {
+  "grid": [
+   20,
+   5
+  ],
+  "map_grid": [
+   40,
+   15
+  ],
+  "common": 95,
+  "used": 95,
+  "noisy": 0,
+  "map_cells": 518,
+  "regions_u": {
+   "toes": [
+    0.0,
+    0.2
+   ],
+   "fore": [
+    0.2,
+    0.45
+   ],
+   "mid": [
+    0.45,
+    0.7
+   ],
+   "heel": [
+    0.7,
+    1.0
+   ]
+  }
+ },
+ "n_light_ref_min": 6,
+ "pi_method": "foot_cells_light_ref",
+ "dfr": {
+  "variant": "v8",
+  "upstream_commit": "92c1416d962b20423f9d3b0ac140c880c7b6e927",
+  "segmenter_files": [
+   "footseg_dl.onnx"
+  ],
+  "models": null,
+  "requested_template": "v106w",
+  "requested_classify": true,
+  "requested_pad_classifier": false,
+  "padded_frames": 0,
+  "presegment": {
+   "enabled": false
+  },
+  "timing": {
+   "stages_s": {
+    "0": 0.36,
+    "1": 0.36,
+    "2": 9.92,
+    "3": 11.62,
+    "4": 11.94,
+    "5": 12.06
+   },
+   "done_s": 12.08,
+   "parallel_templates": true,
+   "deferred_figures": true,
+   "figures_s": 16.16
+  },
+  "prestream": {
+   "enabled": false
+  }
+ }
+}

@@ -1,0 +1,71 @@
+;***************************************************************************************
+;
+; Name		: i3usbdrv.inf  
+;
+; Function	: Install i3system USB device driver
+;
+; Copyright (c) DEVGURU Co., Ltd. (www.devguru.co.kr)
+;
+;***************************************************************************************
+
+[Version]
+Signature="$CHICAGO$"
+Class=USB
+ClassGUID={36FC9E60-C465-11CF-8056-444553540000}
+provider=%Devguru%
+DriverVer = 12/13/2018,1.0.4.0
+CatalogFile=i3usbdrv.cat
+
+[SourceDisksNames.x86]
+1=%Disk_Description%,,,\i386
+
+[SourceDisksNames.amd64]
+1=%Disk_Description%,,,\amd64
+
+[SourceDisksFiles]
+i3usbdrv.sys = 1
+
+[Manufacturer]
+%MfgName%=i3system, NTx86, NTamd64
+
+[i3system.NTx86]
+%USB\VID_0547&PID_0080.DeviceDesc%=i3usbdrv.Dev, USB\VID_0547&PID_0080	; i3system device
+
+[i3system.NTamd64]
+%USB\VID_0547&PID_0080.DeviceDesc%=i3usbdrv.Dev, USB\VID_0547&PID_0080	; i3system device
+
+[DestinationDirs]
+i3usbdrv.Files.Ext = 12
+
+[i3usbdrv.Dev.NT]
+CopyFiles=i3usbdrv.Files.Ext
+
+[i3usbdrv.Dev.NT.Services]
+Addservice = i3usbdrv, 0x00000002, i3usbdrv.AddService
+
+[i3usbdrv.AddService]
+DisplayName    = %i3usbdrv.SvcDesc%
+ServiceType    = 1                  ; SERVICE_KERNEL_DRIVER
+StartType      = 3                  ; SERVICE_DEMAND_START
+ErrorControl   = 1                  ; SERVICE_ERROR_NORMAL
+ServiceBinary  = %12%\i3usbdrv.sys
+AddReg         = i3usbdrv.AddReg
+LoadOrderGroup = Base
+
+[i3usbdrv.AddReg]
+;HKR,,DevLoader,,*ntkern
+;HKR,,NTMPDriver,,i3usbdrv.sys
+HKR,"Parameters","DebugLevel",0x10001,2
+
+[i3usbdrv.Files.Ext]
+i3usbdrv.sys
+
+;---------------------------------------------------------------;
+
+[Strings]
+Devguru          = "Devguru"
+MfgName          = "i3system"
+Disk_Description = "i3system USB Device Driver Installation Disk"
+i3usbdrv.SvcDesc = "i3system USB Device"
+USB\VID_0547&PID_0080.DeviceDesc = "i3system USB Device"
+

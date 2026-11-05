@@ -1,0 +1,926 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        "i3system_te_cs"
+    </assembly>
+    <members>
+        <member name="M:i3_cs.ImageProc.ApplyColorMap(System.Byte*,System.Byte*,System.Int32,System.Int32,System.Int32)">
+            <summary>Generate color image</summary>
+            <param name="dst">Output image buffer to receive 3 channel, bgr image</param>
+            <param name="src">Input 1 channel, gray image</param>
+            <param name="color">Colormap index to apply</param>
+            <param name="width">Image width</param>
+            <param name="height">Image height</param>
+            <remarks>
+Image data received from Thermal Expert is gray image data. But user may want to create color image for some reasons, such as user preference or advantage in perception, etc. This function converts gray image to color image.
+Input data should be converted from 2 byte image to 1 byte image beforehand. Supported colormaps are whitehot, purple, cyan colormap. (See Constants class for colormap index). 
+</remarks>
+        </member>
+        <member name="T:i3_cs.ImageProc">
+@brief Image processing functions.
+
+</member>
+        <member name="M:i3_cs.TE_B.LoadCalibration(System.SByte!System.Runtime.CompilerServices.IsSignUnspecifiedByte!System.Runtime.CompilerServices.IsConst*)">
+            <summary>Load calibration data</summary>
+            <param name="_file">File name to load data</param>
+            <para>true : succeeded to load data\nfalse : failed to load data (file open fail, incorrect file size, or incorrect data load)</para>
+            <remarks>
+If user have calibration data (using SaveCalibration function), user can load that file and apply calibration data to improve image quality.
+Incorrect file load can cause bad image quality or file load fail.
+</remarks>
+        </member>
+        <member name="M:i3_cs.TE_B.SaveCalibration(System.SByte!System.Runtime.CompilerServices.IsSignUnspecifiedByte!System.Runtime.CompilerServices.IsConst*)">
+            <summary>Save calibration data</summary>
+            <param name="_file">File name to save data</param>
+            <para>true : succeeded to save data\nfalse : failed to save data (file open fail or incorrect data save)</para>
+            <remarks>
+User can use ShutterCalibrationOn function to make uniform image. If user want to save this calibration data and use it later, user can use this function. (call ShutterCalibrationOn function first)
+It saves calibration data in _file. This file can be used in Loadcalibration.
+</remarks>
+        </member>
+        <member name="M:i3_cs.TE_B.getFrameTemperature(System.Single*)">
+            <summary>Get 1 frame temperature data</summary>
+            <param name="pRecvTemp">Output temperature buffer</param>
+            <para>1: Read image successfully\n2: Read image of size 0\n3: Recieved image size is not equal to requested size\n4: Data read fail\n7: Flash Data is not read</para>
+            <remarks>
+This function returns 1 frame temperature data. Compared to CalcEntireTemp function, it does not use previously received data. It takes new data and calaculate temperature values.
+</remarks>
+        </member>
+        <member name="M:i3_cs.TE_B.GetFpaTemp">
+            <summary>Get FPA temperature</summary>
+            <para>FPA temperature</para>
+            <remarks>
+This function returns fpa temperature. This value depends on environment temperature. Also it is different for every TE even though TEs are in same condition.
+FPA temperature is updated when image is taken from TE and this function returns most recently received value.
+</remarks>
+        </member>
+        <member name="M:i3_cs.TE_B.SetEmissivity(System.Single)">
+            <summary>Set emissivity value</summary>
+            <param name="_emissivity">emissivity value to apply</param>
+            <remarks>
+It sets emissivity value and afterwards emissivity applied temperature value will be returned when calling CalcTemp function. Its value should be in range of 0 and 1.
+</remarks>
+        </member>
+        <member name="M:i3_cs.TE_B.GetImageHeight">
+            <summary>Get image height</summary>
+            <para>Image height</para>
+            <remarks>Returns height of image, i.e. it returns 288 for QVGA and 480 for VGA</remarks>
+        </member>
+        <member name="M:i3_cs.TE_B.GetImageWidth">
+            <summary>Get image width</summary>
+            <para>Image width</para>
+            <remarks>Returns width of image, i.e. it returns 384 for QVGA and 640 for VGA</remarks>
+        </member>
+        <member name="M:i3_cs.TE_B.AddDead(System.UInt32)">
+            <summary>
+Add or remove bad pixel
+</summary>
+            <param name="pos">Bad pixel position: (width of image) * (y coordinate of bad pixel) + (x coordinate of bad pixel)</param>
+            <para>0: pixel set as not bad pixel\n1: pixel set as bad pixel</para>
+            <remarks>
+When some pixels look like dead pixels, user may want to set those pixels as bad pixels manually and do calibration for those pixels afterwards. It provides those functionality.
+Insert index of bad pixel in arguments and it will set this pixel as bad pixel and calibartion will be done. To remove from bad pixel, call this function once more.
+</remarks>
+        </member>
+        <member name="M:i3_cs.TE_B.UpdateDead">
+            <summary>
+Update bad pixels
+</summary>
+            <para>0 : failed to update\n1: succeeded to update</para>
+            <remarks> 
+In some cases, bad pixels can be generated while using TE which does not exist before, so it is considered non-dead pixel in flash data. This function receive images and analyze if additional bad pixels exist. If bad pixels exist, it will update dead data and calibration process will be applied to those pixels afterwards.
+Update data is not stored after disconnection. So, User should call this function for every reconnection if user want to update bad pixels.
+</remarks>
+        </member>
+        <member name="M:i3_cs.TE_B.CalcEntireTemp(System.Single*)">
+            <summary>
+Calculate temperature of all image pixels
+</summary>
+            <param name="pRecvTemp">Buffer to get temperature data (384x288 for QVGA and 640x480 for VGA, 32bits)</param>
+            <remarks>Return temperature array of all pixels to pRecvTemp from previously received image data. RecvImage function needs to be called before calling this function.</remarks>
+        </member>
+        <member name="M:i3_cs.TE_B.CalcTemp(System.Int32,System.Int32)">
+            <summary>
+Calculate Temperature
+</summary>
+            <param name="x">Horizontal position of target pixel (0~383 for QVGA, 0~639 for VGA)</param>
+            <param name="y">Vertical position of target pixel (0~287 for QVGA, 0~479 for VGA)</param>
+            <returns> Temperature (Celsius)</returns>
+            <remarks>
+Return temperature of target pixel (x, y) from previously received image data. RecvImage function needs to be called before calling this function.
+</remarks>
+        </member>
+        <member name="M:i3_cs.TE_B.ShutterCalibrationOn">
+            <summary>
+Do calibration
+</summary>
+            <returns>true if success. otherwise false</returns>
+            <remarks>
+This function will recalculate offset data for calibration.
+Before calibration, thermal expert needs to see uniform temperature scene.
+</remarks>
+        </member>
+        <member name="M:i3_cs.TE_B.RecvImage(System.Single*)">
+            <summary>
+Receive image data
+</summary>
+            <param name="buf"> buffer to get image data (384x288 for QVGA and 640x480 for VGA, 32bit gray data) </param>
+            <returns>
+                <para>1 : Receive image successfully\n 2 : Receive image of size 0\n 3 : Received image size is not equal to actual image size\n 4 : Failed to receive data</para>
+            </returns>
+            <remarks>
+This function receives data from Thermal Expert and sends to buf without agc algorithm. Therefore, User needs to apply appropriate algorithm to convert raw data to image.
+</remarks>
+        </member>
+        <member name="M:i3_cs.TE_B.RecvImage(System.UInt16*)">
+            <summary>
+Receive image data
+</summary>
+            <param name="buf"> buffer to get image data (384x288 for QVGA and 640x480 for VGA, 16bit gray data) </param>
+            <returns>
+                <para>1 : Receive image successfully\n 2 : Receive image of size 0\n 3 : Received image size is not equal to actual image size\n 4 : Failed to receive data</para>
+            </returns>
+            <remarks>
+This function receives data from Thermal Expert and calibrate to show image. It sends image data to buf which agc algorithm is applied to.
+</remarks>
+        </member>
+        <member name="M:i3_cs.TE_B.CloseTE">
+            <summary>Disconnect Thermal Expert</summary>
+            <remarks>This function disconnect the Thermal Expert and free allocated memory. Call this function after finishing the work.</remarks>
+        </member>
+        <member name="M:i3_cs.TE_B.OpenTE(System.Int32,System.Int32)">
+            <summary>Connect Thermal Expert</summary>
+            <param name="model">Device model number. See <see cref="T:i3_cs.Constants">.</see></param>
+            <param name="hnd_dev">device number for TE to connect. See UsbUtils.ScanTE function for device number.</param>
+            <returns>
+                <para>true if opened successfully, false otherwise</para>
+            </returns>
+            <remarks>
+This function connect TE and make TE ready to communicate with host. This function must be called before communication with TE.
+</remarks>
+        </member>
+        <member name="T:i3_cs.TE_B">
+@brief Interface for communication with Thermal Expert Type B(Q1, V1, Q2)
+
+</member>
+        <member name="M:i3_cs.TE_A.UpdateTempData(System.Single,System.Single,System.Single,System.Single)">
+            <summary>Update Temperature Calibration Data</summary>
+            <param name="_target1">Actual temperature of object 1</param>
+            <param name="_meas1">Temperature of object 1 measured by Thermal Expert</param>
+            <param name="_target2">Actual temperature of object 2</param>
+            <param name="_meas2">Temperature of object 2 measured by Thermal Expert</param>
+            <returns>true if update succeeded, false otherwise</returns>
+            <remarks>
+Thermal Expert is calibrated on manufacturing, but its temperature can be shifted by a specific usecase or any other reasons. It that case, it needs to be recalibrated.
+This function recalibrate temperature data. To do that, user should measure two known temperature points. By using those known temperature (_target1, _targe2) and measured temperature (_meas1, _meas2), it will recalibrate to correct measured temperature to actual temperature.
+After executing this function, user should not disconnect power for at least 7 seconds. Otherwise, updated data may not be saved on disconnect.
+</remarks>
+        </member>
+        <member name="M:i3_cs.TE_A.GetShutterPt100Temp">
+            <summary>Get Shutter Temperature Value</summary>
+            <returns>PT100 temperature</returns>
+            <remarks>
+This function returns PT100 temperature value attached to shutter. Since PT100 value is updated when shutter is closed, it operates shutter and return current PT100 temperature value.
+</remarks>
+        </member>
+        <member name="M:i3_cs.TE_A.GetFpaTemp">
+            <summary>Get FPA temperature</summary>
+            <returns>fpa temperature</returns>
+            <remarks>
+This function returns fpa temperature. This value depends on environment temperature. Also it is different for every TE though TEs are in same condition.
+FPA temperature is updated when image is taken from TE and this function returns most recently received value.
+</remarks>
+        </member>
+        <member name="M:i3_cs.TE_A.GetSetting(i3_cs.TE_Setting*)">
+            <summary>Get current setting in TE</summary>
+            <param name="_setting">Pointer of TE_SETTING struct to get setting values</param>
+            <remarks>It returns current setting values in _pSetting parameter.</remarks>
+        </member>
+        <member name="M:i3_cs.TE_A.SaveSetting(i3_cs.TE_Setting*)">
+            <summary>Save current setting in TE</summary>
+            <param name="_setting">Pointer of TE_Setting struct which contains setting values to save</param>
+            <returns>true if save setting signal is transferred successfully, otherwise return false</returns>
+            <remarks>It sends signal to save setting values in TE engine. Values in _pSetting struct will be saved. Saved setting is not applied until TE is reconnected.</remarks>
+        </member>
+        <member name="M:i3_cs.TE_A.GetID">
+            <summary>Get serial number of TE</summary>
+            <returns>Serial number</returns>
+            <remarks>This function returns serial number of TE which is unique for each product.</remarks>
+        </member>
+        <member name="M:i3_cs.TE_A.SetShutterTemperature(System.UInt16)">
+            <summary>Set temperature variation limit to close shutter</summary>
+            <param name="_temp">Temperature variation limit. This value should be withnin Constants.I3_Shutter_Temp_Min and Constants.I3_Shutter_Temp_Max.</param>
+            <returns> true if set signal is transferred successfully. Otherwise returns false</returns>
+            <remarks>
+When temperature shutter mode is set, shutter will be closed if temperature change of shutter is over temperature variation limit. This function set the limit.
+See <see cref="M:i3_cs.TE_A.SetShutterMode(System.UInt16)" />.
+</remarks>
+        </member>
+        <member name="M:i3_cs.TE_A.SetShutterTime(System.UInt16)">
+            <summary>Set period of shutter operation</summary>
+            <param name="_time">Period of shutter operation. This value should be withnin Constants.I3_Shutter_Time_Min(1) and Constants.I3_Shutter_Time_Max(120).</param>
+            <returns> true if signal is transferred successfully. Otherwise return false</returns>
+            <remarks> 
+This function is used to set period of shutter operation. Shutter is close for every _time * 30 sec if time shutter mode is set.
+See <see cref="M:i3_cs.TE_A.SetShutterMode(System.UInt16)" />.
+</remarks>
+        </member>
+        <member name="M:i3_cs.TE_A.SetShutterMode(System.UInt16)">
+            <summary>Set shutter operation mode</summary>
+            <param name="_mode">Shutter operation mode. (Temperature mode = Constants.I3_Temp_Shutter(0), Time mode = Constants.I3_Time_Shutter(1))</param>
+            <returns> true if signal is transferred successfully, otherwise return false</returns>
+            <remarks>
+Shutter in TE engine is automatically closed and do calibration to maintain high image quality. This function set a condition when shutter is closed. It supports time mode which closes shutter periodically with specified period and temperature mode which closes shutter when temperature of shutter is changed with specified amount.
+See <see cref="M:i3_cs.TE_A.SetShutterTemperature(System.UInt16)" /> and <see cref="M:i3_cs.TE_A.SetShutterTime(System.UInt16)" /></remarks>
+        </member>
+        <member name="M:i3_cs.TE_A.SetEmissivity(System.Single)">
+            <summary>Set emissivity value</summary>
+            <param name="_emissivity">emissivity value to apply</param>
+            <remarks>It sets emissivity value and afterwards emissivity applied temperature value will be returned when CalcTemp function is called.</remarks>
+        </member>
+        <member name="M:i3_cs.TE_A.ResetMainBoard">
+            <summary>Reset TE engine</summary>
+            <returns>true if reset signal is transferred successfully, otherwise return false</returns>
+            <remarks>It sends signal to reset TE engine. After calling this function, TE will be rebooted.</remarks>
+        </member>
+        <member name="M:i3_cs.TE_A.CalcTemp(System.UInt16*)">
+            <summary>Get temperature for 1 frame image</summary>
+            <param name="buf">buffer to get temperature data (384x288 for QVGA and 640x480 for VGA)</param>
+            <remarks>
+This function returns temperature data for entire image which is most recently received. Therefore RecvImage function should be called before calling this function. Returned values are modified to fit into 2byte. To get temperature, user should subtract 5000 and then divide by 100, i.e. (real temperature value) = (return value - 5000) / 100
+</remarks>
+        </member>
+        <member name="M:i3_cs.TE_A.LensShadingCorrection">
+            <summary>Do Lens Shading Correction</summary>
+            <returns>true if success. otherwise false</returns>
+            <remarks>
+This function calibrate shading at outer position generated by lens effect in order to make uniform image. Thermal Expert engine should see uniform scene before executing this function.
+</remarks>
+        </member>
+        <member name="M:i3_cs.TE_A.LoadCalibration(System.SByte!System.Runtime.CompilerServices.IsSignUnspecifiedByte!System.Runtime.CompilerServices.IsConst*)">
+            <summary>Load calibration data</summary>
+            <param name="_file">File name to load data</param>
+            <para>true : succeeded to load data\nfalse : failed to load data (file open fail, incorrect file size, or incorrect data load)</para>
+            <remarks>
+If user have calibration data (using SaveCalibration function), user can load that file and apply calibration data to improve image quality.
+Incorrect file load can cause bad image quality or file load fail.
+</remarks>
+        </member>
+        <member name="M:i3_cs.TE_A.SaveCalibration(System.SByte!System.Runtime.CompilerServices.IsSignUnspecifiedByte!System.Runtime.CompilerServices.IsConst*)">
+            <summary>Do calibration and save in file</summary>
+            <param name="_file">File name to load data</param>
+            <returns>true if success. otherwise false</returns>
+            <remarks>
+This function will save lens shading calibration data. Before calling this function, execute LensShadingCorrection.
+</remarks>
+        </member>
+        <member name="M:i3_cs.TE_A.ShutterCalibrationOn">
+            <summary>Do calibration</summary>
+            <returns>true if success. otherwise false</returns>
+            <remarks>
+This function will recalculate offset data for calibration.
+Before calibration, stop receiving image data from Thermal Expert. It closes shutter and recalculate offset to obtain uniform image.
+</remarks>
+        </member>
+        <member name="M:i3_cs.TE_A.CloseTE">
+            <summary>Disconnect Thermal Expert</summary>
+            <remarks>This function disconnect the Thermal Expert and free allocated memory. Call this function after finishing the work.</remarks>
+        </member>
+        <member name="M:i3_cs.TE_A.OpenTE(System.Int32)">
+            <summary>Connect Thermal Expert</summary>
+            <param name="hnd_dev">device number for TE to connect. See UsbUtils.ScanTE function for device number.</param>
+            <returns>
+                <para>true if opened successfully, false otherwise</para>
+            </returns>
+            <remarks>
+This function connect TE and make TE ready to communicate with host. This function must be called before communication with TE.
+</remarks>
+        </member>
+        <member name="M:i3_cs.TE_A.GetImageHeight">
+            <summary>Get height of image</summary>
+            <returns>Image height</returns>
+            <remarks>This function returns height of image, i.e. it returns 288 for QVGA and 480 for VGA</remarks>
+        </member>
+        <member name="M:i3_cs.TE_A.GetImageWidth">
+            <summary>Get width of image</summary>
+            <returns>Image width</returns>
+            <remarks>This function returns width of image, i.e. it returns 384 for QVGA and 640 for VGA</remarks>
+        </member>
+        <member name="M:i3_cs.TE_A.RecvImage(System.UInt16*,System.Boolean)">
+            <summary>
+Receive image data
+</summary>
+            <param name="buf"> buffer to get image data (384x288 for QVGA and 640x480 for VGA, 16bit gray data) </param>
+            <param name="agc"> if set true, AGC algorithm is applied. Otherwise, AGC is not applied.</param>
+            <returns>
+                <para>1 : Receive image successfully\n 2 : Receive image of size 0\n 3 : Received image size is not equal to actual image size\n 4 : Failed to receive data</para>
+            </returns>
+            <remarks>
+This function receive data from Thermal Expert and calibrate to show image. It send image data to buf. If agc is set to true, gain and offset value is automatically calculated so that image data will be fitted to 16bit range.
+</remarks>
+        </member>
+        <member name="T:i3_cs.TE_A">
+@brief Interface for communication with Thermal Expert Type A(EQ1, EV1)
+
+</member>
+        <member name="T:i3_cs.TE_Setting">
+@brief Data sturcture to get/set setting values
+
+</member>
+        <member name="M:i3_cs.UsbUtils.WindowProc(System.Int32,System.IntPtr,System.IntPtr)">
+            <summary>Check TE connection changes</summary>
+            <param name="msg">USB connection is changed or not</param>
+            <param name="wParam">TE is removed or arrived</param>
+            <param name="lParam">device information</param>
+            <returns>
+                <para>1 : TE is arrived successfully</para>
+                <para>2 : TE is arrived but driver is not opened successfully</para>
+                <para>3 : TE is removed successfully</para>
+            </returns>
+            <remarks>
+This function checks TE connection. Hook function to handle messages in Window class and then call this function in this function. Then it will return 1 if TE is connected through usb port and return 3 if TE is removed from usb port.
+<para>"Example code"</para><para>private void Window_SourceInitialized(object sender, EventArgs e)</para><para>{</para><para> HwndSource source = HwndSource.FromHwnd(new WindowInteropHelper(this).Handle);</para><para> source.AddHook(new HwndSourceHook(WndProc));</para><para>}</para><para>private IntPtr WndProc(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)</para><para>{</para><para> int ret = TE_A.WindowProc(msg, wParam, lParam);</para><para> if (ret == 1)</para><para> 	MessageBox.Show("Device connected");</para><para> else if (ret == 3)</para><para>	MessageBox.Show("Device removed");</para><para> return IntPtr.Zero;</para><para>}</para></remarks>
+            <example>
+                <code>
+private void Window_SourceInitialized(object sender, EventArgs e)
+{
+ HwndSource source = HwndSource.FromHwnd(new WindowInteropHelper(this).Handle);
+ source.AddHook(new HwndSourceHook(WndProc));
+}
+private IntPtr WndProc(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)
+{
+ int ret = TE_A.WindowProc(msg, wParam, lParam);
+ if (ret == 1)
+ 	MessageBox.Show("Device connected");
+ else if (ret == 3)
+	MessageBox.Show("Device removed");
+ return IntPtr.Zero;
+}
+</code>
+            </example>
+        </member>
+        <member name="M:i3_cs.UsbUtils.ScanTE(i3_cs.SCANINFO*)">
+            <summary>Check connected TE.</summary>
+            <param name="scan_info">Buffer to get scan results. It should Constans.I3_Max_Usb_Num size array.</param>
+            <returns>1 if scaned successfully, otherwise failed to scan.</returns>
+            <remarks>
+This function scans connected TE and return the results. The result contains connected devices's ID, Product Model, and device number.
+For each connected TE, a device number(0 ~ Constants.I3_Max_Usb_Num - 1) is assigned. TE which has device number i corresponeds to i-th element of pDevCon and its scaned result is stored in i-th element of pDevCon. This device number is used in other function as hnd_dev.
+</remarks>
+        </member>
+        <member name="M:i3_cs.UsbUtils.UnregisterTE">
+            <summary>Unregister device</summary>
+            <remarks>
+If user does not want to check device connection changes anymore, call this function to unregister and free memories.
+</remarks>
+        </member>
+        <member name="M:i3_cs.UsbUtils.RegisterTE(System.IntPtr)">
+            <summary>Register device to check connection change</summary>
+            <param name="hwnd">A handle of a window that will receive device events.</param>
+            <returns>return true if registered successfully, otherwise return false</returns>
+            <remarks>
+In order to get device connection change, device information needs to be registered beforehand. Therefore call this function once, if user want to use WindowProc function and get changes in connection.
+If device is arrived to or removed from usb port, device change message will be sent to given window.
+</remarks>
+        </member>
+        <member name="T:i3_cs.UsbUtils">
+@brief Defines usb connection related functions
+
+</member>
+        <member name="F:i3_cs.SCANINFO.nProdVer">
+            <summary>Connected model. 0 for Q1 and V1, 3 for EQ1, 4 for EV1</summary>
+        </member>
+        <member name="F:i3_cs.SCANINFO.nCoreID">
+            <summary>ID of connected TE</summary>
+        </member>
+        <member name="F:i3_cs.SCANINFO.bDevCon">
+            <summary>indicates if TE is connected or not. 1 means connected, otherwise not connected.</summary>
+        </member>
+        <member name="T:i3_cs.SCANINFO">
+@brief Data structure to get TE connection info
+
+</member>
+        <member name="F:i3_cs.Constants.I3_Model_TE_EV1">
+            <summary>Model Number for TE_EV1</summary>
+        </member>
+        <member name="F:i3_cs.Constants.I3_Model_TE_EQ1">
+            <summary>Model Number for TE_EQ1</summary>
+        </member>
+        <member name="F:i3_cs.Constants.I3_Model_TE_Q2">
+            <summary>Model Number for TE_Q2</summary>
+        </member>
+        <member name="F:i3_cs.Constants.I3_Model_TE_V1">
+            <summary>Model Number for TE_V1</summary>
+        </member>
+        <member name="F:i3_cs.Constants.I3_Model_TE_Q1">
+            <summary>Model Number for TE_Q1</summary>
+        </member>
+        <member name="F:i3_cs.Constants.I3_ColorMap_Purple">
+            <summary>index of purple colormap</summary>
+        </member>
+        <member name="F:i3_cs.Constants.I3_ColorMap_Cyan">
+            <summary>index of cyan colormap</summary>
+        </member>
+        <member name="F:i3_cs.Constants.I3_ColorMap_WhiteHot">
+            <summary>index of whitehot colormap</summary>
+        </member>
+        <member name="F:i3_cs.Constants.I3_Max_Usb_Num">
+            <summary>mavimum available device number that can be recognized simultaneously</summary>
+        </member>
+        <member name="F:i3_cs.Constants.I3_Shutter_Temp_Max">
+            <summary>maximum available temperature difference to operate shutter</summary>
+        </member>
+        <member name="F:i3_cs.Constants.I3_Shutter_Temp_Min">
+            <summary>minimum available temperature difference to operate shutter</summary>
+        </member>
+        <member name="F:i3_cs.Constants.I3_Shutter_Time_Max">
+            <summary>maximum available shutter operation period</summary>
+        </member>
+        <member name="F:i3_cs.Constants.I3_Shutter_Time_Min">
+            <summary>minimum available shutter operation period</summary>
+        </member>
+        <member name="F:i3_cs.Constants.I3_Time_Shutter">
+            <summary>input value for setting time shutter mode</summary>
+        </member>
+        <member name="F:i3_cs.Constants.I3_Temp_Shutter">
+            <summary>input value for setting temperature shutter mode</summary>
+        </member>
+        <member name="T:i3_cs.Constants">
+@brief Defines constant used in SDK
+
+</member>
+        <member name="M:i3.UnregisterTE">
+@brief Unregister TE
+@remark : This function unregister device. call this function when PNP information is not required
+
+</member>
+        <member name="M:i3.RegisterTE(System.IntPtr)">
+@brief Register TE device to get PNP information
+@param hwnd : A handle to the window that will receive device events.
+@return true : succeed in register
+@return false : failed to register
+@remark : This function register device for PNP notification. To get PNP information, call this function once when initialize program
+
+</member>
+        <member name="M:i3.WindowProcTE(System.UInt32,System.UInt32,System.Int64)">
+@brief Check TE connection
+@param iMsg : USB connection is changed or not
+@param wParam : TE is removed or arrived
+@param lParam : device information
+@return  1 : TE is arrived successfully
+@return  2 : TE is arrived but driver is not opened successfully
+@return  3 : TE is removed successfully
+@remark This function checks TE connection. Insert this function in WindowProc function of MFC dialog. Then it will return 1 if TE is connected through usb port and return 3 if TE is removed from usb port.
+
+</member>
+        <member name="M:i3.OpenTE_B(System.Int32,System.Int32)">
+@brief Connect Thermal Expert of Type B model.
+@param _model : Indicator for TE model. Set I3_TE_Q1 for Q1, I3_TE_V1 for V1 and I3_TE_Q2 for Q2.
+@param hnd_dev : Device number for TE to connect
+@return  nullptr : fail to open TE.
+@return  TE_B*(not nullptr) : pointer of TE_B class
+@remark This function get TE device handle and make TE ready to communicate with host. After connection, calibration data will be read from flash memory to create image. It may take few seconds.
+@remark This function must be called to communicate with TE.
+
+</member>
+        <member name="M:i3.OpenTE_A(System.Int32)">
+@brief Connect Thermal Expert of Type A model.
+@param hnd_dev : device number for TE to connect
+@return  nullptr : fail to open TE.
+@return  TE_A*(not nullptr) : pointer of TE_A class
+@remark This function get TE device handle and make TE ready to communicate with host. It must be called to communicate with TE.
+
+</member>
+        <member name="M:i3.ScanTE(i3.TEScanData*)">
+@brief Check connected TE.
+@param pDevCon : Buffer to get scan results. It should MAX_USB_NUM size array.
+@return 1 : Scan successfully
+@return Otherwise : Failed to scan
+@remark This function scans connected TE and return the results. The result contains connected devices's ID, Product Model, and device number.
+@remark For each connected TE, a device number(0 ~ MAX_USB_NUM - 1) is assigned. TE which has device number i corresponeds to i-th element of pDevCon and its scaned result is stored in i-th element of pDevCon. This device number is used in other function as hnd_dev.
+
+</member>
+        <member name="M:i3.ApplyColorMap(System.Byte*,System.Byte*,System.Int32,System.Int32,System.Int32)">
+@brief Apply color to input image
+@param dst : output image (24bit color image, brg888)
+@param src : input image (8bit gray image)
+@param color : colormap to apply. its value ranges from I3_COLORMAP_WHITEHOT to I3_COLORMAP_RAINBOW.
+@param width : width of image
+@param height : height of image
+@remark : This function convert 8 bit input gray image to 24 bit (bgr888) color image. Supported colormaps are whitehot, blackhot, iron, bluered, medical, purple, purpleyellow, darkblue, cyan, and rainbow.
+@remark : Since received image from Thermal Expert is 16 bit, it needs to be converted to 8 bit image before applay this function.
+
+</member>
+        <member name="F:i3.TE_B.m_pTE_Impl">
+@brief TE_B implementation class
+
+</member>
+        <member name="M:i3.TE_B.TempToImg(System.UInt16*,System.Single*)">
+@brief Convert temperature data to image data
+@param pDstImg : output image buffer
+@param pSrcTemp : input temperature buffer
+@remark This function take temperature data from user, and convert it to image data to which image processing algorithm is applied.
+
+</member>
+        <member name="M:i3.TE_B.GetSerialNumber(System.SByte!System.Runtime.CompilerServices.IsSignUnspecifiedByte*)">
+@brief Get Serial Number
+@param serial: output array to get serial number. array length should be greater than length of serial number.
+
+</member>
+        <member name="M:i3.TE_B.SetShutterTemperature(System.UInt16)">
+@brief Set temperature variation limit to close shutter
+@param _temp : temperature variation limit. This value should be withnin I3_SHUTTER_TEMP_MIN and I3_SHUTTER_TEMP_MAX.
+@return  0  : Signal is transferred successfully
+@return -7  : Transfer of signal failed
+@return -11 : Command not supported
+@remark When temperature shutter mode is set, shutter will be closed if temperature change of shutter is over temperature variation limit. This function set the limit. Only works in V2.
+@remark See SetShutterMode.
+
+</member>
+        <member name="M:i3.TE_B.SetShutterTime(System.UInt16)">
+@brief Set period of shutter operation
+@param _time : Period of shutter operation. This value should be withnin I3_SHUTTER_TIME_MIN and I3_SHUTTER_TIME_MAX.
+@return  0  : Signal is transferred successfully
+@return -7  : Transfer of signal failed
+@return -11 : Command not supported
+@remark This function is used to set period of shutter operation. Shutter is close for every _time * 30 sec if time shutter mode is set. Only works in V2.
+@remark See SetShutterMode.
+
+</member>
+        <member name="M:i3.TE_B.SetShutterMode(System.UInt16)">
+@brief Set shutter operation mode
+@param _mode : Shutter operation mode. (Time mode = I3_TIME_SHUTTER, Temperature mode = I3_TEMP_SHUTTER)
+@return  0  : Signal is transferred successfully
+@return -7  : Transfer of signal failed
+@return -11 : Command not supported
+@remark Shutter in TE engine is automatically closed and do calibration to maintain high image quality. This function set a condition when shutter is closed. It supports time mode which closes shutter periodically with specified period and temperature mode which closes shutter when temperature of shutter is changed with specified amount. Only works in V2.
+@remark See SetShutterTemperature and SetShutterTime.
+
+</member>
+        <member name="M:i3.TE_B.LoadCalibration(System.SByte!System.Runtime.CompilerServices.IsSignUnspecifiedByte!System.Runtime.CompilerServices.IsConst*)">
+@brief Load calibration data
+@param _file : file name to load data
+@return true : succeeded to load data
+@return false : failed to load data (file open fail, incorrect file size, or incorrect data load)
+@remark If user have calibration data (using SaveCalibration function), user can load that file and apply calibration data to improve image quality.
+@remark Incorrect file load can cause bad image quality or file load fail.
+
+</member>
+        <member name="M:i3.TE_B.SaveCalibration(System.SByte!System.Runtime.CompilerServices.IsSignUnspecifiedByte!System.Runtime.CompilerServices.IsConst*)">
+@brief Save calibration data
+@param _file : file name to save data
+@return true : succeeded to save data
+@return false : failed to save data (file open fail or incorrect data save)
+@remark User can use ShutterCalibrationOn function to make uniform image. If user want to save this calibration data and use it later, user can use this function. (call ShutterCalibrationOn function first)
+@remark It saves calibration data in _file. This file can be used in Loadcalibration.
+
+</member>
+        <member name="M:i3.TE_B.getFrameTemperature(System.Single*)">
+@brief Get 1 frame temperature data
+@param pRecvTemp : output temperature buffer
+@return 1: Read image successfully
+@return 2: Read image of size 0
+@return 3: Recieved image size is not equal to requested size
+@return 4: Data read fail
+@return 7: Flash Data is not read
+@remark This function returns 1 frame temperature data. Compared to CalcEntireTemp function, it does not use previously received data. It takes new data and calaculate temperature values.
+
+</member>
+        <member name="M:i3.TE_B.GetFPATemp">
+@brief Get FPA temperature raw value
+@return fpa temperature
+@remark This function returns fpa temperature. This value depends on environment temperature. Also it is different for every TE even though TEs are in same condition.
+@remark FPA temperature is updated when image is taken from TE and this function returns most recently received value.
+
+</member>
+        <member name="M:i3.TE_B.GetFpaTemp">
+@brief Get FPA temperature
+@return fpa temperature
+@remark This function returns fpa temperature. This value depends on environment temperature. Also it is different for every TE even though TEs are in same condition.
+@remark FPA temperature is updated when image is taken from TE and this function returns most recently received value.
+
+</member>
+        <member name="M:i3.TE_B.SetEmissivity(System.Single)">
+@brief Set emissivity value
+@param _emissivity : emissivity value to apply
+@remark It sets emissivity value and afterwards emissivity applied temperature value will be returned when calling CalcTemp function.
+
+</member>
+        <member name="M:i3.TE_B.GetImageHeight">
+@brief Get image height
+@return Image height
+@remark Return height of image, i.e. it returns 288 for QVGA and 480 for VGA
+
+</member>
+        <member name="M:i3.TE_B.GetImageWidth">
+@brief Get image width
+@return Image width
+@remark Return width of image, i.e. it returns 384 for QVGA and 640 for VGA
+
+</member>
+        <member name="M:i3.TE_B.AddDead(System.UInt32)">
+@brief Add or remove bad pixel
+@param pos : (width of image) * (y coordinate of bad pixel) + (x coordinate of bad pixel)
+@return TRUE : pixel set as bad pixel
+@return FALSE : pixel set as not bad pixel
+@remark When some pixels look like dead pixels, user may want to set those pixels as bad pixels manually and do calibration for those pixels afterwards. It provides those functionality.
+@remark Insert index of bad pixel in arguments and it will set this pixel as bad pixel and calibartion will be done. To remove from bad pixel, call this function once more.
+
+</member>
+        <member name="M:i3.TE_B.UpdateDead">
+@brief Update bad pixels
+@return 0 : fail to update
+@return 1 : succeed to update
+@remark In some cases, bad pixels can be generated while using TE which does not exist before, so it is considered non-dead pixel in flash data. This function receive images and analyze if additional bad pixels exist. If bad pixels exist, it will update dead data and calibration process will be applied to those pixels afterwards.
+@remark Update data is not stored after disconnection. So, User should call this function for every reconnection if user want to update bad pixels.
+
+</member>
+        <member name="M:i3.TE_B.CalcEntireTemp(System.Single*)">
+@brief Calculate temperature of all image pixels
+@param pRecvTemp : variable to get temperature data (384x288 for QVGA and 640x480 for VGA, 32bits)
+@remark Return temperature array of all pixels to pRecvTemp from previously received image data.
+
+</member>
+        <member name="M:i3.TE_B.CalcTemp(System.Int32,System.Int32)">
+@brief Calculate temperature
+@param _x : Horizontal position of target pixel (0~383 for QVGA, 0~639 for VGA)
+@param _y : Vertical position of target pixel (0~287 for QVGA, 0~479 for VGA)
+@return Temperature (Celsius)
+@remark Return temperature of target pixel (_x, _y) from previously received image data.
+
+</member>
+        <member name="M:i3.TE_B.ShutterCalibrationOn">
+@brief Do calibration
+@return 1: success
+@return 2: fail
+@remark This function will recalculate offset data for calibration.
+@remark Before calibration, stop receiving image data from Thermal Expert, and set Thermal Expert to see uniform temperature scene. It will recalculate offset to obtain uniform image.
+
+</member>
+        <member name="M:i3.TE_B.SetImgOutPrms(i3.IMGOUTPRMS)">
+@brief Set Image Output Parameters
+@param prms : Parameters to apply.
+@remark This function sets parameters to determine image processing algorithms which is appiled after receiving raw data from thermal detector. These parameters are applied when user gets image from RecvImage(void *dst) function. Other RecvImage function does not apply these parameters and returns data depending on its own arguments.
+
+</member>
+        <member name="M:i3.TE_B.RecvImage(System.Void*)">
+@brief Receive image data which image processing algorithm is applied to.
+@param dst : Buffer to get output image. If no post processing is applied, float data is returned, so buffer size should be (4 * pixel num). Otherwise, 16 bit data is returned and buffer size should be (2 * pixel num).
+@return 1: Read image successfully
+@return 2: Read image of size 0 (image not ready)
+@return 3: Recieved image size is not equal to requested size
+@return 4: Data read fail
+@remark This function receives data from Thermal Expert and applies image processing algorithm depending on parameters set. Parameters for image processing algorithms can be set in SetImgOutPrms function. AGC is enabled and other image processing algorithms are disabled in default setting.
+
+</member>
+        <member name="M:i3.TE_B.RecvImage(System.UInt16*)">
+@brief Receive image data
+@param pRecvImage : variable to get image data (384x288 for QVGA and 640x480 for VGA, 16 bits gray data)
+@return 1: Read image successfully
+@return 2: Read image of size 0 (image not ready)
+@return 3: Recieved image size is not equal to requested size
+@return 4: Data read fail
+@return 7: Flash Data is not read
+@remark This function receive data from Thermal Expert and calibrate to show image. It applies AGC algorithm, and then send image data fitted to 16bits to input argument pRecvImage.
+
+</member>
+        <member name="M:i3.TE_B.RecvImage(System.Single*)">
+@brief Receive image data
+@param pRecvImage : variable to get image data (384x288 for QVGA and 640x480 for VGA, 32 bits gray data (not normalized))
+@return 1: Read image successfully
+@return 2: Read image of size 0 (image not ready)
+@return 3: Recieved image size is not equal to requested size
+@return 4: Data read fail
+@return 7: Flash Data is not read
+@remark This function receive data from Thermal Expert and calibrate to show image. It send image data to pRecvImage in which AGC algorithm is not applied. Gain and offset value should be applied in user side.
+
+</member>
+        <member name="M:i3.TE_B.CloseTE">
+@brief Disconnect Thermal Expert
+@remark This function disconnect the Thermal Expert and delete data. Do this function after finishing the work.
+
+</member>
+        <member name="M:i3.TE_B.Dispose">
+@brief Destructor of TE_B class
+
+</member>
+        <member name="M:i3.TE_B.#ctor(System.UInt32,System.UInt32,System.Int32,System.Int32)">
+@brief Constructor of TE_B class
+
+</member>
+        <member name="F:i3.TE_A.m_pTE_Impl">
+@brief TE_A implementation class
+
+</member>
+        <member name="M:i3.TE_A.GetAgcLimitGain">
+@brief Get limit gain value
+@return Current limit gain value
+@remark This function returns limit gain currently used. (See SetAgcLimitGain function for more about limit gain.)
+
+</member>
+        <member name="M:i3.TE_A.SetAgcLimitGain(System.Single)">
+@brief Set agc limit gain
+@param _limitGain : limit gain value. should be greater than 0.
+@return false if argument is less than or equal to zero. true otherwise.
+@remark Automatic Gain Control(AGC) algorithm is applied in thermal image to create more clearer image. But, if contrast is enhanced too much, image can be seen too noisy.
+@remark Limit gain controls how much it will enhance contrast for flat scene. Larger limit gain will enhance contrast more. This function is for setting this limit gain.
+
+</member>
+        <member name="M:i3.TE_A.LensShadingCorrection">
+@brief Do Lens Shading Correction
+@return true if success. otherwise false
+@remark This function calibrate shading at outer position generated by lens effect in order to make uniform image. Thermal Expert engine should see uniform scene before executing this function.
+
+</member>
+        <member name="M:i3.TE_A.LoadCalibration(System.SByte!System.Runtime.CompilerServices.IsSignUnspecifiedByte!System.Runtime.CompilerServices.IsConst*)">
+@brief Load calibration data
+@param _path : file name to load
+@return true : succeeded to load data
+@return false : failed to load data (file open fail, incorrect file size, or incorrect data load)
+@remark If user have calibration data (using SaveCalibration function), user can load that file and apply calibration data to improve image quality.
+@remark Incorrect file load can cause bad image quality or file load fail.
+
+</member>
+        <member name="M:i3.TE_A.SaveCalibration(System.SByte!System.Runtime.CompilerServices.IsSignUnspecifiedByte!System.Runtime.CompilerServices.IsConst*)">
+@brief Save calibration data in file
+@return true: success
+@return false: fail
+@remark This function will save offset values to obtain uniform image in file with given path. Before calling this function, call LensShadingCorrection function.
+
+</member>
+        <member name="M:i3.TE_A.GetShutterPt100Temp">
+@brief Get Shutter temperature
+@return Shutter temperature
+@remark PT100 sensor is attached to shutter in order to calibrate temperature and it returns this shutter temperature computed from this PT100 sensor output.
+@remark PT100 output value is updated when shutter is closed. Therefore if shutter is not closed for long time, it may return incorrect value. User should close shutter periodically to get correct value by calling ShutterCalibrationOn or SetShutterMode function.
+@remark Also, TE sends this value at the end of image data, so it returns PT100 output which is received at last RecvImage function call. To get current PT100 output, RecvImage needs to be called before calling this function.
+
+</member>
+        <member name="M:i3.TE_A.GetShutterPt100RawValue">
+@brief Get PT100 sensor output
+@return PT100 sensor output
+@remark PT100 sensor is attached to shutter in order to calibrate temperature and it returns this PT100 sensor output.
+@remark PT100 output value is updated when shutter is closed. Therefore if shutter is not closed for long time, it may return incorrect value. User should close shutter periodically to get correct value by calling ShutterCalibrationOn or SetShutterMode function.
+@remark Also, TE sends this value at the end of image data, so it returns PT100 output which is received at last RecvImage function call. To get current PT100 output, RecvImage needs to be called before calling this function.
+
+</member>
+        <member name="M:i3.TE_A.GetFpaTemp">
+@brief Get FPA temperature
+@return fpa temperature
+@remark This function returns fpa temperature. This value depends on environment temperature. Also it is different for every TE even though TEs are in same condition.
+@remark FPA temperature is updated when image is taken from TE and this function returns most recently received value.
+
+</member>
+        <member name="M:i3.TE_A.GetID">
+@brief Get serial number of TE
+@return serial number
+@remark This function returns serial number of TE which is unique for each product.
+
+</member>
+        <member name="M:i3.TE_A.ShutterCalibrationOn">
+@brief Do calibration
+@return true: success
+@return false: fail
+@remark This function will close shutter and recalculate offset values to obtain uniform image.
+
+</member>
+        <member name="M:i3.TE_A.SetShutterTemperature(System.UInt16)">
+@brief Set temperature variation limit to close shutter
+@param _temp : temperature variation limit. This value should be withnin I3_SHUTTER_TEMP_MIN and I3_SHUTTER_TEMP_MAX.
+@return true : set signal is transferred successfully
+@return false : Transfer of signal failed
+@remark When temperature shutter mode is set, shutter will be closed if temperature change of shutter is over temperature variation limit. This function set the limit.
+@remark See SetShutterMode.
+
+</member>
+        <member name="M:i3.TE_A.SetShutterTime(System.UInt16)">
+@brief Set period of shutter operation
+@param _time : Period of shutter operation. This value should be withnin I3_SHUTTER_TIME_MIN and I3_SHUTTER_TIME_MAX.
+@return true : set signal is transferred successfully
+@return false : Transfer of signal failed
+@remark This function is used to set period of shutter operation. Shutter is close for every _time * 30 sec if time shutter mode is set.
+@remark See SetShutterMode.
+
+</member>
+        <member name="M:i3.TE_A.SetShutterMode(System.UInt16)">
+@brief Set shutter operation mode
+@param _mode : Shutter operation mode. (Time mode = I3_TIME_SHUTTER, Temperature mode = I3_TEMP_SHUTTER)
+@return true : Signal is transferred successfully
+@return false : Transfer of signal failed
+@remark Shutter in TE engine is automatically closed and do calibration to maintain high image quality. This function set a condition when shutter is closed. It supports time mode which closes shutter periodically with specified period and temperature mode which closes shutter when temperature of shutter is changed with specified amount.
+@remark See SetShutterTemperature and SetShutterTime.
+
+</member>
+        <member name="M:i3.TE_A.GetSetting(i3.TE_Setting*)">
+@brief Get current setting in TE
+@param _pSetting : Pointer of TE_SETTING struct to get setting values
+@remark It returns current setting values in _pSetting variable.
+
+</member>
+        <member name="M:i3.TE_A.SaveSetting(i3.TE_Setting*)">
+@brief Save current setting in TE
+@param _pSetting : Pointer of TE_SETTING struct which contains setting values to save
+@return true if save setting signal is transferred successfully, otherwise return false
+@remark It sends signal to save setting values in TE engine. Values in _pSetting struct will be saved. But, saved setting values are not applied until power is off. Keep cable connected more than 10 seconds. otherwise, it may remove data in flash memory. If settings are successfully saved, thsee values will be applied when TE is connected.
+
+</member>
+        <member name="M:i3.TE_A.SetEmissivity(System.Single)">
+@brief Set emissivity value
+@param _emissivity : emissivity value to apply
+@remark It sets emissivity value and afterwards emissivity applied temperature value will be returned when calling CalcTemp function.
+
+</member>
+        <member name="M:i3.TE_A.ResetMainBoard">
+@brief Reset TE engine
+@return true if reset signal is transferred successfully, otherwise return false
+@remark It sends signal to reset TE engine. After calling this function, TE will be rebooted.
+
+</member>
+        <member name="M:i3.TE_A.CalcTemp(System.UInt16*)">
+@brief Get temperature of 1 frame
+@param _pTempBuf : buffer to get temperature data (384x288 for QVGA and 640x480 for VGA)
+@remark This function returns temperature data for entire image which is most recently received. Therefore RecvImage function should be called before calling this function. Returned values are modified to fit into 2byte. To get temperature, user should subtract 5000 and then divide by 100, i.e. (real temperature value) = (return value - 5000) / 100
+
+</member>
+        <member name="M:i3.TE_A.CalcTemp(System.UInt16,System.UInt16)">
+@brief Get temperature (1 pixel)
+@param _x : x coordinate
+@param _y : y coordinate
+@remark This function returns temperature for given pixel. RecvImage function should be called before calling this function. Returned values are modified to fit into 2byte. To get temperature, user should subtract 5000 and then divide by 100, i.e. (real temperature value) = (return value - 5000) / 100
+
+</member>
+        <member name="M:i3.TE_A.GetImageHeight">
+@brief Get image height
+@return Image height
+@remark Return height of image, i.e. it returns 288 for QVGA and 480 for VGA
+
+</member>
+        <member name="M:i3.TE_A.GetImageWidth">
+@brief Get image width
+@return Image width
+@remark Return width of image, i.e. it returns 384 for QVGA and 640 for VGA
+
+</member>
+        <member name="M:i3.TE_A.SetImgOutPrms(i3.IMGOUTPRMS)">
+@brief Set Image Output Parameters
+@param prms : Parameters to apply.
+@remark This function sets parameters to determine image processing algorithms which is appiled after receiving raw data from thermal detector. These parameters are applied when user gets image from RecvImage(unsigned short *dst) function. Other RecvImage function does not apply these parameters and returns data depending on its own arguments.
+
+</member>
+        <member name="M:i3.TE_A.RecvImage(System.UInt16*)">
+@brief Receive image data which image processing algorithm is applied to.
+@param dst : Buffer to get output image.
+@return 1: Read image successfully
+@return 2: Read image of size 0 (image not ready)
+@return 3: Recieved image size is not equal to requested size
+@return 4: Data read fail
+@remark This function receives data from Thermal Expert and applies image processing algorithm depending on parameters set. Parameters for image processing algorithms can be set in SetImgOutPrms function. AGC is enabled and other image processing algorithms are disabled in default setting.
+
+</member>
+        <member name="M:i3.TE_A.RecvImage(System.UInt16*,System.Single,System.Single)">
+@brief Receive image data with temperature limit
+@param img_buf : variable to get image data (384x288 for QVGA and 640x480 for VGA, 16bits)
+@param temp_min : minimum temperature to express in image
+@param temp_max : maximum temperature to express in image
+@return 1: Read image successfully
+@return 2: Read image of size 0 (image not ready)
+@return 3: Recieved image size is not equal to requested size
+@return 4: Data read fail
+@remark This function receive image data from Thermal Expert and manipulate data to express scene within temperature range. if temperature is smaller than temp_min, 0 will be assigned, and if temperature is greater than temp_max, 65535 will be assigned.  temperature within those limit will set value between 0 and 65535 depending on temperature.
+
+</member>
+        <member name="M:i3.TE_A.RecvImage(System.UInt16*,System.Boolean)">
+@brief Receive image data
+@param pRecvImage : variable to get image data (384x288 for QVGA and 640x480 for VGA, 16bits)
+@param _AGC_On : if set true, AGC algorithm is applied. Otherwise, AGC is not applied.
+@return 1: Read image successfully
+@return 2: Read image of size 0 (image not ready)
+@return 3: Recieved image size is not equal to requested size
+@return 4: Data read fail
+@remark This function receive data from Thermal Expert and calibrate to show image. It send image data to pRecvImage. If _AGC_On is set to true, gain and offset value is automatically calculated so that image data will be fitted to 16bit range.
+
+</member>
+        <member name="M:i3.TE_A.CloseTE">
+@brief Disconnect Thermal Expert
+@remark This function disconnect the Thermal Expert and delete data. Call this function after finishing the work.
+
+</member>
+        <member name="M:i3.TE_A.Dispose">
+@brief Destructor of TE_A class
+
+</member>
+        <member name="M:i3.TE_A.#ctor(System.Void*)">
+@brief Constructor of TE_A class
+
+</member>
+        <member name="D:BOOL">
+@file 
+@brief This file defines interface for communication with thermal expert 
+
+</member>
+        <!-- Discarding badly formed XML document comment for member 'M:i3.TE_B.UpdateDead(System.SByte!System.Runtime.CompilerServices.IsSignUnspecifiedByte!System.Runtime.CompilerServices.IsConst*)'. -->
+        <!-- Discarding badly formed XML document comment for member 'M:i3.TE_B.AddDead(System.UInt32,System.UInt32)'. -->
+        <!-- Discarding badly formed XML document comment for member 'M:i3_cs.TE_B.UpdateDead(System.SByte!System.Runtime.CompilerServices.IsSignUnspecifiedByte!System.Runtime.CompilerServices.IsConst*)'. -->
+        <!-- Discarding badly formed XML document comment for member 'M:i3_cs.TE_B.AddDead(System.UInt32,System.UInt32)'. -->
+    </members>
+</doc>

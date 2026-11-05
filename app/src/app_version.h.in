@@ -1,0 +1,9 @@
+#ifndef HWLAB_APP_APP_VERSION_H_
+#define HWLAB_APP_APP_VERSION_H_
+
+// cmake가 HWLAB_APP_VERSION으로 채웁니다. 릴리즈 빌드는 태그 이름(vX.Y.Z)이고, 개발 빌드는 빈 문자열입니다.
+inline constexpr char kAppVersion[] = "@HWLAB_APP_VERSION@";
+// 빌드한 커밋(7자리). 커밋하지 않은 변경이 있으면 -dirty가 붙고, git으로 읽지 못하면 빈 문자열입니다.
+inline constexpr char kAppCommit[] = "@HWLAB_APP_COMMIT@";
+
+#endif  // HWLAB_APP_APP_VERSION_H_

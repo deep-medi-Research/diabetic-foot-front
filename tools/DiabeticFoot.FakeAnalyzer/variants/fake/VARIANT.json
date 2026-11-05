@@ -1,9 +1,0 @@
-{
- "id": "fake",
- "label": "가짜 분석기",
- "summary": "모든 요청에 같은 고정 결과를 냅니다",
- "upstream": {
-  "commit": "fake",
-  "date": "2026-11-04"
- }
-}
