@@ -33,7 +33,7 @@ class RgbCamera {
    * @param name_contains 장치 이름에 들어 있는 문자열(예: "See3CAM_24CUG")
    * @param width 폭
    * @param height 높이
-   * @param frame_rate 이 fps 이상을 낼 수 있는 형식만 엽니다. USB 2 포트에서는 최대 fps가 낮아 열지 않습니다
+   * @param frame_rate 이 fps 이상을 낼 수 있는 형식만 엽니다. USB 2 속도로 연결되면 최대 fps가 낮아 열지 않습니다
    * @param error 장치를 찾았지만 열지 못하면 이유를 씁니다. 장치를 찾지 못했으면 비워 둡니다(아직 연결 전일 수 있음)
    * @return 연 카메라. 장치나 형식을 찾지 못하면 nullptr
    */
@@ -62,7 +62,7 @@ class RgbCamera {
   virtual bool Reopen() = 0;
 
   /**
-   * 장치를 찾았지만 촬영 선언의 형식으로 열지 못한 이유입니다. 예: USB 2 포트라 UYVY 1920x1200이 최대 6fps
+   * 장치를 찾았지만 촬영 선언의 형식으로 열지 못한 이유입니다. 예: USB 2 속도로 연결돼 UYVY 1920x1200이 최대 6fps
    *
    * @return 이유. 열었거나 장치를 찾지 못했으면 빈 문자열
    * @note 어느 스레드에서 불러도 됩니다.
@@ -103,6 +103,18 @@ class RgbCamera {
    */
   virtual void Interrupt() = 0;
 };
+
+/**
+ * 카메라가 알린 최대 fps가 선언 fps보다 낮아 열지 못할 때 화면에 보일 안내입니다.
+ *
+ * 같은 카메라가 USB 3 속도로 연결되면 UYVY 1280x720을 60fps 이상으로 알리고 USB 2 속도로 연결되면 15fps로 알리므로, 최대 fps만 보고
+ * USB 2 속도로 연결된 것으로 "보인다"고 추정해 말합니다. 포트가 USB 3여도 케이블, 허브, Type-C 방향이 원인일 수 있어 그 셋을 안내합니다.
+ *
+ * @param format 형식 이름(예: "UYVY 1280x720")
+ * @param max_fps 그 크기 UYVY 형식들의 최대 fps 중 가장 큰 값
+ * @param frame_rate 촬영 선언의 fps
+ */
+std::string LowFrameRateMessage(const std::string& format, double max_fps, int32_t frame_rate);
 
 /** 목표 상태로 맞춘 결과입니다. */
 struct ReconcileResult {

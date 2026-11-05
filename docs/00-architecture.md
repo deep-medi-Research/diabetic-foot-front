@@ -262,7 +262,7 @@ platform 헤더는 `platform/include/hwlab/platform/`에 있고 네임스페이�
 | 반영 프레임 | 노출 4번째, 게인과 색온도 3번째 | 실측(60fps, 30fps) |
 | 노출 변경 뒤 3번째 프레임 | 사용 금지(밝기가 크게 벗어남) | 실측 |
 | 블랙 레벨 안정화 | 설정 변경 뒤 75프레임 | 실측 |
-| USB 2 연결 | UYVY 1080p가 8fps | 실측 |
+| USB 2 연결 | UYVY 1080p가 8fps, 720p가 15fps | 실측 |
 
 ### TE-EV1 (열화상)
 
@@ -476,3 +476,4 @@ platform 헤더는 `platform/include/hwlab/platform/`에 있고 네임스페이�
 - 2026-11-03: 열화상 카메라 온도 파일(`<촬영 이름>_thermal_camera_temp.csv`). 원시값 파일에 쓴 프레임마다 FPA 값, 셔터 PT100 원시값, 셔터 온도(°C)를 사이드카와 같은 번호와 시각으로 남김(`CameraTemperature`, `ThermalCamera::LastCameraTemperature`). 사이드카와 매니페스트 형식은 그대로. 표 2에 카메라 온도, 카메라 온도 파일 추가
 - 2026-11-03: 분석 판을 v9에서 v10 하나로 바꿈(#88). 60 fps 녹화는 연속한 두 장의 평균을 한 장으로 써서 30 fps로 분석함. 30초 모자람 검사(`check_inputs`)는 카메라 장 수가 아니라 분석 장 수를 900과 견줌. 경로 길이 상한의 가장 긴 판 이름을 `v10`으로 셈
 - 2026-11-03: 설치 프로그램이 열화상 카메라 USB 드라이버(`i3usbdrv` 1.0.4.0)를 드라이버 저장소에 넣음. 앱은 관리자 권한 없이 설치하고, 드라이버 단계만 사용자 계정 컨트롤로 pnputil을 실행함. 거절하면 `drivers\install_thermal_driver.cmd`로 나중에 넣음. 표 5 TE-EV1, 표 10 열화상 SDK 재배포 고침
+- 2026-11-05: USB 3 포트에 꽂아도 케이블 때문에 USB 2 속도로 연결되면 UYVY 1280x720이 최대 15fps라 60fps로 찍지 못함(고객사 2026-11-04, SDK-197). 앱 안내(`LowFrameRateMessage`)가 포트만 말하던 것을 USB 2 속도로 연결된 것으로 보인다는 말과 USB 3 케이블, 허브 없이 연결, Type-C 뒤집기로 바꿈. 진단(`hwlab_diagnose.cmd`)에 RGB 카메라 USB 연결 속도(SuperSpeed 여부), 연결 경로(허브), 형식별 최대 fps(허브에서 읽은 USB 설명자, 카메라를 열지 않음), 열화상 SDK가 쓰는 VC++ 2010 x64 런타임(MSVCR100, MSVCP100, mfc100u) 확인을 넣고, 설치 프로그램 기록은 이 앱 것만 보임
