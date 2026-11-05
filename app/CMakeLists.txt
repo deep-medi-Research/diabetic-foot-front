@@ -6,8 +6,11 @@ project(hwlab_app LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(HWLAB_PLATFORM_TESTS OFF CACHE BOOL "" FORCE)
-add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../platform platform)
+# 레포 루트에서 구성하면 platform이 이미 들어와 있습니다. app만 구성할 때는 platform을 시험 없이 넣습니다.
+if(NOT TARGET hwlab_platform)
+  set(HWLAB_PLATFORM_TESTS OFF)
+  add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../platform platform)
+endif()
 
 find_package(Qt6 6.5 REQUIRED COMPONENTS Quick QuickControls2)
 qt_standard_project_setup(REQUIRES 6.5)

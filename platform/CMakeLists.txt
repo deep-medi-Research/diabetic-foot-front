@@ -15,8 +15,11 @@ else()
   set(HWLAB_WARNINGS -Wall -Wextra -Wpedantic)
 endif()
 
-set(HWLAB_BUILD_TESTS OFF CACHE BOOL "" FORCE)
-add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../core core)
+# 레포 루트에서 구성하면 core가 이미 들어와 있습니다. platform만 구성할 때는 core를 시험 없이 넣습니다.
+if(NOT TARGET hwlab_vocabulary)
+  set(HWLAB_BUILD_TESTS OFF)
+  add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../core core)
+endif()
 
 add_library(hwlab_platform STATIC
   src/capture.cc
