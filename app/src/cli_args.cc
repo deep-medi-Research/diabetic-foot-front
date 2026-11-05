@@ -12,7 +12,7 @@ namespace {
 constexpr ArgSpec kArguments[] = {
     {"--spec", "<선언 파일>", Group::kRun, "촬영 선언(JSON)입니다. --result가 아니면 꼭 필요하고, 설치 폴더의 specs에 있습니다", false},
     {"--out", "<폴더>", Group::kRun,
-     "처음 저장 위치입니다. 화면에서 고른 위치를 기억하고 있으면 그 위치를 쓰고, 둘 다 없으면 현재 폴더의 captures입니다", false},
+     "처음 저장 위치입니다. 화면에서 고른 위치를 기억하고 있으면 그 위치를 쓰고, 둘 다 없으면 현재 폴더의 captures입니다. 설치 바로가기는 문서\\DiabeticFoot를 줍니다", false},
     {"--profile", "<이름>", Group::kRun,
      "설정, 기록, 로그를 따로 두는 이름입니다. 빌드 폴더에서 실행하면 dev이고, default는 설치본과 같은 위치입니다", false},
     {"--help", nullptr, Group::kRun, "이 도움말을 보이고 끝납니다(-h, /?도 됩니다)", false},
@@ -24,16 +24,16 @@ constexpr ArgSpec kArguments[] = {
     {"--pixel-left-foot", "left|right", Group::kDevices, "화면 왼쪽 상자의 발을 정한 채로 시작합니다", false},
     {"--rgb-regions", "<x,y,w,h,x,y,w,h>", Group::kDevices,
      "RGB 좌우 영역(화소 왼쪽, 화소 오른쪽)을 정한 채로 시작합니다. 격자 맞춤 없이 그대로 검사합니다", false},
-    {"--rgb-area", "<x,y,w,h>", Group::kDevices, "RGB 패널의 관찰 영역(프레임 화소)을 정한 채로 시작합니다", false},
+    {"--rgb-area", "<x,y,w,h>", Group::kDevices, "RGB 패널의 관찰 영역(프레임 화소)을 정한 채로 시작합니다. 관찰 영역 화면을 --screenshot으로 확인할 때 씁니다", false},
     {"--palette", "iron|gray|rainbow|high-contrast", Group::kDevices, "열화상 색상표를 정한 채로 시작합니다", false},
 
     {"--fake", nullptr, Group::kFake,
      "장비 없이 가짜 RGB, 열화상, PPG(COM6), LED(COM7)로 시작합니다. 화면에서 바꾼 값을 다음 실행에 남기지 않습니다", false},
-    {"--fake-thermal-absent", nullptr, Group::kFake, "--fake에서 열화상 장치를 찾지 못하는 상태로 만듭니다", false},
-    {"--fake-thermal-delay-ms", "<ms>", Group::kFake, "--fake에서 열화상을 연 뒤 첫 프레임이 이 시간만큼 늦게 오게 합니다", false},
+    {"--fake-thermal-absent", nullptr, Group::kFake, "--fake에서 열화상 장치를 찾지 못하는 상태로 만듭니다. 열화상 없이 찍을지 묻는 안내를 시험할 때 씁니다", false},
+    {"--fake-thermal-delay-ms", "<ms>", Group::kFake, "--fake에서 열화상을 연 뒤 첫 프레임이 이 시간만큼 늦게 오게 합니다. 같은 안내를 시험할 때 씁니다", false},
     {"--fake-free-bytes", "<바이트>", Group::kFake, "디스크 여유를 읽지 않고 이 값으로 봅니다. 디스크 부족 거부를 시험할 때 씁니다", false},
     {"--fake-restore-fails", nullptr, Group::kFake,
-     "--fake에서 자동 색온도 명령을 실패시켜, 종료 때 카메라 복원 불일치 안내를 시험합니다", false},
+     "--fake에서 실행 전 색온도를 자동으로 두고 자동 색온도 명령을 실패시켜, 종료 때 카메라 복원 불일치 안내를 시험합니다", false},
 
     {"--light-port", "<포트>", Group::kPeripherals, "시작하면서 LED 포트를 엽니다. --fake에서는 가짜 포트(COM7)만 열립니다", false},
     {"--light-percent", "<%>", Group::kPeripherals, "--light-port로 연 뒤 보낼 밝기입니다. 기본은 50입니다", false},
@@ -42,7 +42,7 @@ constexpr ArgSpec kArguments[] = {
     {"--ppg-port", "<포트>", Group::kPeripherals,
      "시작하면서 PPG 포트를 열고 장치를 시작합니다. --fake에서는 가짜 장치(COM6)만 열립니다", false},
     {"--ppg-remember", "<VID:PID:일련번호>", Group::kPeripherals,
-     "기억한 PPG 변환기를 정한 채로 시작합니다. 다음 실행에 남기지 않습니다", false},
+     "기억한 PPG 변환기를 정한 채로 시작합니다. \"지난번 PPG\" 표시와 조명 칸의 확인을 시험할 때 쓰며 다음 실행에 남기지 않습니다", false},
 
     {"--patient", "<이름>", Group::kPatient, "환자 이름 칸을 채운 채로 시작합니다. 로그에는 값을 남기지 않습니다", true},
     {"--birth", "<0000-00-00>", Group::kPatient, "생년월일 칸을 채운 채로 시작합니다. 로그에는 값을 남기지 않습니다", true},

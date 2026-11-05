@@ -274,7 +274,7 @@ rm -r ~/Library/Application\ Support/deepmedi/hwlab-dev
 | 인자 | 설명 |
 | --- | --- |
 | `--spec <선언 파일>` | 촬영 선언(JSON)입니다. --result가 아니면 꼭 필요하고, 설치 폴더의 specs에 있습니다 |
-| `--out <폴더>` | 처음 저장 위치입니다. 화면에서 고른 위치를 기억하고 있으면 그 위치를 쓰고, 둘 다 없으면 현재 폴더의 captures입니다 |
+| `--out <폴더>` | 처음 저장 위치입니다. 화면에서 고른 위치를 기억하고 있으면 그 위치를 쓰고, 둘 다 없으면 현재 폴더의 captures입니다. 설치 바로가기는 문서\DiabeticFoot를 줍니다 |
 | `--profile <이름>` | 설정, 기록, 로그를 따로 두는 이름입니다. 빌드 폴더에서 실행하면 dev이고, default는 설치본과 같은 위치입니다 |
 | `--help` | 이 도움말을 보이고 끝납니다(-h, /?도 됩니다) |
 
@@ -287,7 +287,7 @@ rm -r ~/Library/Application\ Support/deepmedi/hwlab-dev
 | `--lens-shading-folder <폴더>` | 열화상 렌즈 셰이딩 보정 파일 폴더입니다. 기본은 앱 데이터 폴더의 thermal이고, --fake는 보정 기능이 없는 열화상입니다 |
 | `--pixel-left-foot left\|right` | 화면 왼쪽 상자의 발을 정한 채로 시작합니다 |
 | `--rgb-regions <x,y,w,h,x,y,w,h>` | RGB 좌우 영역(화소 왼쪽, 화소 오른쪽)을 정한 채로 시작합니다. 격자 맞춤 없이 그대로 검사합니다 |
-| `--rgb-area <x,y,w,h>` | RGB 패널의 관찰 영역(프레임 화소)을 정한 채로 시작합니다 |
+| `--rgb-area <x,y,w,h>` | RGB 패널의 관찰 영역(프레임 화소)을 정한 채로 시작합니다. 관찰 영역 화면을 --screenshot으로 확인할 때 씁니다 |
 | `--palette iron\|gray\|rainbow\|high-contrast` | 열화상 색상표를 정한 채로 시작합니다 |
 
 **가짜 장치(--fake)**
@@ -295,10 +295,10 @@ rm -r ~/Library/Application\ Support/deepmedi/hwlab-dev
 | 인자 | 설명 |
 | --- | --- |
 | `--fake` | 장비 없이 가짜 RGB, 열화상, PPG(COM6), LED(COM7)로 시작합니다. 화면에서 바꾼 값을 다음 실행에 남기지 않습니다 |
-| `--fake-thermal-absent` | --fake에서 열화상 장치를 찾지 못하는 상태로 만듭니다 |
-| `--fake-thermal-delay-ms <ms>` | --fake에서 열화상을 연 뒤 첫 프레임이 이 시간만큼 늦게 오게 합니다 |
+| `--fake-thermal-absent` | --fake에서 열화상 장치를 찾지 못하는 상태로 만듭니다. 열화상 없이 찍을지 묻는 안내를 시험할 때 씁니다 |
+| `--fake-thermal-delay-ms <ms>` | --fake에서 열화상을 연 뒤 첫 프레임이 이 시간만큼 늦게 오게 합니다. 같은 안내를 시험할 때 씁니다 |
 | `--fake-free-bytes <바이트>` | 디스크 여유를 읽지 않고 이 값으로 봅니다. 디스크 부족 거부를 시험할 때 씁니다 |
-| `--fake-restore-fails` | --fake에서 자동 색온도 명령을 실패시켜, 종료 때 카메라 복원 불일치 안내를 시험합니다 |
+| `--fake-restore-fails` | --fake에서 실행 전 색온도를 자동으로 두고 자동 색온도 명령을 실패시켜, 종료 때 카메라 복원 불일치 안내를 시험합니다 |
 
 **LED와 PPG**
 
@@ -308,7 +308,7 @@ rm -r ~/Library/Application\ Support/deepmedi/hwlab-dev
 | `--light-percent <%>` | --light-port로 연 뒤 보낼 밝기입니다. 기본은 50입니다 |
 | `--light-remember <VID:PID:일련번호>` | 기억한 LED 변환기를 정한 채로 시작합니다. 포트 제안을 시험할 때 쓰며 다음 실행에 남기지 않습니다 |
 | `--ppg-port <포트>` | 시작하면서 PPG 포트를 열고 장치를 시작합니다. --fake에서는 가짜 장치(COM6)만 열립니다 |
-| `--ppg-remember <VID:PID:일련번호>` | 기억한 PPG 변환기를 정한 채로 시작합니다. 다음 실행에 남기지 않습니다 |
+| `--ppg-remember <VID:PID:일련번호>` | 기억한 PPG 변환기를 정한 채로 시작합니다. "지난번 PPG" 표시와 조명 칸의 확인을 시험할 때 쓰며 다음 실행에 남기지 않습니다 |
 
 **환자 정보 칸 채우기**
 
