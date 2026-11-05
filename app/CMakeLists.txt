@@ -56,6 +56,13 @@ if(WIN32)
     add_custom_command(TARGET hwlab_app POST_BUILD
       COMMAND ${CMAKE_COMMAND} -E copy_if_different "${HWLAB_VENDOR_DLL_DIR}/eCAMFwSw.dll" "$<TARGET_FILE_DIR:hwlab_app>")
   endif()
+  # 빌드 폴더의 실행 파일이 Qt 경로 없이 뜨도록 Qt DLL, 플러그인, QML 모듈을 옆에 모읍니다(Visual Studio F5, 빌드 폴더에서 실행).
+  # 바뀌지 않은 파일은 다시 복사하지 않습니다. 배포 폴더(cmake --install)는 아래의 Qt 배포 스크립트가 따로 만듭니다.
+  # offscreen 플러그인은 화면 없는 SSH 세션에서 QT_QPA_PLATFORM=offscreen과 --screenshot으로 확인할 때 씁니다.
+  add_custom_command(TARGET hwlab_app POST_BUILD
+    COMMAND Qt6::windeployqt --qmldir "${CMAKE_CURRENT_SOURCE_DIR}/qml" --no-translations --no-compiler-runtime
+            --no-system-d3d-compiler --no-opengl-sw --include-plugins qoffscreen --verbose 0 "$<TARGET_FILE:hwlab_app>"
+    VERBATIM)
 endif()
 
 # 배포: cmake --install <빌드 폴더> --prefix <폴더> 로 Qt 경로 없이 실행되는 폴더를 만듭니다.
