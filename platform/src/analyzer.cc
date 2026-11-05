@@ -479,6 +479,65 @@ AnalyzerStatus Analyzer::Status() const {
   return s;
 }
 
+namespace {
+
+std::string GenericUtf8(const std::filesystem::path& path) {
+  const std::u8string text = path.lexically_normal().generic_u8string();
+  return std::string(text.begin(), text.end());
+}
+
+// PATH의 폴더에서 실행할 수 있는 파일을 찾습니다. 상대 폴더는 cwd 기준입니다. 없으면 빈 문자열입니다.
+std::string FindOnPath(const std::string& name, const std::filesystem::path& cwd, const std::string& path_env) {
+#ifdef _WIN32
+  constexpr char kSeparator = ';';
+  const std::vector<std::string> names = {name, name + ".exe"};
+#else
+  constexpr char kSeparator = ':';
+  const std::vector<std::string> names = {name};
+#endif
+  size_t begin = 0;
+  while (begin <= path_env.size()) {
+    size_t end = path_env.find(kSeparator, begin);
+    if (end == std::string::npos) end = path_env.size();
+    const std::string folder = path_env.substr(begin, end - begin);
+    begin = end + 1;
+    if (folder.empty()) continue;
+    for (const std::string& candidate : names) {
+      const std::filesystem::path file = cwd / PathFromUtf8(folder) / PathFromUtf8(candidate);
+      std::error_code ec;
+      const std::filesystem::file_status status = std::filesystem::status(file, ec);
+      if (ec || status.type() == std::filesystem::file_type::not_found ||
+          status.type() == std::filesystem::file_type::directory) {
+        continue;
+      }
+#ifndef _WIN32
+      constexpr auto kExec = std::filesystem::perms::owner_exec | std::filesystem::perms::group_exec |
+                             std::filesystem::perms::others_exec;
+      if ((status.permissions() & kExec) == std::filesystem::perms::none) continue;
+#endif
+      return GenericUtf8(file);
+    }
+  }
+  return std::string();
+}
+
+}  // namespace
+
+AnalyzerOverrides ResolveAnalyzerOverrides(const std::string& python, const std::string& script,
+                                           const std::string& cwd, const std::string& path_env) {
+  const std::filesystem::path base = PathFromUtf8(cwd);
+  AnalyzerOverrides out;
+  out.script = script.empty() ? script : GenericUtf8(base / PathFromUtf8(script));
+  if (python.empty()) return out;
+  if (python.find_first_of("/\\") != std::string::npos) {
+    out.python = GenericUtf8(base / PathFromUtf8(python));
+    return out;
+  }
+  const std::string found = FindOnPath(python, base, path_env);
+  out.python = found.empty() ? python : found;
+  return out;
+}
+
 ProcessLaunch AnalyzerLaunch(const std::string& app_dir, const std::string& python_override,
                              const std::string& script_override) {
   std::string base = app_dir;
@@ -557,7 +616,11 @@ std::optional<std::string> AnalyzerFilesProblem(const ProcessLaunch& launch) {
   const auto check = [](const std::string& what, const std::string& path) -> std::optional<std::string> {
     std::error_code ec;
     const auto p = PathFromUtf8(path);
-    if (path.empty() || !std::filesystem::is_regular_file(p, ec)) return what + " 없음: " + path;
+    if (path.empty() || !std::filesystem::is_regular_file(p, ec)) {
+      // 구분자가 없는 이름은 개발용 인자를 PATH에서 찾지 못한 경우입니다.
+      const bool bare = path.find_first_of("/\\") == std::string::npos;
+      return what + " 없음: " + path + (bare && !path.empty() ? " (PATH에서 찾지 못했습니다)" : "");
+    }
     if (std::filesystem::file_size(p, ec) == 0 || ec) return what + " 크기 0: " + path;
     return std::nullopt;
   };

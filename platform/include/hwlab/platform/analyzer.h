@@ -194,10 +194,37 @@ class Analyzer {
  * @param python_override 비어 있지 않으면 이 파이썬을 씁니다(개발용 명령줄 인자)
  * @param script_override 비어 있지 않으면 이 스크립트를 씁니다(개발용 명령줄 인자)
  * @return 실행 정보. 경로 구분자는 '/'입니다
- * @note 시스템 PATH의 파이썬으로 물러나지 않습니다. 패키지 판이 다른 파이썬으로 분석하면 결과가 달라질 수 있습니다.
+ * @note 배포 폴더의 파이썬이 없다고 시스템 PATH의 파이썬으로 물러나지 않습니다. 패키지 판이 다른 파이썬으로 분석하면 결과가 달라질 수 있습니다.
+ *       개발용 인자의 이름만 준 파이썬을 PATH에서 찾는 일은 ResolveAnalyzerOverride가 합니다.
  */
 ProcessLaunch AnalyzerLaunch(const std::string& app_dir, const std::string& python_override,
                              const std::string& script_override);
+
+/** 개발용 인자 `--analyzer-python`, `--analyzer-script`를 풀어 쓴 값입니다. 비어 있으면 배포 폴더 기본값을 씁니다. */
+struct AnalyzerOverrides {
+  std::string python;
+  std::string script;
+};
+
+/**
+ * 개발용 인자 `--analyzer-python`, `--analyzer-script` 값을 앱이 시작한 폴더 기준으로 풀어 줍니다.
+ *
+ * 관류 분석 프로그램은 스크립트가 있는 폴더를 작업 폴더로 띄우므로, 상대 경로는 그 폴더 기준으로 읽혀 어긋납니다.
+ * 그래서 시작할 때 한 번 절대 경로로 바꿉니다. 비어 있는 값은 그대로 비워 둡니다(배포 폴더 기본값을 씁니다).
+ *
+ * - 스크립트: 상대 경로이면 `cwd`를 앞에 붙입니다.
+ * - 파이썬: 경로 구분자가 없는 이름(`python3`, `python`)은 `path_env`의 폴더를 앞에서부터 찾아 처음 나온 실행 파일의
+ *   절대 경로로 바꿉니다. 구분자가 있는 상대 경로는 `cwd`를 앞에 붙입니다. 이름을 찾지 못하면 이름 그대로 두므로
+ *   AnalyzerFilesProblem이 그 이름을 넣어 "파이썬 없음"으로 알립니다.
+ *
+ * @param python `--analyzer-python` 값(UTF-8). 비어 있을 수 있습니다
+ * @param script `--analyzer-script` 값(UTF-8). 비어 있을 수 있습니다
+ * @param cwd 앱이 시작한 작업 폴더(UTF-8)
+ * @param path_env 환경 변수 PATH 값(UTF-8). Windows는 ';', 그 밖에는 ':'로 나뉩니다
+ * @return 풀어 쓴 파이썬과 스크립트. 경로 구분자는 '/'입니다
+ */
+AnalyzerOverrides ResolveAnalyzerOverrides(const std::string& python, const std::string& script,
+                                           const std::string& cwd, const std::string& path_env);
 
 /** 관류 분석 프로그램의 분석 판 하나입니다. `<analysis>/variants/<판>/VARIANT.json`에서 읽습니다. */
 struct AnalyzerVariant {

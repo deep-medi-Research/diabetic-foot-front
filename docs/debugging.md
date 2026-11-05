@@ -113,12 +113,12 @@
 
 `--fake`는 카메라, 열화상, PPG(`COM6`), LED(`COM7`)를 가짜 장치로 바꿔 장비 없이 전체 화면을 띄웁니다. 분석 프로그램이 없어도 뜹니다.
 
-```bat
-build\app\hwlab_app.exe --spec specs\see3cam_manual_720p60.json --out C:\temp\shots --fake
+```powershell
+.\build\windows-debug\app\hwlab_app.exe --spec specs\see3cam_manual_720p60.json --out build\shots --fake
 ```
 
 ```bash
-build/app/hwlab_app --spec specs/see3cam_manual_720p60.json --out /tmp/shots --fake
+build/macos-debug/app/hwlab_app --spec specs/see3cam_manual_720p60.json --out build/shots --fake
 ```
 
 - **화면 없이**<br>환경 변수 `QT_QPA_PLATFORM=offscreen`을 주면 창을 띄우지 않고 돕니다. 원격 접속과 자동 시험에 씁니다. 예: `set QT_QPA_PLATFORM=offscreen`
@@ -145,7 +145,7 @@ build/app/hwlab_app --spec specs/see3cam_manual_720p60.json --out /tmp/shots --f
 `--fake`에 [가짜 분석 프로그램](../tools/fake_analysis/README.md)을 더하면 촬영, 분석 상태 막대, 결과 창을 끝까지 볼 수 있습니다. 실행 명령, 고정 결과 값, 분석 시간 늘리기(`FAKE_ANALYSIS_STAGE_MS`)는 그 문서에 있습니다.
 
 - **분석 실패를 만들 때**<br>촬영 폴더를 복사해 이름을 `fail`, `hang`, `crash`, `nosummary`로 바꾸고 `--analyze <그 폴더>`로 분석하게 합니다. 실패, 멈춤, 비정상 종료, 결과 파일 없음을 각각 흉내 냅니다
-- **분석 프로그램이 안 뜰 때**<br>`--analyzer-python`과 `--analyzer-script`는 전체 경로로 줍니다. 상대 경로를 주면 분석 프로그램을 스크립트 폴더에서 띄우므로 "준비 전에 끝났습니다(종료 코드 2)"로 실패합니다
+- **분석 프로그램이 안 뜰 때**<br>`--analyzer-script`와 `--analyzer-python`의 상대 경로는 앱을 띄운 폴더 기준이고, `python`처럼 이름만 준 파이썬은 PATH에서 찾습니다. 찾지 못하면 분석 칸에 "파이썬 없음: python (PATH에서 찾지 못했습니다)"가 보입니다
 - **분석 프로그램 없이 빌드한 경우**<br>시작 로그에 `분석 판: 분석 판이 없습니다`가 남고 화면 분석 칸은 "관류 분석 프로그램 없음"을 보입니다. 촬영과 저장은 그대로 됩니다
 
 ## 지난 촬영의 결과 창 열기
@@ -184,7 +184,7 @@ macOS의 plist는 `~/Library/Preferences`에 있고, 앱 데이터 폴더는 `~/
 ### 프로필을 고르는 규칙
 
 - **`--profile <이름>`을 주면 그 이름입니다**<br>이름은 영문, 숫자, 점, 밑줄, 하이픈 32자까지입니다. `--profile default`는 프로필 없이 설치본과 같은 위치를 씁니다
-- **주지 않으면 실행 파일이 빌드 폴더에 있는지로 정합니다**<br>실행 파일 폴더나 그 위 폴더에 `CMakeCache.txt`가 있으면 `dev`입니다. Ninja는 실행 파일과 같은 폴더, Visual Studio 생성기는 `Debug` 폴더의 위에 있습니다
+- **주지 않으면 실행 파일이 빌드 폴더에 있는지로 정합니다**<br>실행 파일 폴더나 그 위 폴더에 `CMakeCache.txt`가 있으면 `dev`입니다. 레포 루트의 프리셋 빌드(`build\windows-debug`)는 실행 파일 폴더(`app`)의 위에, 층 하나만 Ninja로 구성한 빌드는 실행 파일과 같은 폴더에, Visual Studio 생성기는 `Debug` 폴더의 위에 있습니다
 - **그 밖에는 프로필이 없습니다**<br>`cmake --install`로 만든 폴더, 설치본, 노트북에 배포하는 개발 빌드가 여기에 듭니다. 이 실행들은 지금까지처럼 설치본과 같은 위치를 씁니다
 - **확인하는 곳**<br>창 제목 끝에 `프로필 dev`가 붙고, 시작 로그에 프로필과 이유가 남습니다
 
@@ -194,7 +194,7 @@ macOS의 plist는 `~/Library/Preferences`에 있고, 앱 데이터 폴더는 `~/
 
 - **`--profile`만 두면**<br>개발자가 옵션을 알아야 하고, 모르면 같은 문제가 남습니다
 - **버전이 비어 있으면 자동으로 나누면**<br>노트북에 `deploy.ps1`로 배포한 개발 빌드는 버전이 비어 있지만 설치본과 같은 설정을 쓰는 것이 맞는 실행입니다. 설정이 갈라져 현장 사용에 영향을 주므로 쓰지 않았습니다
-- **`CMakeCache.txt`로 빌드 폴더를 알아보면**<br>빌드 폴더에서 바로 돌리는 실행(VS의 F5, `build\app\hwlab_app.exe`)만 나뉩니다. 설치 폴더에는 이 파일이 없으므로 설치본이 영향받지 않고, 빌드 폴더에서 나온 실행 파일을 다른 곳에 복사한 경우만 나뉘지 않습니다
+- **`CMakeCache.txt`로 빌드 폴더를 알아보면**<br>빌드 폴더에서 바로 돌리는 실행(VS의 F5, `build\windows-debug\app\hwlab_app.exe`)만 나뉩니다. 설치 폴더에는 이 파일이 없으므로 설치본이 영향받지 않고, 빌드 폴더에서 나온 실행 파일을 다른 곳에 복사한 경우만 나뉘지 않습니다
 
 나뉘지 않는 것도 있습니다.
 
@@ -266,7 +266,7 @@ rm -r ~/Library/Application\ Support/deepmedi/hwlab-dev
 
 ## 인자 전체
 
-`hwlab_app --help`와 같은 표입니다. 표의 원본은 `app/src/cli_args.cc` 하나이고, 이 표는 그 표에서 만듭니다. 인자를 더하거나 바꾼 뒤에는 `HWLAB_UPDATE_DOCS=1 ctest --test-dir build/app -R test_cli_args`로 이 표를 고칩니다(고치지 않으면 시험이 실패합니다).
+`hwlab_app --help`와 같은 표입니다. 표의 원본은 `app/src/cli_args.cc` 하나이고, 이 표는 그 표에서 만듭니다. 인자를 더하거나 바꾼 뒤에는 `HWLAB_UPDATE_DOCS=1 ctest --preset macos-debug -R test_cli_args`(Windows PowerShell은 `$env:HWLAB_UPDATE_DOCS = 1` 뒤에 `ctest --preset windows-debug -R test_cli_args`)로 이 표를 고칩니다(고치지 않으면 시험이 실패합니다).
 
 <!-- hwlab-args:begin -->
 **실행**
@@ -324,8 +324,8 @@ rm -r ~/Library/Application\ Support/deepmedi/hwlab-dev
 
 | 인자 | 설명 |
 | --- | --- |
-| `--analyzer-python <python.exe>` | 배포 폴더의 python 대신 쓸 파이썬입니다. PATH에서 찾지 않으므로 전체 경로로 줍니다 |
-| `--analyzer-script <dfr_worker.py>` | 배포 폴더의 analysis 대신 쓸 dfr_worker.py의 전체 경로입니다 |
+| `--analyzer-python <python.exe>` | 배포 폴더의 python 대신 쓸 파이썬입니다. python처럼 이름만 주면 PATH에서 찾고, 상대 경로는 앱을 띄운 폴더 기준입니다 |
+| `--analyzer-script <dfr_worker.py>` | 배포 폴더의 analysis 대신 쓸 dfr_worker.py입니다. 상대 경로는 앱을 띄운 폴더 기준입니다 |
 | `--analyze <촬영 폴더>` | 시작하자마자 그 촬영 폴더를 분석 대기열에 넣습니다 |
 | `--no-prestream` | 녹화 중 미리 분석(첫 장 발 분할, 영상 미리 읽기)을 쓰지 않고 화면의 스위치도 숨깁니다 |
 | `--presegment-threads <n>` | 녹화 중 첫 장 분할에 쓸 스레드 수입니다. 기본은 2이고, 0이면 분석과 같은 모델을 같이 씁니다 |

@@ -14,5 +14,5 @@ python3 -m venv .venv && .venv/bin/pip install -r tools/requirements.txt
 | `fake_analysis/dfr_worker.py` | 가짜 분석 프로그램 | 없음 | 없음 |
 
 - **`draw_flow.py`, `draw_flow_animation.py`**<br>`docs/images/`의 그림 원본입니다. 코드가 바뀌면 스크립트를 고쳐 다시 그립니다. 실행 방법은 각 파일 맨 위 주석에 있습니다. `rsvg-convert`는 macOS에서 `brew install librsvg`로 설치합니다
-- **`check_result_gif.py`**<br>앱의 `--result`와 `--screenshot`으로 결과 창을 저장해, 그 안에 분석 GIF 첫 장이 있는지 찾습니다. 사용법은 파일 맨 위 설명에 있습니다. OpenCV는 창을 띄우지 않으므로 `opencv-python-headless`면 됩니다. `--shot`은 `<촬영 폴더>/perfusion/` 바로 아래의 `_perfusion.gif`만 찾으므로, 분석 판 폴더(`perfusion/<판>/`)에 있는 결과는 "GIF가 없습니다"로 끝납니다. 판 폴더의 GIF를 `perfusion/`으로 복사한 사본으로 확인합니다
+- **`check_result_gif.py`**<br>앱의 `--result`와 `--screenshot`으로 결과 창을 저장해, 그 안에 분석 GIF 첫 장이 있는지 찾습니다. 사용법은 파일 맨 위 설명에 있습니다. OpenCV는 창을 띄우지 않으므로 `opencv-python-headless`면 됩니다. `--shot`은 분석 판 폴더(`<촬영 폴더>/perfusion/<판>/`)의 `_perfusion.gif`를 찾습니다. 판이 여럿이면 처음 찾은 판을 씁니다
 - **`fake_analysis/`**<br>사용법은 [`fake_analysis/README.md`](fake_analysis/README.md)에 있습니다

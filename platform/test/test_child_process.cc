@@ -10,6 +10,12 @@
 
 #include "hwlab/platform/perfusion_analysis.h"
 
+#ifdef _WIN32
+#define NOMINMAX
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+#endif
+
 namespace {
 
 using hwlab::platform::AnalyzerLine;
@@ -281,7 +287,8 @@ TEST(ChildProcess, StartsWithLowPriority) {
   ASSERT_EQ(normal_lines.size(), 1u);
   ASSERT_EQ(low_lines.size(), 1u);
 #ifdef _WIN32
-  EXPECT_EQ(normal_lines[0], "normal");
+  // 시험을 돌리는 프로세스가 보통보다 낮으면 플래그 없이 띄운 자식도 그 우선순위를 받으므로, 그때는 낮은 쪽만 봅니다.
+  if (GetPriorityClass(GetCurrentProcess()) == NORMAL_PRIORITY_CLASS) EXPECT_EQ(normal_lines[0], "normal");
   EXPECT_EQ(low_lines[0], "below_normal");
 #else
   // 시험을 돌리는 프로세스의 nice 값이 이미 높을 수 있어 상한 19로 자른 값과 비교합니다.

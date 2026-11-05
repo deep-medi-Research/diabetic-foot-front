@@ -4,27 +4,27 @@
 
 ## 앱에서 실행
 
-앱 인자 `--analyzer-python`과 `--analyzer-script`에 파이썬 실행 파일과 `dfr_worker.py`의 전체 경로를 줍니다. 앱이 분석 프로그램을 스크립트 폴더에서 띄우므로, 상대 경로를 주면 앱이 "준비 전에 끝났습니다(종료 코드 2)"로 실패 처리합니다.
+앱 인자 `--analyzer-python`에 파이썬(`python3` 같은 이름이나 경로), `--analyzer-script`에 `dfr_worker.py` 경로를 줍니다. 상대 경로는 앱을 띄운 폴더 기준이고, 이름만 준 파이썬은 PATH에서 찾습니다.
+
+Windows(PowerShell, 레포 폴더에서). 빌드는 [README의 빌드 절](../../README.md#명령줄에서-빌드하고-실행)을 봅니다.
+
+```powershell
+.\build\windows-debug\app\hwlab_app.exe --spec specs\see3cam_manual_720p60.json --out build\shots --fake --analyzer-python python --analyzer-script tools\fake_analysis\dfr_worker.py
+```
 
 macOS(레포 폴더에서)
 
 ```bash
-build/app/hwlab_app --spec specs/see3cam_manual_720p60.json --out /tmp/shots --fake \
-  --analyzer-python "$(command -v python3)" \
-  --analyzer-script "$PWD/tools/fake_analysis/dfr_worker.py"
+build/macos-debug/app/hwlab_app --spec specs/see3cam_manual_720p60.json --out build/shots --fake \
+  --analyzer-python python3 \
+  --analyzer-script tools/fake_analysis/dfr_worker.py
 ```
 
-Windows(명령 프롬프트, 레포 폴더에서)
-
-```bat
-<배포 폴더>\bin\hwlab_app.exe --spec <배포 폴더>\specs\see3cam_manual_720p60.json --out C:\temp\shots --fake ^
-  --analyzer-python C:\Python311\python.exe ^
-  --analyzer-script %CD%\tools\fake_analysis\dfr_worker.py
-```
+Visual Studio에서는 시작 항목 **앱: 가짜 장치와 가짜 분석**이 같은 인자로 띄웁니다.
 
 이름, 생년월일, 상완 혈압, 발목 혈압, 발목 혈압 단계를 채우고 촬영을 누릅니다. 녹화가 끝나면 결과 창이 열리고, 분석 막대는 1~2초 안에 "분석 완료"가 됩니다. 판 이름은 `fake`이고 결과는 `<촬영 폴더>/perfusion/fake/`에 생깁니다.
 
-- **python.exe 경로**<br>`where python`으로 확인합니다
+- **파이썬을 찾지 못하면**<br>분석 칸에 "파이썬 없음: python (PATH에서 찾지 못했습니다)"가 보입니다. PowerShell에서 `where.exe python`으로 위치를 확인해 전체 경로를 줍니다
 - **설치 폴더에 넣기**<br>구성할 때 `-DHWLAB_ANALYZER_DIR=<레포 전체 경로>/tools/fake_analysis`를 주면 `cmake --install`이 `bin/analysis`로 설치합니다. 앱은 `bin/python`의 파이썬을 쓰므로 Windows는 `HWLAB_PYTHON_DIR`도 줍니다
 - **분석 시간 늘리기**<br>환경 변수 `FAKE_ANALYSIS_STAGE_MS`(기본 200)가 진행 단계 사이 대기 밀리초입니다. 앱이 분석 프로그램에 인자를 더 줄 수 없어 환경 변수로 받습니다
 
@@ -33,17 +33,19 @@ Windows(명령 프롬프트, 레포 폴더에서)
 환자 정보 인자와 `--press-start`로 촬영을 자동으로 시작하고, `--screenshot`으로 화면과 결과 창을 저장합니다. 녹화는 `--after` 시각의 3분의 1에 시작하고 촬영과 분석에 약 40초가 걸리므로 `--after`는 100000 이상을 줍니다.
 
 ```bash
-build/app/hwlab_app --spec specs/see3cam_manual_720p60.json --out /tmp/shots --fake \
+build/macos-debug/app/hwlab_app --spec specs/see3cam_manual_720p60.json --out /tmp/shots --fake \
   --patient 테스트 --birth 1955-11-03 --arm-pressure 120/80 --ankle-pressure 120/80 --ankle-level 0 \
-  --analyzer-python "$(command -v python3)" --analyzer-script "$PWD/tools/fake_analysis/dfr_worker.py" \
+  --analyzer-python python3 --analyzer-script tools/fake_analysis/dfr_worker.py \
   --press-start --after 100000 --screenshot /tmp/main.png
 ```
 
 `/tmp/main.png`는 촬영 화면, `/tmp/main_result.png`는 결과 창입니다. 이미 만든 촬영 폴더의 결과 창만 저장하려면 다음을 씁니다.
 
 ```bash
-build/app/hwlab_app --result <촬영 폴더> --result-position 0.5 --screenshot /tmp/result.png --after 5000
+build/macos-debug/app/hwlab_app --result <촬영 폴더> --result-position 0.5 --screenshot /tmp/result.png --after 5000
 ```
+
+화면이 없는 Windows SSH 세션에서는 `$env:QT_QPA_PLATFORM = 'offscreen'`을 먼저 정합니다. 빌드 폴더에 offscreen 플러그인이 함께 들어 있습니다.
 
 ## 결과
 
@@ -97,7 +99,9 @@ python3 dfr_worker.py --variant fake --idle-exit 0
 
 platform 시험이 이 스크립트를 앱과 같은 명령줄로 띄워 `Analyzer`와 결과 읽기로 확인합니다. 파이썬 3.9 이상이 없으면 시험을 건너뜁니다.
 
-```bash
-cmake -S platform -B build/platform && cmake --build build/platform --target test_fake_analysis
-ctest --test-dir build/platform -R FakeAnalysis
+```powershell
+cmake --build --preset windows-debug --target test_fake_analysis
+ctest --preset windows-debug -R FakeAnalysis
 ```
+
+macOS는 프리셋 이름을 `macos-debug`로 바꿉니다.

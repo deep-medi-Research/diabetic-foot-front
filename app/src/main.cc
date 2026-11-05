@@ -255,8 +255,11 @@ int main(int argc, char* argv[]) {
   const bool trial = IsTrialRun(args);
   RememberedValues remembered = trial ? RememberedValues::ThisRunOnly() : RememberedValues::Saved();
   QString out_dir = ShotForm::RememberedRoot(remembered);
-  if (out_dir.isEmpty()) out_dir = Arg(args, QStringLiteral("--out"));
-  if (out_dir.isEmpty()) out_dir = QDir::current().filePath(QStringLiteral("captures"));
+  // 분석 프로그램은 스크립트 폴더에서 돌므로 촬영 폴더를 상대 경로로 넘기면 영상을 찾지 못합니다. 앱을 띄운 폴더 기준 절대 경로로 둡니다.
+  if (out_dir.isEmpty()) {
+    const QString out = Arg(args, QStringLiteral("--out"));
+    out_dir = QFileInfo(out.isEmpty() ? QStringLiteral("captures") : out).absoluteFilePath();
+  }
 
   std::unique_ptr<hwlab::platform::RgbCamera> camera;
   if (fake) {
@@ -459,10 +462,13 @@ int main(int argc, char* argv[]) {
   if (args.contains(QStringLiteral("--ppg-port"))) ppg.connectPort(Arg(args, QStringLiteral("--ppg-port")));
 
   // 관류 분석 프로그램. 촬영이 저장되면 분석 입력 확인을 통과한 촬영을 자동으로 분석하고, 안정화와 녹화 중에는 새 요청을 보내지 않습니다.
-  hwlab::platform::ProcessLaunch analyzer_launch =
-      hwlab::platform::AnalyzerLaunch(QCoreApplication::applicationDirPath().toStdString(),
-                                      Arg(args, QStringLiteral("--analyzer-python")).toStdString(),
-                                      Arg(args, QStringLiteral("--analyzer-script")).toStdString());
+  // 분석 프로그램은 스크립트 폴더를 작업 폴더로 띄우므로, 개발용 인자의 상대 경로와 파이썬 이름은 지금 풀어 둡니다.
+  const hwlab::platform::AnalyzerOverrides analyzer_overrides = hwlab::platform::ResolveAnalyzerOverrides(
+      Arg(args, QStringLiteral("--analyzer-python")).toStdString(),
+      Arg(args, QStringLiteral("--analyzer-script")).toStdString(), QDir::currentPath().toStdString(),
+      qEnvironmentVariable("PATH").toStdString());
+  hwlab::platform::ProcessLaunch analyzer_launch = hwlab::platform::AnalyzerLaunch(
+      QCoreApplication::applicationDirPath().toStdString(), analyzer_overrides.python, analyzer_overrides.script);
   // 녹화 중 첫 장 미리 분할은 노트북에서 프레임 누락이 늘지 않는지 실측하기 전까지 인자로만 켭니다.
   // 녹화 중 영상 미리 읽기는 미리 분할한 발 상자를 쓰므로 미리 분할도 켭니다. 같은 첫 장 신호로 시작합니다.
   // 녹화 중 미리 분석은 관류 분석 프로그램이 늘 할 수 있게 띄우고, 실제로 요청할지는 화면 스위치가 정합니다.
@@ -496,7 +502,9 @@ int main(int argc, char* argv[]) {
                    [&] { analysis.setHold(controller.recording() || controller.settling()); });
   analysis.Start();
   LogEvents(&controller, &analysis, &app);
-  if (args.contains(QStringLiteral("--analyze"))) analysis.onShotSaved(Arg(args, QStringLiteral("--analyze")), true);
+  if (args.contains(QStringLiteral("--analyze"))) {
+    analysis.onShotSaved(QFileInfo(Arg(args, QStringLiteral("--analyze"))).absoluteFilePath(), true);
+  }
 
   QQmlApplicationEngine engine;
   engine.addImageProvider(QStringLiteral("preview"), new PreviewProvider(&controller));

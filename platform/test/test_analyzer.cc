@@ -361,6 +361,110 @@ TEST(AnalyzerLaunch, UsesOverrides) {
   EXPECT_EQ(launch.working_dir, "/src/analysis");
 }
 
+std::string PathList(const std::vector<std::filesystem::path>& folders) {
+#ifdef _WIN32
+  constexpr char kSeparator = ';';
+#else
+  constexpr char kSeparator = ':';
+#endif
+  std::string list;
+  for (const auto& folder : folders) list += (list.empty() ? "" : std::string(1, kSeparator)) + ToUtf8(folder);
+  return list;
+}
+
+#ifdef _WIN32
+const char* const kPythonFile = "python3.exe";
+#else
+const char* const kPythonFile = "python3";
+#endif
+
+void WriteExecutable(const std::filesystem::path& path) {
+  WriteFile(path, "x");
+#ifndef _WIN32
+  std::filesystem::permissions(path, std::filesystem::perms::owner_exec, std::filesystem::perm_options::add);
+#endif
+}
+
+// 스크립트의 상대 경로는 앱이 시작한 폴더를 앞에 붙여 절대 경로로 만듭니다. 분석 프로그램의 작업 폴더가 스크립트 폴더라서입니다.
+TEST(AnalyzerOverrides, MakesScriptAbsoluteAgainstStartFolder) {
+  using hwlab::platform::ResolveAnalyzerOverrides;
+  const auto dir = TempDir("script_abs");
+  const std::string cwd = ToUtf8(dir);
+  // 푼 경로는 구분자가 /입니다. Windows의 임시 폴더는 \로 오므로 기대값도 / 모양으로 만듭니다.
+  const std::string root = dir.generic_string();
+  EXPECT_EQ(ResolveAnalyzerOverrides("", "tools/fake_analysis/dfr_worker.py", cwd, "").script,
+            root + "/tools/fake_analysis/dfr_worker.py");
+  EXPECT_EQ(ResolveAnalyzerOverrides("", "./tools/../tools/dfr_worker.py", cwd, "").script, root + "/tools/dfr_worker.py");
+  const std::string absolute = ToUtf8(dir / "elsewhere" / "dfr_worker.py");
+  EXPECT_EQ(ResolveAnalyzerOverrides("", absolute, cwd, "").script, FromUtf8(absolute).generic_string());
+
+  const ProcessLaunch launch = AnalyzerLaunch("/app", "", ResolveAnalyzerOverrides("", "tools/w.py", cwd, "").script);
+  EXPECT_EQ(launch.working_dir, root + "/tools");
+  EXPECT_EQ(launch.arguments[0], root + "/tools/w.py");
+}
+
+// 값을 주지 않으면 비워 두어 배포 폴더의 파이썬과 스크립트를 씁니다.
+TEST(AnalyzerOverrides, KeepsEmptyValuesEmpty) {
+  const auto resolved = hwlab::platform::ResolveAnalyzerOverrides("", "", "/start", "/usr/bin");
+  EXPECT_EQ(resolved.python, "");
+  EXPECT_EQ(resolved.script, "");
+}
+
+// 경로 구분자가 없는 파이썬 이름은 PATH 앞쪽 폴더부터 찾아 처음 나온 실행 파일의 절대 경로로 바꿉니다.
+TEST(AnalyzerOverrides, FindsBarePythonNameOnPath) {
+  const auto dir = TempDir("python_path");
+  std::filesystem::create_directories(dir / "first");
+  std::filesystem::create_directories(dir / "second");
+  std::filesystem::create_directories(dir / "third");
+  std::filesystem::create_directories(dir / "first" / kPythonFile);  // 같은 이름의 폴더는 건너뜁니다
+  WriteExecutable(dir / "second" / kPythonFile);
+  WriteExecutable(dir / "third" / kPythonFile);
+  const std::string path_env = PathList({dir / "missing", dir / "first", dir / "second", dir / "third"});
+  const auto resolved = hwlab::platform::ResolveAnalyzerOverrides("python3", "", "/start", path_env);
+  EXPECT_EQ(resolved.python, (dir / "second" / kPythonFile).generic_string());
+}
+
+// 이름을 찾지 못하면 이름 그대로 두고, AnalyzerFilesProblem이 그 이름을 넣어 알립니다.
+TEST(AnalyzerOverrides, ReportsBarePythonNameNotOnPath) {
+  const auto dir = TempDir("python_missing");
+  const auto resolved = hwlab::platform::ResolveAnalyzerOverrides("python3", "", "/start", PathList({dir, dir / "x"}));
+  EXPECT_EQ(resolved.python, "python3");
+  WriteFile(dir / "dfr_worker.py", "print()");
+  const auto problem = hwlab::platform::AnalyzerFilesProblem(
+      AnalyzerLaunch("/app", resolved.python, ToUtf8(dir / "dfr_worker.py")));
+  ASSERT_TRUE(problem.has_value());
+  EXPECT_NE(problem->find("파이썬 없음: python3"), std::string::npos) << *problem;
+  EXPECT_NE(problem->find("PATH"), std::string::npos) << *problem;
+}
+
+// PATH의 상대 폴더와 구분자가 있는 상대 파이썬 경로는 시작 폴더 기준입니다.
+TEST(AnalyzerOverrides, ResolvesRelativePythonAgainstStartFolder) {
+  const auto dir = TempDir("python_relative");
+  std::filesystem::create_directories(dir / "bin");
+  std::filesystem::create_directories(dir / ".venv" / "bin");
+  WriteExecutable(dir / "bin" / kPythonFile);
+  const std::string cwd = ToUtf8(dir);
+  const std::string root = dir.generic_string();
+  const auto by_path = hwlab::platform::ResolveAnalyzerOverrides("python3", "", cwd, "bin");
+  EXPECT_EQ(by_path.python, root + "/bin/" + kPythonFile);
+  const auto by_separator = hwlab::platform::ResolveAnalyzerOverrides(".venv/bin/python", "", cwd, "");
+  EXPECT_EQ(by_separator.python, root + "/.venv/bin/python");
+}
+
+#ifndef _WIN32
+// 실행 권한이 없는 파일은 PATH에서 건너뜁니다.
+TEST(AnalyzerOverrides, SkipsNonExecutableFileOnPath) {
+  const auto dir = TempDir("python_not_exec");
+  std::filesystem::create_directories(dir / "plain");
+  std::filesystem::create_directories(dir / "real");
+  WriteFile(dir / "plain" / "python3", "x");
+  WriteExecutable(dir / "real" / "python3");
+  const auto resolved =
+      hwlab::platform::ResolveAnalyzerOverrides("python3", "", "/start", PathList({dir / "plain", dir / "real"}));
+  EXPECT_NE(resolved.python.find("/real/python3"), std::string::npos) << resolved.python;
+}
+#endif
+
 // 파이썬이나 스크립트가 없거나 비어 있으면 그 경로를 이유로 돌려줍니다.
 TEST(AnalyzerLaunch, ReportsMissingFiles) {
   const auto dir = TempDir("files");

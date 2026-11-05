@@ -1,0 +1,20 @@
+{
+  "version": 5,
+  "configurePresets": [
+    {
+      "name": "my-windows-debug",
+      "displayName": "Windows Debug (내 PC 경로)",
+      "inherits": "windows-debug",
+      "environment": {
+        "HWLAB_QT_DIR": "C:/Qt/6.8.1/msvc2022_64",
+        "HWLAB_FFMPEG_DIR": "C:/ffmpeg/ffmpeg-master-latest-win64-lgpl-shared"
+      }
+    }
+  ],
+  "buildPresets": [
+    { "name": "my-windows-debug", "configurePreset": "my-windows-debug" }
+  ],
+  "testPresets": [
+    { "name": "my-windows-debug", "inherits": "windows-debug", "configurePreset": "my-windows-debug" }
+  ]
+}

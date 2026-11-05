@@ -15,8 +15,11 @@ else()
   set(HWLAB_WARNINGS -Wall -Wextra -Wpedantic)
 endif()
 
-set(HWLAB_BUILD_TESTS OFF CACHE BOOL "" FORCE)
-add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../core core)
+# 레포 루트에서 구성하면 core가 이미 들어와 있습니다. platform만 구성할 때는 core를 시험 없이 넣습니다.
+if(NOT TARGET hwlab_vocabulary)
+  set(HWLAB_BUILD_TESTS OFF)
+  add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../core core)
+endif()
 
 add_library(hwlab_platform STATIC
   src/capture.cc
@@ -36,6 +39,14 @@ endif()
 # FFV1 인코더(libavcodec, libavformat). 제품 빌드는 LGPL 공유 라이브러리를 씁니다.
 # macOS의 Homebrew ffmpeg는 GPL 빌드라 테스트에만 씁니다.
 set(HWLAB_FFMPEG_DIR "" CACHE PATH "FFmpeg 개발 파일(include, lib, bin) 폴더")
+# 환경 변수로 받은 Windows 경로(C:\...)는 /로 바꿔 캐시에 둡니다. app의 설치 규칙도 이 값을 씁니다.
+file(TO_CMAKE_PATH "${HWLAB_FFMPEG_DIR}" hwlab_ffmpeg_dir)
+set_property(CACHE HWLAB_FFMPEG_DIR PROPERTY VALUE "${hwlab_ffmpeg_dir}")
+# 틀린 폴더를 주면 다른 곳의 FFmpeg를 찾거나 FFV1 없이 빌드되므로 먼저 모양을 봅니다.
+if(HWLAB_FFMPEG_DIR AND NOT EXISTS "${HWLAB_FFMPEG_DIR}/include/libavcodec/avcodec.h")
+  message(FATAL_ERROR "HWLAB_FFMPEG_DIR에 include/libavcodec/avcodec.h가 없습니다: ${HWLAB_FFMPEG_DIR}\n"
+    "FFmpeg 공유 빌드 zip을 푼 폴더(include, lib, bin이 바로 아래에 있는 폴더)를 줍니다.")
+endif()
 find_path(HWLAB_AV_INCLUDE libavcodec/avcodec.h HINTS ${HWLAB_FFMPEG_DIR}/include /opt/homebrew/opt/ffmpeg/include)
 find_library(HWLAB_AVCODEC avcodec HINTS ${HWLAB_FFMPEG_DIR}/lib /opt/homebrew/opt/ffmpeg/lib)
 find_library(HWLAB_AVFORMAT avformat HINTS ${HWLAB_FFMPEG_DIR}/lib /opt/homebrew/opt/ffmpeg/lib)
@@ -47,14 +58,25 @@ if(HWLAB_AV_INCLUDE AND HWLAB_AVCODEC AND HWLAB_AVFORMAT AND HWLAB_AVUTIL)
   target_include_directories(hwlab_platform SYSTEM PRIVATE ${HWLAB_AV_INCLUDE})
   target_link_libraries(hwlab_platform PRIVATE ${HWLAB_AVFORMAT} ${HWLAB_AVCODEC} ${HWLAB_AVUTIL})
   target_compile_definitions(hwlab_platform PUBLIC HWLAB_HAS_FFV1)
-  if(WIN32 AND HWLAB_FFMPEG_DIR)
+  if(WIN32)
     file(GLOB dlls "${HWLAB_FFMPEG_DIR}/bin/*.dll")
+    if(NOT dlls)
+      message(FATAL_ERROR "FFmpeg DLL이 없습니다: ${HWLAB_FFMPEG_DIR}/bin\n"
+        "빌드한 실행 파일은 이 DLL을 옆에 두어야 뜹니다. 공유(shared) 빌드를 받아 HWLAB_FFMPEG_DIR에 줍니다.")
+    endif()
     # app이 platform을 하위 폴더로 넣어도 보이도록 전역 속성에 둡니다.
     set_property(GLOBAL PROPERTY HWLAB_FFMPEG_DLLS ${dlls})
   endif()
   message(STATUS "FFV1 사용: ${HWLAB_AVCODEC}")
+elseif(WIN32)
+  # specs/의 촬영 선언은 모두 ffv1입니다. FFmpeg 없이 빌드한 앱은 뜨지만 녹화가 "저장 실패"로 끝나므로 구성에서 멈춥니다.
+  message(FATAL_ERROR "FFmpeg를 찾지 못했습니다. HWLAB_FFMPEG_DIR: '${HWLAB_FFMPEG_DIR}'\n"
+    "Windows 앱은 FFV1로 녹화하므로 FFmpeg LGPL 공유 빌드가 있어야 합니다. "
+    "CMakePresets.json으로 구성하면 환경 변수 HWLAB_FFMPEG_DIR에, 직접 구성하면 -DHWLAB_FFMPEG_DIR=<폴더>로 "
+    "include, lib, bin이 있는 폴더를 줍니다. 받는 곳은 README.md의 준비물 표에 있습니다.")
 else()
-  message(STATUS "FFV1 없음: libavcodec을 찾지 못함. 무압축만 씁니다")
+  message(WARNING "FFV1 없음: libavcodec을 찾지 못했습니다. FFV1 시험을 빼고, 앱은 FFV1 선언(specs/의 선언 모두)으로 녹화하지 못합니다. "
+    "macOS는 brew install ffmpeg로 넣습니다.")
 endif()
 
 # 실행 파일 옆에 FFmpeg DLL을 복사합니다.
@@ -322,6 +344,9 @@ if(HWLAB_PLATFORM_TESTS)
   add_executable(test_ppg_sensor test/test_ppg_sensor.cc)
   target_link_libraries(test_ppg_sensor PRIVATE hwlab_platform GTest::gtest_main)
   target_compile_options(test_ppg_sensor PRIVATE ${HWLAB_WARNINGS})
+  if(MSVC)
+    target_compile_definitions(test_ppg_sensor PRIVATE _CRT_SECURE_NO_WARNINGS)
+  endif()
   gtest_discover_tests(test_ppg_sensor)
 endif()
 

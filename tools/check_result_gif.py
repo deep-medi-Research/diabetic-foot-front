@@ -20,7 +20,7 @@ from PIL import Image
 
 
 def gif_first_frame(shot):
-    paths = glob.glob(os.path.join(shot, "perfusion", "*_perfusion.gif"))
+    paths = glob.glob(os.path.join(shot, "perfusion", "*", "*_perfusion.gif"))
     if not paths:
         sys.exit(f"관류 지도 GIF가 없습니다: {shot}")
     with Image.open(paths[0]) as gif:
