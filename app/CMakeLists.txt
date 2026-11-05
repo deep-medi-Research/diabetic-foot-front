@@ -12,8 +12,17 @@ if(NOT TARGET hwlab_platform)
   add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../platform platform)
 endif()
 
-find_package(Qt6 6.5 REQUIRED COMPONENTS Quick QuickControls2)
+find_package(Qt6 6.5 COMPONENTS Quick QuickControls2)
+if(NOT Qt6_FOUND)
+  message(FATAL_ERROR "Qt 6.5 이상(Quick, QuickControls2)을 찾지 못했습니다.\n"
+    "CMakePresets.json으로 구성하면 환경 변수 HWLAB_QT_DIR에, 직접 구성하면 -DCMAKE_PREFIX_PATH=<폴더>로 "
+    "Qt 키트 폴더(예: C:/Qt/6.8.1/msvc2022_64, /opt/homebrew/opt/qt)를 줍니다.")
+endif()
 qt_standard_project_setup(REQUIRES 6.5)
+# Qt 6.8부터 qml/ 폴더의 QML 파일마다 나오는 정책 경고를 없앱니다. 새 동작은 그 폴더에도 qmldir을 만듭니다.
+if(QT_KNOWN_POLICY_QTP0004)
+  qt_policy(SET QTP0004 NEW)
+endif()
 
 qt_add_executable(hwlab_app src/main.cc)
 set_source_files_properties(qml/Theme.qml PROPERTIES QT_QML_SINGLETON_TYPE TRUE)
