@@ -51,8 +51,9 @@ constexpr ArgSpec kArguments[] = {
     {"--ankle-level", "0|V|D|M|S", Group::kPatient, "발목 혈압 단계를 채운 채로 시작합니다", false},
 
     {"--analyzer-python", "<python.exe>", Group::kAnalysis,
-     "배포 폴더의 python 대신 쓸 파이썬입니다. PATH에서 찾지 않으므로 전체 경로로 줍니다", false},
-    {"--analyzer-script", "<dfr_worker.py>", Group::kAnalysis, "배포 폴더의 analysis 대신 쓸 dfr_worker.py의 전체 경로입니다", false},
+     "배포 폴더의 python 대신 쓸 파이썬입니다. python처럼 이름만 주면 PATH에서 찾고, 상대 경로는 앱을 띄운 폴더 기준입니다", false},
+    {"--analyzer-script", "<dfr_worker.py>", Group::kAnalysis,
+     "배포 폴더의 analysis 대신 쓸 dfr_worker.py입니다. 상대 경로는 앱을 띄운 폴더 기준입니다", false},
     {"--analyze", "<촬영 폴더>", Group::kAnalysis, "시작하자마자 그 촬영 폴더를 분석 대기열에 넣습니다", false},
     {"--no-prestream", nullptr, Group::kAnalysis, "녹화 중 미리 분석(첫 장 발 분할, 영상 미리 읽기)을 쓰지 않고 화면의 스위치도 숨깁니다", false},
     {"--presegment-threads", "<n>", Group::kAnalysis, "녹화 중 첫 장 분할에 쓸 스레드 수입니다. 기본은 2이고, 0이면 분석과 같은 모델을 같이 씁니다", false},
