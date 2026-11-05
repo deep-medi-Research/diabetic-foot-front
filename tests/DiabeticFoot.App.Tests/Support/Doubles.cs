@@ -41,11 +41,21 @@ internal sealed class ManualTimeProvider : TimeProvider
 {
     private long _milliseconds;
 
+    public DateTimeOffset Now { get; set; } = new(2026, 11, 5, 9, 30, 0, TimeSpan.Zero);
+
+    public override TimeZoneInfo LocalTimeZone => TimeZoneInfo.Utc;
+
+    public override DateTimeOffset GetUtcNow() => Now;
+
     public override long TimestampFrequency => 1000;
 
     public override long GetTimestamp() => _milliseconds;
 
-    public void Advance(TimeSpan span) => _milliseconds += (long)span.TotalMilliseconds;
+    public void Advance(TimeSpan span)
+    {
+        _milliseconds += (long)span.TotalMilliseconds;
+        Now += span;
+    }
 }
 
 /// <summary>
