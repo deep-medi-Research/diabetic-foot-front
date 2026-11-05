@@ -110,40 +110,40 @@ bool IsTrialRun(const QStringList& args) {
 // 로그 맨 앞에 남기는 시작 정보입니다. 이 로그가 어느 빌드의 어떤 실행이고 설정과 기록이 어디에 있는지 보입니다.
 void LogStartup(const QStringList& args, const QString& data_dir, const profile::Choice& profile) {
   const QString version = QGuiApplication::applicationVersion();
-  qInfo("hwlab_app %s 시작(PID %lld)", qPrintable(version.isEmpty() ? QStringLiteral("(버전 없음)") : version),
+  qInfo("hwlab_app %s 시작(PID %lld)", qUtf8Printable(version.isEmpty() ? QStringLiteral("(버전 없음)") : version),
         static_cast<long long>(QCoreApplication::applicationPid()));
-  qInfo("실행 파일: %s", qPrintable(QDir::toNativeSeparators(QCoreApplication::applicationFilePath())));
-  qInfo("인자: %s", qPrintable(cli::MaskedForLog(args).mid(1).join(QLatin1Char(' '))));
-  qInfo("Qt %s, 화면 플랫폼 %s, %s", qVersion(), qPrintable(QGuiApplication::platformName()),
-        qPrintable(QSysInfo::prettyProductName()));
-  qInfo("프로필: %s", qPrintable(profile::Describe(profile)));
-  qInfo("앱 데이터 폴더: %s", qPrintable(QDir::toNativeSeparators(data_dir)));
-  qInfo("설정 위치: %s%s", qPrintable(QDir::toNativeSeparators(QSettings().fileName())),
+  qInfo("실행 파일: %s", qUtf8Printable(QDir::toNativeSeparators(QCoreApplication::applicationFilePath())));
+  qInfo("인자: %s", qUtf8Printable(cli::MaskedForLog(args).mid(1).join(QLatin1Char(' '))));
+  qInfo("Qt %s, 화면 플랫폼 %s, %s", qVersion(), qUtf8Printable(QGuiApplication::platformName()),
+        qUtf8Printable(QSysInfo::prettyProductName()));
+  qInfo("프로필: %s", qUtf8Printable(profile::Describe(profile)));
+  qInfo("앱 데이터 폴더: %s", qUtf8Printable(QDir::toNativeSeparators(data_dir)));
+  qInfo("설정 위치: %s%s", qUtf8Printable(QDir::toNativeSeparators(QSettings().fileName())),
         IsTrialRun(args) ? " (시험 실행이라 이번에는 읽지도 쓰지도 않음)" : "");
   const QString log_file = app_log::CurrentFilePath();
-  qInfo("로그 파일: %s", log_file.isEmpty() ? "없음(로그 폴더를 만들지 못함)" : qPrintable(QDir::toNativeSeparators(log_file)));
+  qInfo("로그 파일: %s", log_file.isEmpty() ? "없음(로그 폴더를 만들지 못함)" : qUtf8Printable(QDir::toNativeSeparators(log_file)));
 }
 
 // 촬영 단계, 저장, 오류, 분석 끝을 로그에 남깁니다. 모두 화면 스레드에서 받는 신호이고 프레임마다 오는 신호는 쓰지 않습니다.
 void LogEvents(CaptureController* controller, AnalysisVariants* analysis, QObject* context) {
   QObject::connect(controller, &CaptureController::phaseChanged, context,
-                   [controller] { qInfo("촬영 단계: %s", qPrintable(controller->phase())); });
+                   [controller] { qInfo("촬영 단계: %s", qUtf8Printable(controller->phase())); });
   QObject::connect(controller, &CaptureController::errorChanged, context, [controller] {
-    if (!controller->error().isEmpty()) qWarning("촬영 오류: %s", qPrintable(controller->error()));
+    if (!controller->error().isEmpty()) qWarning("촬영 오류: %s", qUtf8Printable(controller->error()));
   });
   QObject::connect(controller, &CaptureController::rgbSaved, context, [](const QString& folder, bool ready) {
-    qInfo("RGB 영상 저장 끝: %s (분석 입력 %s)", qPrintable(QDir::toNativeSeparators(folder)), ready ? "통과" : "통과하지 못함");
+    qInfo("RGB 영상 저장 끝: %s (분석 입력 %s)", qUtf8Printable(QDir::toNativeSeparators(folder)), ready ? "통과" : "통과하지 못함");
   });
   QObject::connect(controller, &CaptureController::shotSaved, context, [](const QString& folder, bool ready) {
-    qInfo("촬영 저장 끝: %s (분석 입력 %s)", qPrintable(QDir::toNativeSeparators(folder)), ready ? "통과" : "통과하지 못함");
+    qInfo("촬영 저장 끝: %s (분석 입력 %s)", qUtf8Printable(QDir::toNativeSeparators(folder)), ready ? "통과" : "통과하지 못함");
   });
   QObject::connect(analysis, &AnalysisVariants::finished, context,
                    [](const QString& folder, bool ok, const QString& summary, const QString& variant) {
     if (ok) {
-      qInfo("분석 성공(%s판): %s", qPrintable(variant), qPrintable(QDir::toNativeSeparators(summary)));
+      qInfo("분석 성공(%s판): %s", qUtf8Printable(variant), qUtf8Printable(QDir::toNativeSeparators(summary)));
     } else {
-      qWarning("분석 실패(%s판): %s. 분석 프로그램 출력은 그 폴더의 perfusion 아래 analyzer_log.txt에 있습니다", qPrintable(variant),
-               qPrintable(QDir::toNativeSeparators(folder)));
+      qWarning("분석 실패(%s판): %s. 분석 프로그램 출력은 그 폴더의 perfusion 아래 analyzer_log.txt에 있습니다", qUtf8Printable(variant),
+               qUtf8Printable(QDir::toNativeSeparators(folder)));
     }
   });
 }
@@ -182,7 +182,7 @@ int main(int argc, char* argv[]) {
   } log_end;
   LogStartup(args, data_dir, profile);
   if (const auto problems = cli::Check(args)) {
-    qCritical("%s\n모든 인자는 %s --help로 봅니다.", qPrintable(*problems), qPrintable(program));
+    qCritical("%s\n모든 인자는 %s --help로 봅니다.", qUtf8Printable(*problems), qUtf8Printable(program));
     return 2;
   }
 #ifdef _WIN32
@@ -204,7 +204,7 @@ int main(int argc, char* argv[]) {
     ResultView result_view(&engine);
     QString result_error;
     if (!result_view.Open(Arg(args, QStringLiteral("--result")), &result_error)) {
-      qWarning("분석 결과를 읽지 못함: %s", qPrintable(result_error));
+      qWarning("분석 결과를 읽지 못함: %s", qUtf8Printable(result_error));
       if (result_view.Window() == nullptr) return 1;
     }
     if (args.contains(QStringLiteral("--result-variant"))) result_view.setCurrentVariant(Arg(args, QStringLiteral("--result-variant")));
@@ -227,7 +227,7 @@ int main(int argc, char* argv[]) {
     // 읽은 뒤 바로 닫습니다. 열어 두면 앱이 도는 동안 선언 파일을 바꿀 수 없습니다.
     QFile file(spec_path);
     if (!file.open(QIODevice::ReadOnly)) {
-      qCritical("선언 파일을 열지 못함: %s", qPrintable(spec_path));
+      qCritical("선언 파일을 열지 못함: %s", qUtf8Printable(spec_path));
       return 2;
     }
     spec_text = file.readAll();
@@ -439,7 +439,7 @@ int main(int argc, char* argv[]) {
   }
   QString start_error;
   if (!controller.Start(&start_error)) {
-    qCritical("시작 실패: %s", qPrintable(start_error));
+    qCritical("시작 실패: %s", qUtf8Printable(start_error));
     return 1;
   }
   if (args.contains(QStringLiteral("--light-port"))) {
@@ -512,7 +512,7 @@ int main(int argc, char* argv[]) {
     QString open_error;
     // 켜 둔 다른 판이 아직 분석 중이면 그 판의 탭을 "분석 중"으로 엽니다.
     if (!result_view.Open(folder, &open_error, !analysis.Finished(folder))) {
-      qWarning("분석 결과를 읽지 못함: %s", qPrintable(open_error));
+      qWarning("분석 결과를 읽지 못함: %s", qUtf8Printable(open_error));
     }
   };
   // 분석 입력 확인을 통과한 촬영은 녹화가 끝나 저장되면 결과 창을 바로 엽니다. 영상과 열화상을 먼저 보이고 분석 값은
@@ -522,7 +522,7 @@ int main(int argc, char* argv[]) {
     QString open_error;
     // 분석은 RGB가 저장되면 바로 시작하므로, 열화상 배열을 쓰는 동안 끝났을 수 있습니다. 그러면 "분석 중"으로 열지 않습니다.
     if (!result_view.Open(folder, &open_error, !analysis.Finished(folder)) && !open_error.isEmpty()) {
-      qInfo("결과 창을 분석 전에 엶: %s", qPrintable(open_error));
+      qInfo("결과 창을 분석 전에 엶: %s", qUtf8Printable(open_error));
     }
   });
   // 관류 지도 GIF와 그림은 분석 완료 뒤에 그립니다. 다 그리면 결과 창이 GIF를 다시 읽습니다.

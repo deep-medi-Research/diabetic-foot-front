@@ -297,7 +297,7 @@ void AnalysisController::Collect(const QString& folder) {
     // 소멸자가 작업 스레드를 기다린 뒤 객체가 사라지므로, 큐에 넣은 호출은 이 객체가 있을 때만 실행됩니다.
     QMetaObject::invokeMethod(this, [this, folder, outcome] {
       SetCollect(outcome.ok ? QStringLiteral("done") : QStringLiteral("failed"), outcome.text, outcome.folder);
-      if (!outcome.ok) qWarning("%s", qPrintable(outcome.text));
+      if (!outcome.ok) qWarning("%s", qUtf8Printable(outcome.text));
       emit collected(folder, outcome.ok, outcome.text, outcome.folder);
     }, Qt::QueuedConnection);
   }));

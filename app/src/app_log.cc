@@ -229,7 +229,7 @@ void Install(const QString& dir) {
   // 처리기가 어느 스레드에서 불려도 쓸 수 있도록 지우지 않습니다. 정리 중(정적 객체 소멸)에 온 메시지도 받기 위함입니다.
   g_sink.store(new Sink(std::move(options)), std::memory_order_release);
   g_previous_handler = qInstallMessageHandler(Handler);
-  if (!usable) qWarning("로그 폴더를 만들지 못해 파일에는 남기지 않습니다: %s", qPrintable(dir));
+  if (!usable) qWarning("로그 폴더를 만들지 못해 파일에는 남기지 않습니다: %s", qUtf8Printable(dir));
 }
 
 void Shutdown() {

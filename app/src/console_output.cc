@@ -1,5 +1,6 @@
 #include "console_output.h"
 
+#include <algorithm>
 #include <cstdio>
 #include <mutex>
 #include <string>
@@ -18,14 +19,23 @@ bool Usable(HANDLE handle) {
   return handle != nullptr && handle != INVALID_HANDLE_VALUE && GetFileType(handle) != FILE_TYPE_UNKNOWN;
 }
 
+// 콘솔에는 UTF-16으로 씁니다. 한 번에 쓰는 글자 수에 상한이 있어(약 64KB) 나눠 씁니다.
+void WriteToConsole(HANDLE console, const QString& text) {
+  constexpr size_t kChunk = 8192;
+  const std::wstring wide = text.toStdWString();
+  for (size_t at = 0; at < wide.size(); at += kChunk) {
+    DWORD written = 0;
+    WriteConsoleW(console, wide.data() + at, static_cast<DWORD>(std::min(kChunk, wide.size() - at)), &written, nullptr);
+  }
+}
+
 void WriteTo(HANDLE handle, const QString& text) {
-  DWORD written = 0;
   DWORD mode = 0;
   if (GetConsoleMode(handle, &mode)) {
-    const std::wstring wide = text.toStdWString();
-    WriteConsoleW(handle, wide.data(), static_cast<DWORD>(wide.size()), &written, nullptr);
+    WriteToConsole(handle, text);
     return;
   }
+  DWORD written = 0;
   const QByteArray bytes = text.toUtf8();
   WriteFile(handle, bytes.constData(), static_cast<DWORD>(bytes.size()), &written, nullptr);
 }
@@ -41,7 +51,7 @@ void Write(DWORD which, const QString& text) {
   if (!AttachConsole(ATTACH_PARENT_PROCESS)) return;
   HANDLE console = CreateFileW(L"CONOUT$", GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, nullptr, OPEN_EXISTING, 0, nullptr);
   if (console != INVALID_HANDLE_VALUE) {
-    WriteTo(console, text);
+    WriteToConsole(console, text);
     CloseHandle(console);
   }
   FreeConsole();
