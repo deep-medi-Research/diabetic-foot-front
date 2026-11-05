@@ -24,7 +24,7 @@
 | `specs/` | 촬영 선언 |
 | `vendor/` | 제조사 SDK, 샘플, 문서 |
 | `docs/` | 설계 문서, 분석 연동 약속 |
-| `tools/` | 그림 원본과 결과 창 확인 도구 |
+| `tools/` | 그림 원본, 결과 창 확인 도구, 가짜 분석 프로그램 |
 
 ## 주요 기능
 
@@ -48,6 +48,7 @@
 - **`HWLAB_PYTHON_DIR`**<br>분석 프로그램이 쓰는 파이썬 폴더입니다. `bin/python`으로 설치합니다
 - **주고받는 방식**<br>앱이 분석 프로그램을 띄우고, 표준 입력의 JSON 한 줄과 표준 출력의 줄, 결과 파일로만 주고받습니다. 형식은 [`docs/analysis-contract.md`](docs/analysis-contract.md)에 있습니다
 - **개발할 때**<br>설치하지 않은 분석 프로그램은 앱 인자 `--analyzer-python <python 실행 파일> --analyzer-script <dfr_worker.py>`로 가리킵니다
+- **분석 프로그램 없이 개발할 때**<br>`tools/fake_analysis`의 가짜 분석 프로그램이 같은 인자로 뜨고, 모든 촬영에 같은 고정 결과를 냅니다. 실행 방법은 아래 [실행](#실행)에 있습니다
 
 ## 빌드
 
@@ -85,3 +86,27 @@ cmake --install build/app --prefix <배포 폴더(절대 경로)>   # Qt 경로 
 - **`--no-prestream`**<br>녹화 중 미리 분석을 쓰지 않습니다
 
 그 밖의 인자는 `app/src/main.cc` 맨 위에 있습니다.
+
+### 분석 프로그램 없이 결과 창까지 보기
+
+**`--fake`에 `tools/fake_analysis`의 가짜 분석 프로그램을 더하면 장비도 실제 분석 프로그램도 없이 촬영, 분석 상태 막대, 결과 창을 끝까지 볼 수 있습니다.** 파이썬 3.9 이상만 있으면 되고, 가짜 분석 프로그램은 모든 촬영에 같은 고정 결과를 냅니다. 파이썬과 스크립트는 전체 경로로 줍니다. 앱이 분석 프로그램을 스크립트 폴더에서 띄우므로, 상대 경로를 주면 "준비 전에 끝났습니다"로 실패합니다.
+
+macOS(레포 폴더에서)
+
+```bash
+build/app/hwlab_app --spec specs/see3cam_manual_720p60.json --out /tmp/shots --fake \
+  --analyzer-python "$(command -v python3)" \
+  --analyzer-script "$PWD/tools/fake_analysis/dfr_worker.py"
+```
+
+Windows(명령 프롬프트, 레포 폴더에서)
+
+```bat
+<배포 폴더>\bin\hwlab_app.exe --spec <배포 폴더>\specs\see3cam_manual_720p60.json --out C:\temp\shots --fake ^
+  --analyzer-python C:\Python311\python.exe ^
+  --analyzer-script %CD%\tools\fake_analysis\dfr_worker.py
+```
+
+- **python.exe 경로**<br>`where python`으로 확인합니다
+- **설치 폴더에 넣기**<br>구성할 때 `-DHWLAB_ANALYZER_DIR=<레포 전체 경로>/tools/fake_analysis`를 주면 `cmake --install`이 `bin/analysis`로 설치합니다. 앱은 `bin/python`의 파이썬을 쓰므로 Windows는 `HWLAB_PYTHON_DIR`도 줍니다
+- **인자, 고정 결과 값, 실패 흉내**<br>[`tools/fake_analysis/README.md`](tools/fake_analysis/README.md)
