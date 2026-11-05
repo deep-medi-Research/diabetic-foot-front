@@ -148,7 +148,7 @@ int main(int argc, char* argv[]) {
                                          : !commit.isEmpty() ? QStringLiteral("(개발 %1)").arg(commit)
                                                              : QString());
 #ifdef _WIN32
-  // 설치 프로그램(installer.iss의 AppMutex)이 이 이름으로 앱 실행 여부를 확인하고, 실행 중이면 덮어쓰지 않고 닫으라고 안내합니다.
+  // 이 레포 밖의 설치 프로그램이 이 이름(Inno Setup의 AppMutex)으로 앱 실행 여부를 확인하고, 실행 중이면 덮어쓰지 않고 닫으라고 안내합니다.
   // 핸들은 프로세스가 끝날 때 Windows가 닫습니다.
   CreateMutexW(nullptr, FALSE, L"HWLabAppRunning");
 #endif
