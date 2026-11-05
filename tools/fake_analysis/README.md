@@ -22,7 +22,7 @@ Windows(명령 프롬프트, 레포 폴더에서)
   --analyzer-script %CD%\tools\fake_analysis\dfr_worker.py
 ```
 
-이름, 생년월일, 상완 혈압, 발목 혈압, 발목 혈압 단계를 채우고 촬영을 누릅니다. 녹화가 끝나면 결과 창이 열리고, 분석 막대는 약 2초 뒤 "분석 완료"가 됩니다. 판 이름은 `fake`이고 결과는 `<촬영 폴더>/perfusion/fake/`에 생깁니다.
+이름, 생년월일, 상완 혈압, 발목 혈압, 발목 혈압 단계를 채우고 촬영을 누릅니다. 녹화가 끝나면 결과 창이 열리고, 분석 막대는 1~2초 안에 "분석 완료"가 됩니다. 판 이름은 `fake`이고 결과는 `<촬영 폴더>/perfusion/fake/`에 생깁니다.
 
 - **python.exe 경로**<br>`where python`으로 확인합니다
 - **설치 폴더에 넣기**<br>구성할 때 `-DHWLAB_ANALYZER_DIR=<레포 전체 경로>/tools/fake_analysis`를 주면 `cmake --install`이 `bin/analysis`로 설치합니다. 앱은 `bin/python`의 파이썬을 쓰므로 Windows는 `HWLAB_PYTHON_DIR`도 줍니다
