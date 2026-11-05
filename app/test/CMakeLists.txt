@@ -30,6 +30,10 @@ hwlab_add_app_test(test_rgb_trace SOURCES test_rgb_trace.cc ../src/rgb_trace.h .
 # 명령줄 인자 표: 검사, --help, 로그에 남기는 인자 가리기
 hwlab_add_app_test(test_cli_args SOURCES test_cli_args.cc ../src/cli_args.h ../src/cli_args.cc)
 
+# 로그 파일: 날짜별 파일 이름과 보관 기간, 줄 서식, 느린 콘솔에도 메시지를 내는 쪽이 기다리지 않는 대기열
+hwlab_add_app_test(test_app_log
+  SOURCES test_app_log.cc ../src/app_log.h ../src/app_log.cc ../src/console_output.h ../src/console_output.cc)
+
 # 환자 정보 입력의 혈압 검사와, 환자를 바꾸면 혈압 칸을 비우는 동작을 시험합니다.
 hwlab_add_app_test(test_shot_form
   SOURCES test_shot_form.cc

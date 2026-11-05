@@ -16,7 +16,9 @@
 #include <QQmlApplicationEngine>
 #include <QQuickStyle>
 #include <QQuickWindow>
+#include <QSettings>
 #include <QStandardPaths>
+#include <QSysInfo>
 #include <QTimer>
 
 #include <algorithm>
@@ -26,6 +28,7 @@
 
 #include "analysis_controller.h"
 #include "analysis_variants.h"
+#include "app_log.h"
 #include "app_version.h"
 #include "capture_controller.h"
 #include "cli_args.h"
@@ -93,6 +96,32 @@ std::optional<hwlab::platform::LightPortIdentity> ParseLightIdentity(const QStri
                                             parts.size() == 3 ? parts[2].toStdString() : std::string()};
 }
 
+// 다음 실행에 남기지 않는 시험 실행인지입니다. 시험 실행에서 바꾼 값이 장비 PC의 실제 값을 덮어쓰지 않게 하기 위함입니다.
+// --out은 설치 바로가기도 주므로 시험 실행을 가르는 데 쓰지 않습니다.
+// 시험용으로 준 변환기(--light-remember, --ppg-remember)로 확인한 포트도 실제 실행에 남기지 않습니다.
+bool IsTrialRun(const QStringList& args) {
+  for (const char* name : {"--fake", "--screenshot", "--close-after", "--light-remember", "--ppg-remember"}) {
+    if (args.contains(QLatin1String(name))) return true;
+  }
+  return false;
+}
+
+// 로그 맨 앞에 남기는 시작 정보입니다. 이 로그가 어느 빌드의 어떤 실행이고 설정과 기록이 어디에 있는지 보입니다.
+void LogStartup(const QStringList& args, const QString& data_dir) {
+  const QString version = QGuiApplication::applicationVersion();
+  qInfo("hwlab_app %s 시작(PID %lld)", qPrintable(version.isEmpty() ? QStringLiteral("(버전 없음)") : version),
+        static_cast<long long>(QCoreApplication::applicationPid()));
+  qInfo("실행 파일: %s", qPrintable(QDir::toNativeSeparators(QCoreApplication::applicationFilePath())));
+  qInfo("인자: %s", qPrintable(cli::MaskedForLog(args).mid(1).join(QLatin1Char(' '))));
+  qInfo("Qt %s, 화면 플랫폼 %s, %s", qVersion(), qPrintable(QGuiApplication::platformName()),
+        qPrintable(QSysInfo::prettyProductName()));
+  qInfo("앱 데이터 폴더: %s", qPrintable(QDir::toNativeSeparators(data_dir)));
+  qInfo("설정 위치: %s%s", qPrintable(QDir::toNativeSeparators(QSettings().fileName())),
+        IsTrialRun(args) ? " (시험 실행이라 이번에는 읽지도 쓰지도 않음)" : "");
+  const QString log_file = app_log::CurrentFilePath();
+  qInfo("로그 파일: %s", log_file.isEmpty() ? "없음(로그 폴더를 만들지 못함)" : qPrintable(QDir::toNativeSeparators(log_file)));
+}
+
 }  // namespace
 
 int main(int argc, char* argv[]) {
@@ -107,17 +136,14 @@ int main(int argc, char* argv[]) {
   QGuiApplication app(argc, argv);
   const QStringList args = app.arguments();
   const QString program = QFileInfo(args.value(0)).fileName();
-  if (cli::WantsHelp(args)) {
-    WriteStdout(cli::HelpText(program, QString()));
-    return 0;
-  }
-  if (const auto problems = cli::Check(args)) {
-    WriteStderr(*problems + QStringLiteral("\n모든 인자는 %1 --help로 봅니다.\n").arg(program));
-    return 2;
-  }
-  // 기억한 값을 남기는 QSettings의 이름입니다(RememberedValues).
+  // 기억한 값을 남기는 QSettings의 이름입니다(RememberedValues). 앱 데이터 폴더(로그 포함)도 이 이름을 따릅니다.
   QGuiApplication::setOrganizationName(QStringLiteral("deepmedi"));
   QGuiApplication::setApplicationName(QStringLiteral("hwlab"));
+  const QString data_dir = QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation);
+  if (cli::WantsHelp(args)) {
+    WriteStdout(cli::HelpText(program, app_log::HelpFooter(data_dir)));
+    return 0;
+  }
   // 창 제목이 Qt.application.version으로 버전을 보입니다. 개발 빌드는 버전이 비어 있어 빌드한 커밋을 보입니다.
   // 노트북에 설치된 개발 빌드가 어느 코드인지 화면에서 확인하기 위함입니다.
   const QString version = QString::fromUtf8(kAppVersion);
@@ -125,6 +151,16 @@ int main(int argc, char* argv[]) {
   QGuiApplication::setApplicationVersion(!version.isEmpty() ? version
                                          : !commit.isEmpty() ? QStringLiteral("(개발 %1)").arg(commit)
                                                              : QString());
+  // 이 줄부터 Qt 메시지는 콘솔과 로그 파일에 남습니다. main을 어떤 길로 나가도 남은 줄을 쓰고 끝납니다.
+  app_log::Install(app_log::LogDirectory(data_dir));
+  struct LogEnd {
+    ~LogEnd() { app_log::Shutdown(); }
+  } log_end;
+  LogStartup(args, data_dir);
+  if (const auto problems = cli::Check(args)) {
+    qCritical("%s\n모든 인자는 %s --help로 봅니다.", qPrintable(*problems), qPrintable(program));
+    return 2;
+  }
 #ifdef _WIN32
   // 설치 프로그램(installer.iss의 AppMutex)이 이 이름으로 앱 실행 여부를 확인하고, 실행 중이면 덮어쓰지 않고 닫으라고 안내합니다.
   // 핸들은 프로세스가 끝날 때 Windows가 닫습니다.
@@ -186,12 +222,8 @@ int main(int argc, char* argv[]) {
   struct TeardownEnd {
     ~TeardownEnd() { LogShutdownStep(QStringLiteral("정리 끝")); }
   } teardown_end;
-  // 다음 실행에 남길지는 여기서만 정합니다. 시험 실행에서 바꾼 값이 장비 PC의 실제 값을 덮어쓰지 않게 하기 위함입니다.
-  // --out은 설치 바로가기도 주므로 시험 실행을 가르는 데 쓰지 않습니다.
-  // 시험용으로 준 변환기(--light-remember, --ppg-remember)로 확인한 포트도 실제 실행에 남기지 않습니다.
-  const bool trial = fake || args.contains(QStringLiteral("--screenshot")) ||
-                     args.contains(QStringLiteral("--close-after")) || args.contains(QStringLiteral("--light-remember")) ||
-                     args.contains(QStringLiteral("--ppg-remember"));
+  // 다음 실행에 남길지는 여기서만 정합니다.
+  const bool trial = IsTrialRun(args);
   RememberedValues remembered = trial ? RememberedValues::ThisRunOnly() : RememberedValues::Saved();
   QString out_dir = ShotForm::RememberedRoot(remembered);
   if (out_dir.isEmpty()) out_dir = Arg(args, QStringLiteral("--out"));
