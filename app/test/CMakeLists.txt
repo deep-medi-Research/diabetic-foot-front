@@ -27,9 +27,10 @@ endfunction()
 
 hwlab_add_app_test(test_rgb_trace SOURCES test_rgb_trace.cc ../src/rgb_trace.h ../src/rgb_trace.cc)
 
-# 명령줄 인자 표: 검사, --help, 로그에 남기는 인자 가리기
+# 명령줄 인자 표: 검사, --help, 로그에 남기는 인자 가리기, docs/debugging.md의 인자 표와 같은지
 hwlab_add_app_test(test_cli_args
   SOURCES test_cli_args.cc ../src/cli_args.h ../src/cli_args.cc ../src/app_profile.h ../src/app_profile.cc)
+target_compile_definitions(test_cli_args PRIVATE HWLAB_DOCS_DIR="${CMAKE_CURRENT_SOURCE_DIR}/../../docs")
 
 # 프로필: 어떤 실행이 설치본과 설정을 나누는지, 앱 이름과 창 제목 버전이 어떻게 바뀌는지
 hwlab_add_app_test(test_app_profile

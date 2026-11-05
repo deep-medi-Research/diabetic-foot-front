@@ -1,3 +1,4 @@
+#include <QFile>
 #include <QTest>
 
 #include <set>
@@ -150,6 +151,29 @@ class CliArgsTest : public QObject {
   // 인자 값이 인자 이름처럼 생겨도 마지막 인자가 값 없이 끝나도 가리기가 범위를 넘지 않습니다.
   void MaskingHandlesTrailingSecretWithoutValue() {
     QCOMPARE(cli::MaskedForLog(Args({QStringLiteral("--patient")})), Args({QStringLiteral("--patient")}));
+  }
+
+  // docs/debugging.md의 인자 표는 cli_args.cc의 표에서 만든 것과 같아야 합니다. 어긋나면 HWLAB_UPDATE_DOCS=1로 이 시험을 돌려 고칩니다.
+  void DocsTableMatchesTable() {
+    const QString path = QStringLiteral(HWLAB_DOCS_DIR "/debugging.md");
+    QFile file(path);
+    QVERIFY2(file.open(QIODevice::ReadOnly), qPrintable(path));
+    const QString text = QString::fromUtf8(file.readAll());
+    file.close();
+    const QString begin = QStringLiteral("<!-- hwlab-args:begin -->\n");
+    const QString end = QStringLiteral("<!-- hwlab-args:end -->");
+    const qsizetype from = text.indexOf(begin);
+    const qsizetype to = text.indexOf(end);
+    QVERIFY2(from >= 0 && to > from, "docs/debugging.md에 hwlab-args 표시가 없습니다");
+    const QString current = text.mid(from + begin.size(), to - from - begin.size());
+    const QString expected = cli::MarkdownTable() + QLatin1Char('\n');
+    if (current == expected) return;
+    if (qEnvironmentVariableIsSet("HWLAB_UPDATE_DOCS")) {
+      QVERIFY(file.open(QIODevice::WriteOnly | QIODevice::Truncate));
+      file.write((text.left(from + begin.size()) + expected + text.mid(to)).toUtf8());
+      return;
+    }
+    QFAIL("docs/debugging.md의 인자 표가 cli_args.cc의 표와 다릅니다. HWLAB_UPDATE_DOCS=1로 test_cli_args를 돌리면 고칩니다");
   }
 
   // 마크다운 표의 칸 구분자와 섞이지 않게 값 자리의 |를 이스케이프합니다.
