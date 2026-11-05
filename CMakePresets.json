@@ -78,7 +78,7 @@
       "name": "test",
       "hidden": true,
       "output": { "outputOnFailure": true },
-      "execution": { "noTestsAction": "error" }
+      "execution": { "noTestsAction": "error", "jobs": 4 }
     },
     { "name": "windows-debug", "inherits": "test", "configurePreset": "windows-debug" },
     { "name": "windows-release", "inherits": "test", "configurePreset": "windows-release" },
