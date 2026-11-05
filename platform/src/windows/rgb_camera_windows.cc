@@ -413,7 +413,7 @@ class WindowsRgbCamera final : public RgbCamera {
   // 첫 형식을 열면 1280x720은 60~120fps 형식이 120fps로 돌았습니다(2026-11-03 실측 119.2fps, SDK fps 60으로도 그대로).
   // fps 범위를 알려 주는 형식은 frame_rate로 맞춰 엽니다.
   // 같은 카메라도 USB 2 속도로 연결되면 형식마다 최대 fps가 낮게 나옵니다(데이터시트 UYVY 1920x1200: USB 3 55fps, USB 2 6fps).
-  // USB 3 포트에 꽂아도 케이블, 허브, Type-C 방향 때문에 USB 2 속도가 될 수 있습니다(2026-11-04 고객사, UYVY 1280x720 최대 15fps).
+  // USB 3 포트에 꽂아도 케이블, 허브, Type-C 방향 때문에 USB 2 속도가 될 수 있습니다(2026-11-04 현장 보고, UYVY 1280x720 최대 15fps).
   bool SelectUyvy(int32_t width, int32_t height, int32_t frame_rate, std::string* error) {
     const std::string size = "UYVY " + std::to_string(width) + "x" + std::to_string(height);
     bool sized = false;     // 크기가 맞는 UYVY 형식이 있음

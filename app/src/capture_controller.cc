@@ -311,7 +311,7 @@ std::pair<QStringList, QStringList> RestoreLines(const hwlab::platform::Reconcil
 void LogRestore(const QStringList& lines) {
   if (lines.isEmpty()) return;
   const QString stamp = QDateTime::currentDateTime().toString(Qt::ISODate);
-  for (const QString& line : lines) qWarning("카메라 복원: %s", qPrintable(line));
+  for (const QString& line : lines) qWarning("카메라 복원: %s", qUtf8Printable(line));
   const QString dir = QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation);
   if (dir.isEmpty() || !QDir().mkpath(dir)) return;
   QFile file(QDir(dir).filePath(QStringLiteral("camera_restore_log.txt")));

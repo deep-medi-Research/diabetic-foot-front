@@ -193,7 +193,7 @@ Invoke-Section '장치' {
 }
 
 # RGB 카메라의 USB 연결 속도와 형식 목록입니다. 카메라를 열지 않고 카메라가 꽂힌 허브의 포트에 묻습니다.
-# USB 3 포트에 꽂아도 케이블, 허브, Type-C 방향 때문에 USB 2 속도로 연결되면 UYVY 1280x720이 최대 15fps로 보입니다(2026-11-04 고객사).
+# USB 3 포트에 꽂아도 케이블, 허브, Type-C 방향 때문에 USB 2 속도로 연결되면 UYVY 1280x720이 최대 15fps로 보입니다(2026-11-04 현장 보고).
 Invoke-Section 'RGB 카메라 USB' {
   $cameras = @($global:pnpDevices | Where-Object { $_.DeviceID -match '^USB\\VID_2560&PID_[0-9A-F]{4}\\[^\\]+$' })
   if (-not $cameras) { return }

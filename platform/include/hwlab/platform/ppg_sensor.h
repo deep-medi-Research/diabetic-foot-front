@@ -194,7 +194,7 @@ struct PpgSnapshot {
  * 다른 스레드는 Port()의 WakeRead만 부릅니다.
  *
  * @note 실험 노트북(Intel xHCI)의 USB 포트에 변환기를 바로 꽂으면 측정 데이터가 0.2~0.7초만 오고 멈춥니다. USB 허브를
- *       거치면 정상입니다(2026-10-19~20 실측, 이슈 #4). 표본이 멈추면 Snapshot().state가 kStalled가 됩니다.
+ *       거치면 정상입니다(2026-10-19~20 실측). 표본이 멈추면 Snapshot().state가 kStalled가 됩니다.
  */
 class PpgLink {
  public:
@@ -245,7 +245,7 @@ class PpgLink {
    * 포트를 연 뒤 장치가 보낸 메시지(정보, 상태, 오류, 측정 데이터)를 하나라도 받았으면 true입니다(PPG 장치 확인).
    *
    * @note 전원을 켠 장치는 초기화를 끝내면 묻지 않아도 장치 정보와 상태 'o'를 보냅니다. 실기(2026-10-19)에서 전원을 켜고 약
-   *       42초 뒤였습니다(이슈 #4).
+   *       42초 뒤였습니다.
    */
   bool Found() const { return found_; }
 

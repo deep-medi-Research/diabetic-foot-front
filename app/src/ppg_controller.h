@@ -45,7 +45,7 @@ struct PpgSaveResult {
  *       FTDI 드라이버가 멈췄을 때는 USB를 다시 꽂아야 풀렸습니다.
  * @note 장치 시각은 표본 번호이고 PC 시계보다 약 0.5% 느려서(2026-10-19 실측) PC 수신 시각으로 맞춥니다(PpgLink).
  *       장치 스레드의 PC 시계(steady_clock)는 Windows에서 카메라 수신 시각(QueryPerformanceCounter)과 같은 카운터입니다.
- * @note 실험 노트북의 USB 포트에 바로 꽂으면 파형이 0.2~0.7초 뒤 멈춥니다. 허브를 거치면 정상입니다(이슈 #4).
+ * @note 실험 노트북의 USB 포트에 바로 꽂으면 파형이 0.2~0.7초 뒤 멈춥니다. 허브를 거치면 정상입니다.
  */
 class PpgController : public QObject {
   Q_OBJECT

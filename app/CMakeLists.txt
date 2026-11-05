@@ -32,10 +32,10 @@ qt_add_qml_module(hwlab_app URI HwLab VERSION 1.0
   RESOURCES fonts/Pretendard-Regular.otf fonts/Pretendard-SemiBold.otf fonts/Pretendard-Bold.otf)
 target_link_libraries(hwlab_app PRIVATE Qt6::Quick Qt6::QuickControls2 hwlab_platform)
 target_include_directories(hwlab_app PRIVATE src ${CMAKE_CURRENT_BINARY_DIR})
-# 릴리즈 버전입니다. release.ps1이 태그 이름(vX.Y.Z)을 넣고, 개발 빌드는 비워 둡니다. 창 제목과 설치 프로그램이 이 값을 씁니다.
+# 릴리즈 버전입니다. 이 레포 밖의 릴리즈 스크립트가 태그 이름(vX.Y.Z)을 넣고, 개발 빌드는 비워 둡니다. 창 제목과 이 레포 밖의 설치 프로그램이 이 값을 씁니다.
 # 헤더 하나로 넣어 버전이 바뀌어도 main.cc만 다시 컴파일합니다.
 set(HWLAB_APP_VERSION "" CACHE STRING "앱 버전(vX.Y.Z). 비우면 개발 빌드")
-# 빌드한 커밋은 구성할 때 git으로 읽습니다. deploy.ps1과 release.ps1은 빌드마다 다시 구성하므로 커밋이 바뀌면 같이 바뀝니다.
+# 빌드한 커밋은 구성할 때 git으로 읽습니다. 이 레포 밖의 배포 스크립트는 빌드마다 다시 구성하므로 커밋이 바뀌면 같이 바뀝니다.
 execute_process(COMMAND git rev-parse --short=7 HEAD WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
   OUTPUT_VARIABLE HWLAB_APP_COMMIT OUTPUT_STRIP_TRAILING_WHITESPACE ERROR_QUIET)
 execute_process(COMMAND git status --porcelain --untracked-files=no WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
@@ -85,6 +85,10 @@ install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/../specs DESTINATION .)
 # 환자 정보와 저장 위치 입력
 target_sources(hwlab_app PRIVATE src/shot_form.h src/shot_form.cc src/remembered_values.h src/remembered_values.cc)
 target_sources(hwlab_app PRIVATE src/shutdown_watch.h src/shutdown_watch.cc src/single_instance.h src/single_instance.cc)
+
+# 명령줄 인자 표(검사, --help, 문서), 콘솔 출력(Windows는 부모 콘솔에 붙음), 날짜별 로그 파일, 개발 빌드의 설정 분리(프로필)
+target_sources(hwlab_app PRIVATE src/cli_args.h src/cli_args.cc src/console_output.h src/console_output.cc
+  src/app_log.h src/app_log.cc src/app_profile.h src/app_profile.cc)
 qt_target_qml_sources(hwlab_app QML_FILES qml/Field.qml)
 
 # 열화상 미리보기와 열화상 SDK DLL. SDK 폴더(-DHWLAB_THERMAL_SDK_DIR)를 주지 않은 빌드는 열화상 없이 동작합니다.
@@ -95,11 +99,11 @@ if(WIN32 AND HWLAB_THERMAL_SDK_DIR)
   foreach(dll i3system_TE_x64.dll i3system_USB_DLL_V2_2_x64.dll i3system_imgproc_impl_x64.dll)
     install(FILES ${HWLAB_THERMAL_SDK_DIR}/bin/x64/${dll} DESTINATION ${CMAKE_INSTALL_BINDIR})
   endforeach()
-  # 열화상 카메라 USB 드라이버입니다. 설치 프로그램이 드라이버 저장소에 넣고, 거절하면 install_thermal_driver.cmd로 나중에 넣습니다.
+  # 열화상 카메라 USB 드라이버입니다. 이 레포 밖의 설치 프로그램이 드라이버 저장소에 넣고, 거절하면 install_thermal_driver.cmd로 나중에 넣습니다.
   install(FILES ../vendor/thermal_expert_driver/i3usbdrv.inf ../vendor/thermal_expert_driver/i3usbdrv.cat DESTINATION drivers/thermal)
   install(FILES ../vendor/thermal_expert_driver/amd64/i3usbdrv.sys DESTINATION drivers/thermal/amd64)
   install(PROGRAMS package/install_thermal_driver.cmd DESTINATION drivers)
-  # 설치나 장치 연결이 안 될 때 상태를 텍스트 파일 하나로 모으는 진단 프로그램입니다. 릴리즈에도 따로 올립니다.
+  # 설치나 장치 연결이 안 될 때 상태를 텍스트 파일 하나로 모으는 진단 프로그램입니다. 릴리즈(이 레포 밖)에도 따로 올립니다.
   install(PROGRAMS package/hwlab_diagnose.cmd DESTINATION .)
 endif()
 
@@ -133,7 +137,7 @@ qt_target_qml_sources(hwlab_app QML_FILES qml/PpgPanel.qml qml/PpgWave.qml)
 qt_target_qml_sources(hwlab_app QML_FILES qml/RestoreNotice.qml qml/CloseConfirm.qml)
 target_sources(hwlab_app PRIVATE src/scripted_rgb_camera.h src/late_rgb_camera.h)
 
-# 배포 패키지: 관류 분석 프로그램, VC++ 런타임, 실행 명령, 라이선스 고지입니다. 이 레포 밖의 배포 도구가 이 옵션을 채웁니다.
+# 배포 패키지: 관류 분석 프로그램, VC++ 런타임, 실행 명령, 라이선스 고지입니다. 이 레포 밖의 배포 스크립트가 이 옵션을 채웁니다.
 # 관류 분석 프로그램은 실행 파일 폴더 기준 python/python.exe와 analysis/dfr_worker.py로 찾으므로 둘 다 실행 파일 옆에 둡니다.
 set(HWLAB_PYTHON_DIR "" CACHE PATH "관류 분석 프로그램용 임베디드 파이썬 폴더(python.exe, 고정 판 패키지 설치됨)")
 # 관류 분석 프로그램은 이 레포에 없습니다. 기본값은 비어 있어 분석 없이 빌드하고 설치하며, 배포 패키지는 분석 프로그램 폴더를 이 값으로 넘깁니다.
@@ -172,7 +176,7 @@ endif()
 install(FILES package/licenses/NOTICE.txt package/licenses/Apache-2.0.txt package/licenses/LGPL-3.0.txt
   package/licenses/GPL-3.0.txt DESTINATION licenses)
 
-# app 테스트(QtTest). ctest --test-dir <빌드 폴더>로 돌립니다. 배포 빌드(release.ps1, deploy.ps1)는 테스트를 빌드하지 않아도 되므로 끌 수 있습니다.
+# app 테스트(QtTest). ctest --test-dir <빌드 폴더>로 돌립니다. 이 레포 밖의 배포 스크립트가 하는 배포 빌드는 테스트를 빌드하지 않아도 되므로 끌 수 있습니다.
 option(HWLAB_APP_TESTS "app 테스트" ON)
 if(HWLAB_APP_TESTS)
   enable_testing()

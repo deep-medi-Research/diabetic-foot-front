@@ -15,7 +15,7 @@ namespace hwlab::platform {
  * 형식은 `FF`, 발신지(PC 0x55, 장치 0x4D), 길이 2바이트(큰 쪽 먼저, 코드부터 CRC까지의 바이트 수), 코드 1바이트,
  * 데이터, CRC16 2바이트(작은 쪽 먼저)입니다. 전체 크기는 4 + 길이입니다.
  *
- * @note 제조사 장치 사양서(MP-SDK Interface Basic Rev.06, 2025-07-31, 이 레포에는 없음)와 실기(2026-10-19~20, 이슈 #4)로
+ * @note 제조사 장치 사양서(MP-SDK Interface Basic Rev.06, 2025-07-31, 이 레포에는 없음)와 실기(2026-10-19~20)로
  *       확인한 형식입니다.
  */
 struct PpgMessage {

@@ -18,7 +18,7 @@ namespace hwlab::platform {
  * @note 상주 관류 분석 프로그램(dfr_worker.py)만 씁니다. 단독 스크립트를 건마다 띄우는 길은 두지 않습니다.
  *       그 스크립트는 영상 이름을 `left.avi`, `right.avi`로 고정해 FFV1 MKV를 받지 못하고, 매번 모델을 다시 올립니다.
  * @note 열화상은 관류 분석 프로그램이 촬영 폴더에서 `thermal_{left,right}.npy` 이름으로 찾으므로 경로 키가 없습니다.
- * @note 그 밖의 기본값은 기존 앱(PerfusionRunner)이 보내던 값과 같습니다.
+ * @note 그 밖의 기본값은 기존 앱이 보내던 값과 같습니다.
  */
 struct PerfusionRequest {
   /** 촬영 폴더(UTF-8). 요청 키 `rec_dir`입니다. */

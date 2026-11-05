@@ -84,9 +84,13 @@ void InitShutdownLog() {
 }
 
 void LogShutdownStep(const QString& step) {
-  std::lock_guard<std::mutex> lock(State().mutex);
-  State().last_step = step;
-  Append(step);
+  {
+    std::lock_guard<std::mutex> lock(State().mutex);
+    State().last_step = step;
+    Append(step);
+  }
+  // 앱 로그에도 남겨 한 파일에서 종료까지 따라갈 수 있게 합니다. 제한 시간 감시 스레드는 프로세스를 바로 끝내므로 여기를 거치지 않습니다.
+  qInfo("종료 단계: %s", qUtf8Printable(step));
 }
 
 void ArmShutdownLimit(int limit_ms, const QString& what) {

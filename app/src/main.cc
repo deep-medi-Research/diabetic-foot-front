@@ -1,48 +1,10 @@
-// hwlab_app --spec <선언.json> [--out <폴더>] [--fake] [--no-thermal] [--save-full] [--screenshot <png> --after <ms> [--press-start]]
-//           [--patient <이름> --birth <0000-00-00>] [--arm-pressure <수축기/이완기>]
-//           [--ankle-pressure <수축기/이완기>] [--ankle-level 0|V|D|M|S]
-//           [--pixel-left-foot left|right] [--rgb-regions <x,y,w,h,x,y,w,h>]
-//           [--rgb-area <x,y,w,h>]
-//           [--fake-thermal-absent | --fake-thermal-delay-ms <ms>] [--lens-shading-folder <폴더>]
-//           [--light-port <포트> [--light-percent <%>]] [--light-remember <VID:PID:일련번호>] [--ppg-port <포트>]
-//           [--ppg-remember <VID:PID:일련번호>]
-//           [--analyzer-python <python.exe> --analyzer-script <dfr_worker.py>] [--analyze <촬영 폴더>]
-//           [--no-prestream] [--presegment-threads <n>]
-//   --out: 처음 저장 위치. 화면에서 고른 위치를 기억하고 있으면 그 위치를 씁니다. 설치 바로가기가 문서\DiabeticFoot를 줍니다.
-//   --fake: 장비 없이 가짜 RGB 카메라, 가짜 열화상 카메라, 가짜 PPG 장치(COM6)로 화면을 띄웁니다.
-//   기억한 값: --fake, --screenshot, --close-after, --light-remember, --ppg-remember를 준 시험 실행은 지난 값을 읽지 않고 바꾼 값도 다음 실행에 남기지 않습니다.
-//   --no-thermal: 열화상 카메라를 열지 않고 RGB만 녹화합니다.
-//   --save-full: 좌우 발 영상과 함께 전체 화면 영상도 저장합니다. 기본은 좌우 발 영상만입니다(FFV1 인코딩 수를 줄이기 위함).
-//   --screenshot: 정한 시간 뒤 화면을 이미지로 저장하고 끝납니다. 화면이 없는 SSH 세션에서 화면을 확인할 때 씁니다.
-//     결과 창이 열려 있으면 <이름>_result.<확장자>로 함께 저장합니다.
-//   --patient, --birth: 환자 정보 칸을 채운 채로 시작합니다. 화면 없이 입력 검사와 저장을 시험할 때 씁니다.
-//   --arm-pressure, --ankle-pressure, --ankle-level: 상완과 발목 혈압 칸(예: 120/80)과 발목 혈압 단계를 채운 채로 시작합니다.
-//     혈압 입력 검사를 시험할 때 씁니다.
-//   --pixel-left-foot, --rgb-regions: 화면 왼쪽 상자의 발과 RGB 좌우 영역(화소 왼쪽, 화소 오른쪽)을 정한 채로 시작합니다.
-//     영역은 격자 맞춤 없이 그대로 검사하므로 영역 오류 표시를 시험할 때도 씁니다.
-//   --rgb-area: RGB 패널의 관찰 영역(프레임 화소)을 정한 채로 시작합니다. 관찰 영역 화면을 --screenshot으로 확인할 때 씁니다.
-//   --fake-thermal-absent, --fake-thermal-delay-ms: --fake에서 열화상 장치를 찾지 못하는 상태, 연 뒤 첫 프레임을 기다리는 상태를
-//     만듭니다. 열화상 없이 찍을지 묻는 안내 화면을 시험할 때 씁니다.
-//   --lens-shading-folder: 열화상 렌즈 셰이딩 보정 파일 폴더. 주지 않으면 장비 실행은 앱 데이터 폴더의 thermal을 쓰고,
-//     --fake는 보정 기능이 없는 열화상이 됩니다. 보정 안내와 보정 버튼을 --fake로 시험할 때 씁니다.
-//   --light-port, --light-percent: 시작하면서 LED 포트를 열고 밝기를 보냅니다. 화면 확인용이며 --fake에서는 가짜 포트(COM7)만 열립니다.
-//   --light-remember: 기억한 LED 변환기를 정한 채로 시작합니다. 포트 제안을 시험할 때 쓰며 다음 실행에 남기지 않습니다.
-//   --ppg-port: 시작하면서 PPG 포트를 열고 장치를 시작합니다. 화면 확인용이며 --fake에서는 가짜 PPG 장치(COM6)만 열립니다.
-//   --ppg-remember: 기억한 PPG 변환기를 정한 채로 시작합니다. "지난번 PPG" 표시와 조명 칸의 확인을 시험할 때 쓰며 다음 실행에 남기지 않습니다.
-//   --palette iron|gray|rainbow|high-contrast: 열화상 색상표를 정한 채로 시작합니다. 색상표 화면을 시험할 때 씁니다.
-//   --fake-free-bytes <바이트>: 디스크 여유를 읽지 않고 이 값으로 봅니다. 디스크 부족 거부를 시험할 때 씁니다.
-//   --fake-restore-fails: --fake에서 실행 전 색온도를 자동으로 두고 자동 색온도 명령을 실패시킵니다. 종료 때 복원 불일치 안내를 시험할 때 씁니다.
-//   --close-after <ms>: 정한 시간 뒤 창을 닫습니다(종료 때 카메라 복원 흐름 시험).
-//   --analyzer-python, --analyzer-script: 배포 폴더의 python/, analysis/ 대신 쓸 관류 분석 프로그램(개발용).
-//     스크립트의 상대 경로는 앱을 띄운 폴더 기준이고, 경로 구분자가 없는 파이썬 이름(python3)은 PATH에서 찾습니다. 못 찾으면 분석 칸이 그 이름을 보입니다.
-//     값을 주지 않으면 PATH의 파이썬으로 물러나지 않고 배포 폴더의 python/을 씁니다.
-//   --analyze: 시작하자마자 그 촬영 폴더를 분석 대기열에 넣습니다. 촬영 없이 분석 막대를 시험할 때 씁니다.
-//   --no-prestream: 녹화 중 미리 분석(첫 장 발 분할과 영상 미리 읽기)을 쓰지 않고, 화면의 스위치도 숨깁니다.
-//     주지 않으면 화면의 "녹화 중 미리 분석" 스위치로 켜고 끕니다(기본 켬, 기억한 값에 남김).
-//   --presegment-threads: 녹화 중 첫 장 분할에 쓸 스레드 수입니다. 기본 2, 0이면 분석과 같은 모델을 같이 씁니다.
-// hwlab_app --result <촬영 폴더> [--result-position <0~1>] [--result-variant <판>] [--screenshot <png> --after <ms>]
-//   --result: 분석이 끝난 촬영 폴더의 결과 창만 띄웁니다(개발용). 카메라와 열화상을 열지 않고 --spec도 읽지 않습니다.
-//   --result-position: 되감기 막대 위치(0 처음, 1 끝). --result-variant: 보일 판 탭. --screenshot은 결과 창을 저장합니다.
+// hwlab_app: 당뇨발 촬영 앱의 시작점입니다.
+//
+// 명령줄 인자의 이름, 값, 설명은 cli_args.cc의 표 하나가 원본입니다. hwlab_app --help로 전체를 보고, 같은 표가 docs/debugging.md에 들어갑니다.
+// 인자를 더하면 그 표에도 더합니다. 표에 없는 인자는 시작할 때 거절됩니다.
+//
+// 다음 실행에 남기는 "기억한 값"은 --fake, --screenshot, --close-after, --light-remember, --ppg-remember 중 하나라도 준 시험 실행에서는
+// 지난 값을 읽지 않고 바꾼 값도 남기지 않습니다. 장비 PC의 실제 값을 시험이 덮어쓰지 않게 하기 위함입니다(아래 trial).
 #include <QCoreApplication>
 #include <QCryptographicHash>
 #include <QDir>
@@ -54,7 +16,9 @@
 #include <QQmlApplicationEngine>
 #include <QQuickStyle>
 #include <QQuickWindow>
+#include <QSettings>
 #include <QStandardPaths>
+#include <QSysInfo>
 #include <QTimer>
 
 #include <algorithm>
@@ -64,8 +28,12 @@
 
 #include "analysis_controller.h"
 #include "analysis_variants.h"
+#include "app_log.h"
+#include "app_profile.h"
 #include "app_version.h"
 #include "capture_controller.h"
+#include "cli_args.h"
+#include "console_output.h"
 #include "light_controller.h"
 #include "result_view.h"
 #include "scripted_ppg_device.h"
@@ -129,6 +97,62 @@ std::optional<hwlab::platform::LightPortIdentity> ParseLightIdentity(const QStri
                                             parts.size() == 3 ? parts[2].toStdString() : std::string()};
 }
 
+// 다음 실행에 남기지 않는 시험 실행인지입니다. 시험 실행에서 바꾼 값이 장비 PC의 실제 값을 덮어쓰지 않게 하기 위함입니다.
+// --out은 설치 바로가기도 주므로 시험 실행을 가르는 데 쓰지 않습니다.
+// 시험용으로 준 변환기(--light-remember, --ppg-remember)로 확인한 포트도 실제 실행에 남기지 않습니다.
+bool IsTrialRun(const QStringList& args) {
+  for (const char* name : {"--fake", "--screenshot", "--close-after", "--light-remember", "--ppg-remember"}) {
+    if (args.contains(QLatin1String(name))) return true;
+  }
+  return false;
+}
+
+// 로그 맨 앞에 남기는 시작 정보입니다. 이 로그가 어느 빌드의 어떤 실행이고 설정과 기록이 어디에 있는지 보입니다.
+// 콘솔에는 로그 파일 경로 한 줄만 보이고 나머지는 파일에만 남습니다(명령 프롬프트에서 켠 오류 메시지가 묻히지 않게 하기 위함).
+void LogStartup(const QStringList& args, const QString& data_dir, const profile::Choice& profile) {
+  const auto detail = [](const QString& text) { app_log::InfoToFileOnly(text); };
+  const QString version = QGuiApplication::applicationVersion();
+  detail(QStringLiteral("hwlab_app %1 시작(PID %2)")
+             .arg(version.isEmpty() ? QStringLiteral("(버전 없음)") : version)
+             .arg(QCoreApplication::applicationPid()));
+  detail(QStringLiteral("실행 파일: %1").arg(QDir::toNativeSeparators(QCoreApplication::applicationFilePath())));
+  detail(QStringLiteral("인자: %1").arg(cli::MaskedForLog(args).mid(1).join(QLatin1Char(' '))));
+  detail(QStringLiteral("Qt %1, 화면 플랫폼 %2, %3")
+             .arg(QString::fromLatin1(qVersion()), QGuiApplication::platformName(), QSysInfo::prettyProductName()));
+  detail(QStringLiteral("프로필: %1").arg(profile::Describe(profile)));
+  detail(QStringLiteral("앱 데이터 폴더: %1").arg(QDir::toNativeSeparators(data_dir)));
+  detail(QStringLiteral("설정 위치: %1%2")
+             .arg(QDir::toNativeSeparators(QSettings().fileName()),
+                  IsTrialRun(args) ? QStringLiteral(" (시험 실행이라 이번에는 읽지도 쓰지도 않음)") : QString()));
+  const QString log_file = app_log::CurrentFilePath();
+  qInfo("로그 파일: %s",
+        log_file.isEmpty() ? "없음(로그 폴더를 만들지 못함)" : qUtf8Printable(QDir::toNativeSeparators(log_file)));
+}
+
+// 촬영 단계, 저장, 오류, 분석 끝을 로그에 남깁니다. 모두 화면 스레드에서 받는 신호이고 프레임마다 오는 신호는 쓰지 않습니다.
+void LogEvents(CaptureController* controller, AnalysisVariants* analysis, QObject* context) {
+  QObject::connect(controller, &CaptureController::phaseChanged, context,
+                   [controller] { qInfo("촬영 단계: %s", qUtf8Printable(controller->phase())); });
+  QObject::connect(controller, &CaptureController::errorChanged, context, [controller] {
+    if (!controller->error().isEmpty()) qWarning("촬영 오류: %s", qUtf8Printable(controller->error()));
+  });
+  QObject::connect(controller, &CaptureController::rgbSaved, context, [](const QString& folder, bool ready) {
+    qInfo("RGB 영상 저장 끝: %s (분석 입력 %s)", qUtf8Printable(QDir::toNativeSeparators(folder)), ready ? "통과" : "통과하지 못함");
+  });
+  QObject::connect(controller, &CaptureController::shotSaved, context, [](const QString& folder, bool ready) {
+    qInfo("촬영 저장 끝: %s (분석 입력 %s)", qUtf8Printable(QDir::toNativeSeparators(folder)), ready ? "통과" : "통과하지 못함");
+  });
+  QObject::connect(analysis, &AnalysisVariants::finished, context,
+                   [](const QString& folder, bool ok, const QString& summary, const QString& variant) {
+    if (ok) {
+      qInfo("분석 성공(%s판): %s", qUtf8Printable(variant), qUtf8Printable(QDir::toNativeSeparators(summary)));
+    } else {
+      qWarning("분석 실패(%s판): %s. 분석 프로그램 출력은 그 폴더의 perfusion 아래 analyzer_log.txt에 있습니다", qUtf8Printable(variant),
+               qUtf8Printable(QDir::toNativeSeparators(folder)));
+    }
+  });
+}
+
 }  // namespace
 
 int main(int argc, char* argv[]) {
@@ -139,18 +163,35 @@ int main(int argc, char* argv[]) {
   if (!qEnvironmentVariableIsSet("QSG_RENDER_LOOP")) qputenv("QSG_RENDER_LOOP", "basic");
 #endif
   QGuiApplication app(argc, argv);
-  // 기억한 값을 남기는 QSettings의 이름입니다(RememberedValues).
+  const QStringList args = app.arguments();
+  const QString program = QFileInfo(args.value(0)).fileName();
+  // 기억한 값을 남기는 QSettings의 이름입니다(RememberedValues). 앱 데이터 폴더(로그 포함)도 이 이름을 따릅니다.
+  // 빌드 폴더에서 실행한 개발 빌드는 프로필 dev로 설치본과 설정과 기록을 나눕니다(app_profile.h). 설치본의 위치와 키는 그대로입니다.
+  const profile::Choice profile = profile::Resolve(args, QCoreApplication::applicationDirPath());
   QGuiApplication::setOrganizationName(QStringLiteral("deepmedi"));
-  QGuiApplication::setApplicationName(QStringLiteral("hwlab"));
+  QGuiApplication::setApplicationName(profile::ApplicationName(profile.name));
+  const QString data_dir = QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation);
+  if (cli::WantsHelp(args)) {
+    WriteStdout(cli::HelpText(program, app_log::HelpFooter(data_dir)));
+    return 0;
+  }
   // 창 제목이 Qt.application.version으로 버전을 보입니다. 개발 빌드는 버전이 비어 있어 빌드한 커밋을 보입니다.
   // 노트북에 설치된 개발 빌드가 어느 코드인지 화면에서 확인하기 위함입니다.
   const QString version = QString::fromUtf8(kAppVersion);
   const QString commit = QString::fromUtf8(kAppCommit);
-  QGuiApplication::setApplicationVersion(!version.isEmpty() ? version
-                                         : !commit.isEmpty() ? QStringLiteral("(개발 %1)").arg(commit)
-                                                             : QString());
+  QGuiApplication::setApplicationVersion(profile::DisplayVersion(version, commit, profile.name));
+  // 이 줄부터 Qt 메시지는 콘솔과 로그 파일에 남습니다. main을 어떤 길로 나가도 남은 줄을 쓰고 끝납니다.
+  app_log::Install(app_log::LogDirectory(data_dir));
+  struct LogEnd {
+    ~LogEnd() { app_log::Shutdown(); }
+  } log_end;
+  LogStartup(args, data_dir, profile);
+  if (const auto problems = cli::Check(args)) {
+    qCritical("%s\n모든 인자는 %s --help로 봅니다.", qUtf8Printable(*problems), qUtf8Printable(program));
+    return 2;
+  }
 #ifdef _WIN32
-  // 설치 프로그램(installer.iss의 AppMutex)이 이 이름으로 앱 실행 여부를 확인하고, 실행 중이면 덮어쓰지 않고 닫으라고 안내합니다.
+  // 이 레포 밖의 설치 프로그램이 이 이름(Inno Setup의 AppMutex)으로 앱 실행 여부를 확인하고, 실행 중이면 덮어쓰지 않고 닫으라고 안내합니다.
   // 핸들은 프로세스가 끝날 때 Windows가 닫습니다.
   CreateMutexW(nullptr, FALSE, L"HWLabAppRunning");
 #endif
@@ -162,14 +203,13 @@ int main(int argc, char* argv[]) {
   }
   // font.family를 빠뜨린 글자도 같은 글꼴로 그리도록 기본 글꼴을 정합니다.
   QGuiApplication::setFont(QFont(QStringLiteral("Pretendard")));
-  const QStringList args = app.arguments();
   // 결과 창만 띄우는 개발용 실행입니다. 장치를 열기 전에 끝내 촬영 중인 다른 프로그램의 장치를 건드리지 않습니다.
   if (args.contains(QStringLiteral("--result"))) {
     QQmlApplicationEngine engine;
     ResultView result_view(&engine);
     QString result_error;
     if (!result_view.Open(Arg(args, QStringLiteral("--result")), &result_error)) {
-      qWarning("분석 결과를 읽지 못함: %s", qPrintable(result_error));
+      qWarning("분석 결과를 읽지 못함: %s", qUtf8Printable(result_error));
       if (result_view.Window() == nullptr) return 1;
     }
     if (args.contains(QStringLiteral("--result-variant"))) result_view.setCurrentVariant(Arg(args, QStringLiteral("--result-variant")));
@@ -192,7 +232,7 @@ int main(int argc, char* argv[]) {
     // 읽은 뒤 바로 닫습니다. 열어 두면 앱이 도는 동안 선언 파일을 바꿀 수 없습니다.
     QFile file(spec_path);
     if (!file.open(QIODevice::ReadOnly)) {
-      qCritical("선언 파일을 열지 못함: %s", qPrintable(spec_path));
+      qCritical("선언 파일을 열지 못함: %s", qUtf8Printable(spec_path));
       return 2;
     }
     spec_text = file.readAll();
@@ -211,12 +251,8 @@ int main(int argc, char* argv[]) {
   struct TeardownEnd {
     ~TeardownEnd() { LogShutdownStep(QStringLiteral("정리 끝")); }
   } teardown_end;
-  // 다음 실행에 남길지는 여기서만 정합니다. 시험 실행에서 바꾼 값이 장비 PC의 실제 값을 덮어쓰지 않게 하기 위함입니다.
-  // --out은 설치 바로가기도 주므로 시험 실행을 가르는 데 쓰지 않습니다.
-  // 시험용으로 준 변환기(--light-remember, --ppg-remember)로 확인한 포트도 실제 실행에 남기지 않습니다.
-  const bool trial = fake || args.contains(QStringLiteral("--screenshot")) ||
-                     args.contains(QStringLiteral("--close-after")) || args.contains(QStringLiteral("--light-remember")) ||
-                     args.contains(QStringLiteral("--ppg-remember"));
+  // 다음 실행에 남길지는 여기서만 정합니다.
+  const bool trial = IsTrialRun(args);
   RememberedValues remembered = trial ? RememberedValues::ThisRunOnly() : RememberedValues::Saved();
   QString out_dir = ShotForm::RememberedRoot(remembered);
   // 분석 프로그램은 스크립트 폴더에서 돌므로 촬영 폴더를 상대 경로로 넘기면 영상을 찾지 못합니다. 앱을 띄운 폴더 기준 절대 경로로 둡니다.
@@ -411,7 +447,7 @@ int main(int argc, char* argv[]) {
   }
   QString start_error;
   if (!controller.Start(&start_error)) {
-    qCritical("시작 실패: %s", qPrintable(start_error));
+    qCritical("시작 실패: %s", qUtf8Printable(start_error));
     return 1;
   }
   if (args.contains(QStringLiteral("--light-port"))) {
@@ -465,6 +501,7 @@ int main(int argc, char* argv[]) {
   QObject::connect(&controller, &CaptureController::phaseChanged, &analysis,
                    [&] { analysis.setHold(controller.recording() || controller.settling()); });
   analysis.Start();
+  LogEvents(&controller, &analysis, &app);
   if (args.contains(QStringLiteral("--analyze"))) {
     analysis.onShotSaved(QFileInfo(Arg(args, QStringLiteral("--analyze"))).absoluteFilePath(), true);
   }
@@ -488,7 +525,7 @@ int main(int argc, char* argv[]) {
     QString open_error;
     // 켜 둔 다른 판이 아직 분석 중이면 그 판의 탭을 "분석 중"으로 엽니다.
     if (!result_view.Open(folder, &open_error, !analysis.Finished(folder))) {
-      qWarning("분석 결과를 읽지 못함: %s", qPrintable(open_error));
+      qWarning("분석 결과를 읽지 못함: %s", qUtf8Printable(open_error));
     }
   };
   // 분석 입력 확인을 통과한 촬영은 녹화가 끝나 저장되면 결과 창을 바로 엽니다. 영상과 열화상을 먼저 보이고 분석 값은
@@ -498,7 +535,7 @@ int main(int argc, char* argv[]) {
     QString open_error;
     // 분석은 RGB가 저장되면 바로 시작하므로, 열화상 배열을 쓰는 동안 끝났을 수 있습니다. 그러면 "분석 중"으로 열지 않습니다.
     if (!result_view.Open(folder, &open_error, !analysis.Finished(folder)) && !open_error.isEmpty()) {
-      qInfo("결과 창을 분석 전에 엶: %s", qPrintable(open_error));
+      qInfo("결과 창을 분석 전에 엶: %s", qUtf8Printable(open_error));
     }
   });
   // 관류 지도 GIF와 그림은 분석 완료 뒤에 그립니다. 다 그리면 결과 창이 GIF를 다시 읽습니다.
