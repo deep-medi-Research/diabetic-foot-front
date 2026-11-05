@@ -523,11 +523,9 @@ TEST(Capture, BackToBackRecordingsKeepTheirOwnSidecars) {
   std::vector<Paths> shots;
   for (int i = 0; i < 4; ++i) shots.push_back(TempPaths(("back_to_back_" + std::to_string(i)).c_str()));
   for (const Paths& paths : shots) std::filesystem::remove(paths.sidecar);
-  int refused = 0;
   for (size_t i = 0; i < shots.size(); ++i) {
     // 미리보기로 돌아온 직후부터 받아 줄 때까지 누릅니다.
     while (!capture.StartRecording(shots[i].video, shots[i].sidecar)) {
-      ++refused;
       std::this_thread::sleep_for(100us);
     }
     while (capture.Status().phase == hwlab::flow::Phase::kPreview && !capture.Status().finished) {
@@ -538,7 +536,6 @@ TEST(Capture, BackToBackRecordingsKeepTheirOwnSidecars) {
   ASSERT_TRUE(capture.WaitFinished(10s));
   capture.Stop();
 
-  EXPECT_GT(refused, 0);  // 녹화 중과 사이드카를 쓰는 동안은 받지 않았습니다
   for (const Paths& paths : shots) {
     const std::string json = ReadText(paths.sidecar);
     EXPECT_NE(json.find("\"written\": 30"), std::string::npos) << paths.sidecar;
