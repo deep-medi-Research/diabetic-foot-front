@@ -350,6 +350,20 @@ if(HWLAB_PLATFORM_TESTS)
   gtest_discover_tests(test_template_map)
 endif()
 
+# 가짜 분석 프로그램(tools/fake_analysis)을 앱과 같은 명령줄로 띄워 Analyzer와 결과 읽기까지 시험합니다. 파이썬 3.9 이상이 없으면 시험을 건너뜁니다.
+if(HWLAB_PLATFORM_TESTS)
+  find_package(Python3 3.9 COMPONENTS Interpreter)
+  get_filename_component(HWLAB_FAKE_ANALYSIS_SCRIPT ${CMAKE_CURRENT_SOURCE_DIR}/../tools/fake_analysis/dfr_worker.py ABSOLUTE)
+  add_executable(test_fake_analysis test/test_fake_analysis.cc)
+  target_link_libraries(test_fake_analysis PRIVATE hwlab_platform GTest::gtest_main)
+  target_compile_options(test_fake_analysis PRIVATE ${HWLAB_WARNINGS})
+  target_compile_definitions(test_fake_analysis PRIVATE
+    HWLAB_FAKE_ANALYSIS_SCRIPT="${HWLAB_FAKE_ANALYSIS_SCRIPT}"
+    HWLAB_FAKE_ANALYSIS_PYTHON="${Python3_EXECUTABLE}")
+  hwlab_copy_ffmpeg_dlls(test_fake_analysis)
+  gtest_discover_tests(test_fake_analysis DISCOVERY_TIMEOUT 30)
+endif()
+
 # 장당 길이(fps)가 빠진 이전 FFV1 MKV의 장을 그대로 옮겨 fps를 적는 도구입니다(2026-10-20 이전 녹화).
 if(HWLAB_HAS_FFV1)
   add_executable(hwlab_mkv_rewrite tools/hwlab_mkv_rewrite.cc)

@@ -6,6 +6,7 @@
 - **이 문서에서 "앱"은 촬영 앱이고 "분석 프로그램"은 관류 분석 프로그램입니다**<br>좌우(왼발, 오른발, `left`, `right`)는 모두 피험자 기준입니다
 - **분석 판은 분석 프로그램 폴더의 `variants/<판>` 하나입니다**<br>앱은 판마다 분석 프로그램을 하나씩 띄우고, 판마다 결과 폴더가 따로 있습니다
 - **시험용 가짜 분석 프로그램이 `platform/test/fake_analyzer.cc`에 있습니다**<br>platform 시험이 이 문서의 줄 형식을 가짜 분석 프로그램으로 확인합니다
+- **개발용 가짜 분석 프로그램이 `tools/fake_analysis/dfr_worker.py`에 있습니다**<br>이 문서의 줄 형식과 결과 파일을 같은 모양으로 내는 파이썬 스크립트입니다. 분석 프로그램 없이 앱의 분석 상태 막대와 결과 창을 만들고 확인할 때 씁니다
 
 ## 1. 흐름
 
@@ -451,4 +452,5 @@ sequenceDiagram
 ## 12. 시험
 
 - **platform 시험이 줄 형식과 결과 읽기를 확인합니다**<br>`platform/test/test_perfusion_analysis.cc`는 요청 줄 만들기와 출력 줄 해석, `test_analyzer.cc`는 `fake_analyzer.cc`를 띄워 준비, preload, 분석, 시간 제한, 취소, 판 찾기를 확인합니다
+- **가짜 분석 프로그램의 결과는 platform 시험이 앱의 읽기로 확인합니다**<br>`test_fake_analysis.cc`가 `tools/fake_analysis/dfr_worker.py`를 앱과 같은 명령줄로 띄워 요약, npz 두 개, GIF, PNG 세 장을 읽고, 시간 창 수가 요약, npz, GIF에서 같은지 봅니다. 파이썬 3.9 이상이 없으면 이 시험은 건너뜁니다
 - **결과 파일 읽기는 실제 결과를 고정한 파일로 확인합니다**<br>`test_perfusion_summary.cc`, `test_perfusion_detail.cc`, `test_npy_archive.cc`가 `platform/test/data`의 요약 JSON과 npz를 읽습니다. 이 파일은 분석 프로그램이 낸 결과 값이고 모델 파일은 없습니다
