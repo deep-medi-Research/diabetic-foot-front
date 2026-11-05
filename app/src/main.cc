@@ -219,8 +219,11 @@ int main(int argc, char* argv[]) {
                      args.contains(QStringLiteral("--ppg-remember"));
   RememberedValues remembered = trial ? RememberedValues::ThisRunOnly() : RememberedValues::Saved();
   QString out_dir = ShotForm::RememberedRoot(remembered);
-  if (out_dir.isEmpty()) out_dir = Arg(args, QStringLiteral("--out"));
-  if (out_dir.isEmpty()) out_dir = QDir::current().filePath(QStringLiteral("captures"));
+  // 분석 프로그램은 스크립트 폴더에서 돌므로 촬영 폴더를 상대 경로로 넘기면 영상을 찾지 못합니다. 앱을 띄운 폴더 기준 절대 경로로 둡니다.
+  if (out_dir.isEmpty()) {
+    const QString out = Arg(args, QStringLiteral("--out"));
+    out_dir = QFileInfo(out.isEmpty() ? QStringLiteral("captures") : out).absoluteFilePath();
+  }
 
   std::unique_ptr<hwlab::platform::RgbCamera> camera;
   if (fake) {
@@ -462,7 +465,9 @@ int main(int argc, char* argv[]) {
   QObject::connect(&controller, &CaptureController::phaseChanged, &analysis,
                    [&] { analysis.setHold(controller.recording() || controller.settling()); });
   analysis.Start();
-  if (args.contains(QStringLiteral("--analyze"))) analysis.onShotSaved(Arg(args, QStringLiteral("--analyze")), true);
+  if (args.contains(QStringLiteral("--analyze"))) {
+    analysis.onShotSaved(QFileInfo(Arg(args, QStringLiteral("--analyze"))).absoluteFilePath(), true);
+  }
 
   QQmlApplicationEngine engine;
   engine.addImageProvider(QStringLiteral("preview"), new PreviewProvider(&controller));
