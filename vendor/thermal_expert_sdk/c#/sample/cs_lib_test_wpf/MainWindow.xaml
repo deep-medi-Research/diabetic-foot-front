@@ -1,0 +1,75 @@
+﻿<Window x:Class="cs_lib_test_wpf.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:cs_lib_test_wpf"
+        mc:Ignorable="d"
+        Title="MainWindow" Height="600" Width="1000"
+        Loaded="Window_Loaded"
+        SourceInitialized="Window_SourceInitialized">
+    <Grid>
+        <GroupBox x:Name="groupBox" Header="Engine" HorizontalAlignment="Left" Margin="669,25,0,0" VerticalAlignment="Top" Height="364" Width="313">
+            <StackPanel HorizontalAlignment="Left" Height="342" VerticalAlignment="Top" Width="303" Margin="0,0,-2,0">
+                <Grid Height="145">
+                    <Button x:Name="Button_GetImage" Content="Run" HorizontalAlignment="Left" Margin="10,45,0,0" VerticalAlignment="Top" Width="75"
+            			Click="Button_GetImage_Click"/>
+                    <Button x:Name="button_reset" Content="Reset" HorizontalAlignment="Left" Margin="99,45,0,0" VerticalAlignment="Top" Width="75"
+            			Click="button_reset_Click"/>
+                    <TextBox x:Name="textBox_emissivity" HorizontalAlignment="Left" Height="23" Margin="84,117,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="61" PreviewKeyDown="textBox_emissivity_PreviewKeyDown" TextChanged="textBox_emissivity_TextChanged"/>
+                    <Label x:Name="label" Content="Emissivity :" HorizontalAlignment="Left" Margin="10,114,0,0" VerticalAlignment="Top"/>
+                    <Button x:Name="button_savesetting" Content="Save Setting" HorizontalAlignment="Left" Margin="10,80,0,0" VerticalAlignment="Top" Width="75" Click="button_savesetting_Click"/>
+                    <Button x:Name="button_getsetting" Content="Get Setting" HorizontalAlignment="Left" Margin="99,80,0,0" VerticalAlignment="Top" Width="75" Click="button_getsetting_Click"/>
+                    <Button x:Name="button_connect" Content="Connect" HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top" Width="75" Click="button_connect_Click"/>
+                    <Button x:Name="button_close" Content="Close" HorizontalAlignment="Left" Margin="99,10,0,0" VerticalAlignment="Top" Width="75" Click="button_close_Click"/>
+                    <Button x:Name="button_scan" Content="Scan" HorizontalAlignment="Left" Margin="193,10,0,0" VerticalAlignment="Top" Width="75" Click="button_scan_Click"/>
+                    <Button x:Name="button_getPt100" Content="Get PT100" HorizontalAlignment="Left" Margin="193,80,0,0" VerticalAlignment="Top" Width="75" Click="button_getPt100_Click"/>
+                </Grid>
+                <Grid Height="96" RenderTransformOrigin="0.5,0.5">
+                    <Label x:Name="label_shutter_time" Content="" HorizontalAlignment="Left" Margin="270,10,0,0" VerticalAlignment="Top" Width="33"/>
+                    <Label x:Name="label_shutter_temp" Content="" HorizontalAlignment="Left" Margin="270,35,0,0" VerticalAlignment="Top" Width="23"/>
+                    <RadioButton x:Name="radioButton_temp_shutter" Content="Temp Shutter" HorizontalAlignment="Left" Margin="5,41,0,0" VerticalAlignment="Top"
+            			Click="radioButton_temp_shutter_Click" Height="20" RenderTransformOrigin="0.5,0.5" Width="107"/>
+                    <Slider x:Name="slider_shutter_time" HorizontalAlignment="Left" Margin="118,12,0,0" VerticalAlignment="Top" Width="152" Minimum="1" Maximum="120" IsSnapToTickEnabled="True" TickFrequency="1"
+                            ValueChanged="slider_shutter_time_ValueChanged"/>
+                    <RadioButton x:Name="radioButton_time_shutter" Content="Time Shutter" Margin="5,12,0,0" VerticalAlignment="Top"
+            			Click="radioButton_time_shutter_Click" HorizontalAlignment="Left" Width="89" Height="20" RenderTransformOrigin="0.5,0.5"/>
+                    <Slider x:Name="slider_shutter_temp" HorizontalAlignment="Left" Margin="118,41,0,0" VerticalAlignment="Top" Width="152" Minimum="1" Maximum="10" TickFrequency="1"
+                            ValueChanged="slider_shutter_temp_ValueChanged" IsSnapToTickEnabled="True"/>
+                    <Button x:Name="button_shutter" Content="Shutter" HorizontalAlignment="Left" Margin="10,70,0,0" VerticalAlignment="Top" Width="75" 
+            			Click="button_shutter_Click"/>
+                </Grid>
+                <Grid Height="101">
+                    <GroupBox x:Name="groupBox2" Header="Temperature Calibration" HorizontalAlignment="Left" VerticalAlignment="Top" Height="81" Width="303" Margin="0,5,0,0"/>
+                    <Button x:Name="button_updateTempData" Content="Update" HorizontalAlignment="Left" Margin="247,53,0,0" VerticalAlignment="Top" Width="51" Click="button_update_temp_data_Click" Height="26"/>
+                    <TextBox x:Name="textBox_tempTarget1" HorizontalAlignment="Left" Height="23" Margin="59,28,0,0" TextWrapping="Wrap" Text="0" VerticalAlignment="Top" Width="50" TextChanged="textBox_tempTarget1_TextChanged"/>
+                    <TextBox x:Name="textBox_tempTarget2" HorizontalAlignment="Left" Height="23" Margin="59,57,0,0" TextWrapping="Wrap" Text="0" VerticalAlignment="Top" Width="50" TextChanged="textBox_tempTarget2_TextChanged"/>
+                    <TextBox x:Name="textBox_tempMeasure1" HorizontalAlignment="Left" Height="23" Margin="176,28,0,0" TextWrapping="Wrap" Text="0" VerticalAlignment="Top" Width="50" TextChanged="textBox_tempMeasure1_TextChanged"/>
+                    <TextBox x:Name="textBox_tempMeasure2" HorizontalAlignment="Left" Height="23" Margin="176,57,0,0" TextWrapping="Wrap" Text="0" VerticalAlignment="Top" Width="50" TextChanged="textBox_tempMeasure2_TextChanged"/>
+                    <Label x:Name="label2" Content="Target1" HorizontalAlignment="Left" Margin="6,28,0,0" VerticalAlignment="Top"/>
+                    <Label x:Name="label3" Content="Target2" HorizontalAlignment="Left" Margin="6,54,0,0" VerticalAlignment="Top"/>
+                    <Label x:Name="label4" Content="Measure1" HorizontalAlignment="Left" Margin="115,28,0,0" VerticalAlignment="Top"/>
+                    <Label x:Name="label5" Content="Measure2" HorizontalAlignment="Left" Margin="114,54,0,0" VerticalAlignment="Top"/>
+
+                </Grid>
+            </StackPanel>
+        </GroupBox>
+        <Image x:Name="image" HorizontalAlignment="Left" Height="480" Margin="10,30,0,0" VerticalAlignment="Top" Width="640" MouseLeftButtonDown="image_MouseLeftButtonDown"/>
+        <GroupBox x:Name="groupBox1" Header="Camera" HorizontalAlignment="Left" Margin="669,394,0,0" VerticalAlignment="Top" Height="134" Width="313">
+            <StackPanel Height="112" VerticalAlignment="Top">
+                <Grid Height="114">
+                    <ComboBox x:Name="comboBox" HorizontalAlignment="Left" Margin="13,10,0,0" VerticalAlignment="Top" Width="75" SelectionChanged="comboBox_SelectionChanged"/>
+                    <Button x:Name="button_open_b" Content="Open" Margin="118,10,0,0" Click="button_open_b_Click" Width="75" Height="21" VerticalAlignment="Top" HorizontalAlignment="Left"/>
+                    <Button x:Name="button_close_b" Content="Close" Margin="216,10,0,0" Width="75" RenderTransformOrigin="0.173,0.3" Click="button_close_b_Click" Height="21" VerticalAlignment="Top" HorizontalAlignment="Left"/>
+                    <Button x:Name="button_run_b" Content="Run" HorizontalAlignment="Left" Margin="13,49,0,0" VerticalAlignment="Top" Width="75" Click="button_run_b_Click"/>
+                    <Button x:Name="button_calib_b" Content="Calibration" HorizontalAlignment="Left" Margin="118,49,0,0" VerticalAlignment="Top" Width="75" RenderTransformOrigin="0,-0.35" Click="button_calib_b_Click"/>
+                    <Button x:Name="button_update_dead_b" Content="BadPixels" HorizontalAlignment="Left" Margin="216,49,0,0" VerticalAlignment="Top" Width="75" RenderTransformOrigin="0,-0.35" Click="button_update_dead_b_Click"/>
+                    <Button x:Name="button_save_cal_b" Content="Save Cal" HorizontalAlignment="Left" Margin="13,84,0,0" VerticalAlignment="Top" Width="75" Click="button_save_cal_b_Click"/>
+                    <Button x:Name="button_load_cal_b" Content="Load Cal" HorizontalAlignment="Left" Margin="118,84,0,0" VerticalAlignment="Top" Width="75" Click="button_load_cal_b_Click"/>
+                </Grid>
+            </StackPanel>
+        </GroupBox>
+        <ComboBox x:Name="comboBox_colorMap" HorizontalAlignment="Left" Margin="767,537,0,0" VerticalAlignment="Top" Width="95" SelectionChanged="comboBox_colorMap_SelectionChanged"/>
+        <Label x:Name="label1" Content="Colormap" HorizontalAlignment="Left" Margin="689,533,0,0" VerticalAlignment="Top"/>
+    </Grid>
+</Window>

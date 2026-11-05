@@ -1,0 +1,5 @@
+# Windows 배치 파일은 줄 끝이 CRLF여야 레이블(goto)이 바르게 동작합니다.
+*.cmd text eol=crlf
+
+# 제조사 SDK, 샘플, 문서는 받은 그대로 둡니다. 줄 끝을 바꾸지 않습니다.
+vendor/** -text
