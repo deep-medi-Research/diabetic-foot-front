@@ -29,6 +29,7 @@
 #include "analysis_controller.h"
 #include "analysis_variants.h"
 #include "app_log.h"
+#include "app_profile.h"
 #include "app_version.h"
 #include "capture_controller.h"
 #include "cli_args.h"
@@ -107,7 +108,7 @@ bool IsTrialRun(const QStringList& args) {
 }
 
 // 로그 맨 앞에 남기는 시작 정보입니다. 이 로그가 어느 빌드의 어떤 실행이고 설정과 기록이 어디에 있는지 보입니다.
-void LogStartup(const QStringList& args, const QString& data_dir) {
+void LogStartup(const QStringList& args, const QString& data_dir, const profile::Choice& profile) {
   const QString version = QGuiApplication::applicationVersion();
   qInfo("hwlab_app %s 시작(PID %lld)", qPrintable(version.isEmpty() ? QStringLiteral("(버전 없음)") : version),
         static_cast<long long>(QCoreApplication::applicationPid()));
@@ -115,6 +116,7 @@ void LogStartup(const QStringList& args, const QString& data_dir) {
   qInfo("인자: %s", qPrintable(cli::MaskedForLog(args).mid(1).join(QLatin1Char(' '))));
   qInfo("Qt %s, 화면 플랫폼 %s, %s", qVersion(), qPrintable(QGuiApplication::platformName()),
         qPrintable(QSysInfo::prettyProductName()));
+  qInfo("프로필: %s", qPrintable(profile::Describe(profile)));
   qInfo("앱 데이터 폴더: %s", qPrintable(QDir::toNativeSeparators(data_dir)));
   qInfo("설정 위치: %s%s", qPrintable(QDir::toNativeSeparators(QSettings().fileName())),
         IsTrialRun(args) ? " (시험 실행이라 이번에는 읽지도 쓰지도 않음)" : "");
@@ -137,8 +139,10 @@ int main(int argc, char* argv[]) {
   const QStringList args = app.arguments();
   const QString program = QFileInfo(args.value(0)).fileName();
   // 기억한 값을 남기는 QSettings의 이름입니다(RememberedValues). 앱 데이터 폴더(로그 포함)도 이 이름을 따릅니다.
+  // 빌드 폴더에서 실행한 개발 빌드는 프로필 dev로 설치본과 설정과 기록을 나눕니다(app_profile.h). 설치본의 위치와 키는 그대로입니다.
+  const profile::Choice profile = profile::Resolve(args, QCoreApplication::applicationDirPath());
   QGuiApplication::setOrganizationName(QStringLiteral("deepmedi"));
-  QGuiApplication::setApplicationName(QStringLiteral("hwlab"));
+  QGuiApplication::setApplicationName(profile::ApplicationName(profile.name));
   const QString data_dir = QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation);
   if (cli::WantsHelp(args)) {
     WriteStdout(cli::HelpText(program, app_log::HelpFooter(data_dir)));
@@ -148,15 +152,13 @@ int main(int argc, char* argv[]) {
   // 노트북에 설치된 개발 빌드가 어느 코드인지 화면에서 확인하기 위함입니다.
   const QString version = QString::fromUtf8(kAppVersion);
   const QString commit = QString::fromUtf8(kAppCommit);
-  QGuiApplication::setApplicationVersion(!version.isEmpty() ? version
-                                         : !commit.isEmpty() ? QStringLiteral("(개발 %1)").arg(commit)
-                                                             : QString());
+  QGuiApplication::setApplicationVersion(profile::DisplayVersion(version, commit, profile.name));
   // 이 줄부터 Qt 메시지는 콘솔과 로그 파일에 남습니다. main을 어떤 길로 나가도 남은 줄을 쓰고 끝납니다.
   app_log::Install(app_log::LogDirectory(data_dir));
   struct LogEnd {
     ~LogEnd() { app_log::Shutdown(); }
   } log_end;
-  LogStartup(args, data_dir);
+  LogStartup(args, data_dir, profile);
   if (const auto problems = cli::Check(args)) {
     qCritical("%s\n모든 인자는 %s --help로 봅니다.", qPrintable(*problems), qPrintable(program));
     return 2;

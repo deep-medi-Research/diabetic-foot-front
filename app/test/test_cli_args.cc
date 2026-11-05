@@ -33,7 +33,7 @@ class CliArgsTest : public QObject {
   void AcceptsEveryArgumentInTable() {
     for (const cli::ArgSpec& spec : cli::Arguments()) {
       QStringList rest{QString::fromUtf8(spec.name)};
-      if (spec.value != nullptr) rest << QStringLiteral("값");
+      if (spec.value != nullptr) rest << (rest[0] == QStringLiteral("--profile") ? QStringLiteral("qa") : QStringLiteral("값"));
       const auto problems = cli::Check(WithSpec(rest));
       QVERIFY2(!problems, qPrintable(rest.join(QLatin1Char(' ')) + QStringLiteral(": ") + problems.value_or(QString())));
     }
@@ -74,6 +74,15 @@ class CliArgsTest : public QObject {
     const auto problems = cli::Check(WithSpec({QStringLiteral("--out=C:\\shots")}));
     QVERIFY(problems);
     QVERIFY2(problems->contains(QStringLiteral("--out C:\\shots")), qPrintable(*problems));
+  }
+
+  // --profile 이름은 폴더와 레지스트리 키에 들어가므로 쓸 수 없는 글자는 거절합니다.
+  void ChecksProfileName() {
+    QVERIFY(!cli::Check(WithSpec({QStringLiteral("--profile"), QStringLiteral("qa-1")})));
+    QVERIFY(!cli::Check(WithSpec({QStringLiteral("--profile"), QStringLiteral("default")})));
+    const auto problems = cli::Check(WithSpec({QStringLiteral("--profile"), QStringLiteral("a/b")}));
+    QVERIFY(problems);
+    QVERIFY2(problems->contains(QStringLiteral("a/b")), qPrintable(*problems));
   }
 
   void RejectsBareWord() {

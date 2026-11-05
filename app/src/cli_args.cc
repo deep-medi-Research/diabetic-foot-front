@@ -2,6 +2,8 @@
 
 #include <algorithm>
 
+#include "app_profile.h"
+
 namespace cli {
 
 namespace {
@@ -11,6 +13,8 @@ constexpr ArgSpec kArguments[] = {
     {"--spec", "<선언 파일>", Group::kRun, "촬영 선언(JSON)입니다. --result가 아니면 꼭 필요하고, 설치 폴더의 specs에 있습니다", false},
     {"--out", "<폴더>", Group::kRun,
      "처음 저장 위치입니다. 화면에서 고른 위치를 기억하고 있으면 그 위치를 쓰고, 둘 다 없으면 현재 폴더의 captures입니다", false},
+    {"--profile", "<이름>", Group::kRun,
+     "설정, 기록, 로그를 따로 두는 이름입니다. 빌드 폴더에서 실행하면 dev이고, default는 설치본과 같은 위치입니다", false},
     {"--help", nullptr, Group::kRun, "이 도움말을 보이고 끝납니다(-h, /?도 됩니다)", false},
 
     {"--no-thermal", nullptr, Group::kDevices, "열화상 카메라를 열지 않고 RGB만 녹화합니다", false},
@@ -156,6 +160,9 @@ std::optional<QString> Check(const QStringList& args) {
       continue;
     }
     ++i;
+    if (token == QLatin1String("--profile") && !profile::IsValidName(args[i])) {
+      problems << QStringLiteral("--profile 이름은 영문, 숫자, 점, 밑줄, 하이픈으로 32자까지입니다: %1").arg(args[i]);
+    }
   }
   const bool has_result = args.contains(QStringLiteral("--result"));
   if (!has_result && !args.contains(QStringLiteral("--spec"))) {
