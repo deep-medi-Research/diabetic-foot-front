@@ -14,6 +14,7 @@
 - **설계**<br>[`docs/00-architecture.md`](docs/00-architecture.md)
 - **분석 프로그램과 주고받는 형식**<br>[`docs/analysis-contract.md`](docs/analysis-contract.md)
 - **촬영 폴더의 파일과 크기**<br>[`docs/shot-folder.md`](docs/shot-folder.md)
+- **녹화 뒤 확인할 것(장 수, 누락, 프레임 시각, 장치 사이 시각)**<br>[`docs/recording-checklist.md`](docs/recording-checklist.md)
 - **로그, 기록 위치, 장비 없는 재현, 인자 전체**<br>[`docs/debugging.md`](docs/debugging.md)
 - **도구와 가짜 분석 프로그램**<br>[`tools/README.md`](tools/README.md), [`tools/fake_analysis/README.md`](tools/fake_analysis/README.md)
 
@@ -27,7 +28,7 @@
 | `specs/` | 촬영 선언 |
 | `vendor/` | 제조사 SDK, 샘플, 문서 |
 | `docs/` | 코드 길잡이, 설계, 분석 연동 약속, 촬영 폴더, 디버깅 |
-| `tools/` | 그림 원본, 결과 창 확인 도구, 가짜 분석 프로그램 |
+| `tools/` | 그림 원본, 결과 창 확인 도구, 촬영 폴더 검사 도구, 가짜 분석 프로그램 |
 
 ## 주요 기능
 
