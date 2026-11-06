@@ -285,7 +285,7 @@ class WindowsThermalCamera final : public ThermalCamera {
     return lens_shading_;
   }
 
-  bool CorrectLensShading(std::string* error) override {
+  bool CorrectLensShading(const std::optional<timing::LensShadingConditions>& made, std::string* error) override {
     std::lock_guard<std::mutex> lock(device_mutex_);
     if (device_ == nullptr) return Fail(error, "열화상 카메라가 열려 있지 않습니다");
     if (lens_shading_folder_.empty()) return Fail(error, "렌즈 셰이딩 보정 파일 폴더가 정해지지 않았습니다");
@@ -302,7 +302,7 @@ class WindowsThermalCamera final : public ThermalCamera {
       SetLensShading({{record::LensShadingSource::kFailed, std::nullopt}, "렌즈 셰이딩 보정이 실패했습니다"});
       return Fail(error, "렌즈 셰이딩 보정이 실패했습니다");
     }
-    LensShadingStatus status{{record::LensShadingSource::kCorrected, std::nullopt}, std::string()};
+    LensShadingStatus status{{record::LensShadingSource::kCorrected, std::nullopt}, std::string(), made};
     const std::filesystem::path path = LensShadingPath(name);
     // 저장이 중간에 실패해도 앞의 보정 파일이 남도록 임시 파일에 쓴 뒤 바꿔 넣습니다.
     std::filesystem::path temp = path;
@@ -318,6 +318,9 @@ class WindowsThermalCamera final : public ThermalCamera {
       status.error = "보정은 적용했지만 저장한 보정 파일을 바꿔 넣지 못했습니다";
     } else {
       status.record.file_unix_s = FileUnixSeconds(path);
+      if (made && status.record.file_unix_s && !WriteLensShadingConditions(path, *status.record.file_unix_s, *made)) {
+        status.error = "보정 파일은 저장했지만 보정 때의 카메라 온도를 저장하지 못했습니다";
+      }
     }
     if (!status.error.empty()) std::filesystem::remove(temp, ec);
     SetLensShading(status);
@@ -500,7 +503,10 @@ class WindowsThermalCamera final : public ThermalCamera {
     if (!device_->LoadCalibration(sdk_path->c_str())) {
       return {{record::LensShadingSource::kFailed, std::nullopt}, "보정 파일을 불러오지 못했습니다"};
     }
-    return {{record::LensShadingSource::kLoaded, FileUnixSeconds(path)}, std::string()};
+    const std::optional<int64_t> saved_s = FileUnixSeconds(path);
+    std::optional<timing::LensShadingConditions> made;
+    if (saved_s) made = ReadLensShadingConditions(path, *saved_s);
+    return {{record::LensShadingSource::kLoaded, saved_s}, std::string(), made};
   }
 
   void SetLensShading(const LensShadingStatus& status) {

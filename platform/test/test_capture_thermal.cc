@@ -505,6 +505,50 @@ TEST(CaptureThermal, CorrectsLensShadingOnlyInPreview) {
   EXPECT_NE(ReadText(paths.thermal_sidecar).find("\"source\": \"corrected\""), std::string::npos);
 }
 
+TEST(CaptureThermal, LensShadingKeepsCameraTemperatureAtCorrection) {
+  using hwlab::timing::WarmupPhase;
+  FakeRgbCamera camera(RgbScript());
+  FakeThermalScript thermal_script = ThermalScript();
+  // 가상 시계로 기다리지 않고 프레임을 내어, 데워진 카메라가 예열 완료(구간 10분과 유지 15분)에 닿는 시간을 몇 초로 줄입니다.
+  thermal_script.pc_clock = false;
+  thermal_script.wall_period_us = 0;
+  thermal_script.fpa_tau_us = 15 * 60'000'000LL;
+  thermal_script.warmed_before_open_us = 120 * 60'000'000LL;
+  FakeThermalCamera thermal(thermal_script);
+  const std::string folder = LensShadingFolder("conditions", std::nullopt);
+  thermal.SetLensShadingFolder(folder);
+  Capture capture(camera, SmallSpec(20), &thermal);
+  std::string error;
+  ASSERT_TRUE(capture.Start(&error)) << error;
+  ASSERT_TRUE(WaitStatus(capture, [](const CaptureStatus& s) { return s.thermal.camera_temperature.has_value(); }));
+  EXPECT_EQ(capture.Status().thermal.warmup.phase, WarmupPhase::kMeasuring);
+  const auto deadline = std::chrono::steady_clock::now() + 60s;
+  while (capture.Status().thermal.warmup.phase != WarmupPhase::kReady && std::chrono::steady_clock::now() < deadline) {
+    std::this_thread::sleep_for(10ms);
+  }
+  const CaptureStatus ready = capture.Status();
+  ASSERT_EQ(ready.thermal.warmup.phase, WarmupPhase::kReady);
+
+  ASSERT_TRUE(capture.CorrectThermalLensShading());
+  ASSERT_TRUE(WaitStatus(capture, [](const CaptureStatus& s) { return !s.thermal.lens_shading_busy; }));
+  const CaptureStatus corrected = capture.Status();
+  capture.Stop();
+  ASSERT_TRUE(corrected.thermal.lens_shading && corrected.thermal.lens_shading->made);
+  const hwlab::timing::LensShadingConditions made = *corrected.thermal.lens_shading->made;
+  EXPECT_EQ(made.warmup, WarmupPhase::kReady);
+  EXPECT_NEAR(made.fpa, ready.thermal.camera_temperature->fpa, 1e-3);
+  EXPECT_NEAR(made.shutter_c, ready.thermal.camera_temperature->shutter_c, 1e-3);
+
+  FakeThermalCamera reopened(thermal_script);
+  reopened.SetLensShadingFolder(folder);
+  ASSERT_TRUE(reopened.Open(&error));
+  ASSERT_TRUE(reopened.LensShading());
+  EXPECT_EQ(reopened.LensShading()->record.source, hwlab::record::LensShadingSource::kLoaded);
+  ASSERT_TRUE(reopened.LensShading()->made);
+  EXPECT_NEAR(reopened.LensShading()->made->fpa, made.fpa, 1e-3);
+  EXPECT_EQ(reopened.LensShading()->made->warmup, WarmupPhase::kReady);
+}
+
 // 열화상이 끊긴 동안은 보정 요청을 받지 않습니다. 다시 여는 몇 초 뒤에 보정하면 그 사이 렌즈 앞을 치웠을 수 있습니다.
 TEST(CaptureThermal, CorrectsLensShadingOnlyWhileReceiving) {
   FakeRgbCamera camera(RgbScript());
@@ -559,14 +603,14 @@ class GatedLensShadingCamera final : public hwlab::platform::ThermalCamera {
   bool HoldAutoCalibration(bool hold, std::string* error) override { return inner_.HoldAutoCalibration(hold, error); }
   void SetLensShadingFolder(const std::string& folder) override { inner_.SetLensShadingFolder(folder); }
   std::optional<hwlab::platform::LensShadingStatus> LensShading() const override { return inner_.LensShading(); }
-  bool CorrectLensShading(std::string* error) override {
+  bool CorrectLensShading(const std::optional<hwlab::timing::LensShadingConditions>& made, std::string* error) override {
     {
       std::unique_lock<std::mutex> lock(mutex_);
       correcting_ = true;
       changed_.notify_all();
       changed_.wait(lock, [&] { return gate_open_; });
     }
-    return inner_.CorrectLensShading(error);
+    return inner_.CorrectLensShading(made, error);
   }
 
   bool WaitCorrecting() {

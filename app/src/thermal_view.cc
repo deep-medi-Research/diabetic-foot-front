@@ -8,6 +8,8 @@
 
 #include "hwlab/pixel/foot_warmth.h"
 #include "hwlab/pixel/rect.h"
+#include "hwlab/platform/thermal_camera.h"
+#include "hwlab/timing/warmup.h"
 
 namespace {
 
@@ -156,7 +158,8 @@ void ThermalView::Update(const hwlab::platform::ThermalStatus& status) {
   if (status.connection == status_.connection && status.received == status_.received &&
       status.written == status_.written && status.dropped == status_.dropped && status.missing == status_.missing &&
       status.error == status_.error && status.lens_shading == status_.lens_shading &&
-      status.lens_shading_busy == status_.lens_shading_busy && fps == measured_fps_) {
+      status.lens_shading_busy == status_.lens_shading_busy && fps == measured_fps_ &&
+      status.warmup == status_.warmup) {
     return;
   }
   status_ = status;
@@ -199,6 +202,102 @@ QString ThermalView::lensShadingText() const {
   }
   const QString when = QDateTime::fromSecsSinceEpoch(*saved).toString(QStringLiteral("M/d HH:mm"));
   return QStringLiteral("렌즈 보정 적용(%1 보정)").arg(when);
+}
+
+std::optional<hwlab::timing::WarmupStatus> ThermalView::ShownWarmup() const {
+  if (status_.connection != hwlab::platform::ThermalConnection::kReceiving || !status_.camera_temperature) {
+    return std::nullopt;
+  }
+  return status_.warmup;
+}
+
+QString ThermalView::warmup() const {
+  using hwlab::timing::WarmupPhase;
+  const auto shown = ShownWarmup();
+  if (!shown) return {};
+  switch (shown->phase) {
+    case WarmupPhase::kMeasuring:
+      return QStringLiteral("measuring");
+    case WarmupPhase::kWarming:
+      return QStringLiteral("warming");
+    case WarmupPhase::kSettling:
+      return QStringLiteral("settling");
+    case WarmupPhase::kReady:
+      return QStringLiteral("ready");
+  }
+  return {};
+}
+
+QString ThermalView::warmupText() const {
+  const QString key = warmup();
+  if (key == QStringLiteral("measuring")) return QStringLiteral("예열 확인 중");
+  if (key == QStringLiteral("warming")) return QStringLiteral("예열 중");
+  if (key == QStringLiteral("settling")) return QStringLiteral("예열 마무리 중");
+  if (key == QStringLiteral("ready")) return QStringLiteral("예열 완료");
+  return {};
+}
+
+QString ThermalView::warmupDetail() const {
+  const auto shown = ShownWarmup();
+  if (!shown) return {};
+  const hwlab::timing::WarmupRule& rule = hwlab::platform::kTeEv1WarmupRule;
+  const auto minutes_left = [](int64_t us) { return QString::number((us + 59'999'999) / 60'000'000); };
+  if (!shown->rate_fpa_per_min) return QStringLiteral("%1분 뒤 판정").arg(minutes_left(shown->remaining_us));
+  const double rate_c = hwlab::timing::ShutterCelsius(*shown->rate_fpa_per_min, rule);
+  const QString rate = QStringLiteral("지난 %1분 분당 %2 °C")
+                           .arg(rule.window_us / 60'000'000)
+                           .arg(QString::asprintf("%+.2f", rate_c));
+  if (shown->phase == hwlab::timing::WarmupPhase::kSettling) {
+    return QStringLiteral("%1, %2분 뒤 완료").arg(rate, minutes_left(shown->remaining_us));
+  }
+  return rate;
+}
+
+std::optional<hwlab::timing::LensShadingFit> ThermalView::ShownLensFit() const {
+  using hwlab::record::LensShadingSource;
+  const auto shown = ShownWarmup();
+  if (!shown || !status_.lens_shading || status_.lens_shading_busy) return std::nullopt;
+  const LensShadingSource source = status_.lens_shading->record.source;
+  if (source != LensShadingSource::kLoaded && source != LensShadingSource::kCorrected) return std::nullopt;
+  return hwlab::timing::JudgeLensShadingFit(status_.lens_shading->made, status_.camera_temperature->fpa, shown->phase,
+                                            hwlab::platform::kTeEv1WarmupRule);
+}
+
+QString ThermalView::lensFit() const {
+  using hwlab::timing::LensShadingFit;
+  const auto fit = ShownLensFit();
+  if (!fit) return {};
+  switch (*fit) {
+    case LensShadingFit::kUnknown:
+      return QStringLiteral("unknown");
+    case LensShadingFit::kMadeWhileWarming:
+      return QStringLiteral("made-warming");
+    case LensShadingFit::kWaitWarmup:
+      return QStringLiteral("wait-warmup");
+    case LensShadingFit::kTemperatureMoved:
+      return QStringLiteral("moved");
+    case LensShadingFit::kFits:
+      return QStringLiteral("fits");
+  }
+  return {};
+}
+
+QString ThermalView::lensFitText() const {
+  const QString key = lensFit();
+  if (key == QStringLiteral("unknown")) return QStringLiteral("보정 때 온도 기록 없음");
+  if (key == QStringLiteral("made-warming")) return QStringLiteral("예열 전에 한 보정, 예열 완료 뒤 다시 보정");
+  if (key == QStringLiteral("wait-warmup")) return QStringLiteral("예열 완료 뒤 렌즈 보정 판정");
+  if (key == QStringLiteral("moved")) {
+    const double moved_c = hwlab::timing::ShutterCelsius(status_.camera_temperature->fpa - status_.lens_shading->made->fpa,
+                                                         hwlab::platform::kTeEv1WarmupRule);
+    return QStringLiteral("보정 때보다 %1 °C 다름, 다시 보정").arg(std::abs(moved_c), 0, 'f', 2);
+  }
+  return {};
+}
+
+bool ThermalView::lensRecalibrate() const {
+  const QString key = lensFit();
+  return key == QStringLiteral("made-warming") || key == QStringLiteral("moved");
 }
 
 QString ThermalView::state() const {

@@ -72,6 +72,11 @@ target_link_libraries(test_record_rate PRIVATE hwlab_timing GTest::gtest_main)
 target_compile_options(test_record_rate PRIVATE ${HWLAB_WARNINGS})
 gtest_discover_tests(test_record_rate)
 
+add_executable(test_warmup test_warmup.cc)
+target_link_libraries(test_warmup PRIVATE hwlab_timing GTest::gtest_main)
+target_compile_options(test_warmup PRIVATE ${HWLAB_WARNINGS})
+gtest_discover_tests(test_warmup)
+
 add_executable(test_analysis_inputs test_analysis_inputs.cc)
 target_link_libraries(test_analysis_inputs PRIVATE hwlab_record GTest::gtest_main)
 target_compile_options(test_analysis_inputs PRIVATE ${HWLAB_WARNINGS})

@@ -10,6 +10,7 @@
 #include <optional>
 #include <string_view>
 #include <system_error>
+#include <utility>
 
 #include "hwlab/pixel/brightness.h"
 #include "hwlab/platform/shot_folder.h"
@@ -17,6 +18,7 @@
 #include "hwlab/timing/clock_map.h"
 #include "hwlab/timing/frame_gap.h"
 #include "hwlab/timing/record_rate.h"
+#include "hwlab/timing/warmup.h"
 
 namespace hwlab::platform {
 
@@ -186,6 +188,7 @@ void ThermalStream::ReceiveLoop() {
   bool open = false;
   bool opened_before = false;
   std::deque<Timestamp> recent;
+  timing::WarmupState warmup;
   for (;;) {
     {
       std::lock_guard<std::mutex> lock(stop_mutex_);
@@ -224,6 +227,7 @@ void ThermalStream::ReceiveLoop() {
       status_.measured_fps = 0;
       // 닫은 장치의 보정은 남지 않으므로(실측) 다시 열어 보정 파일을 불러올 때까지 지웁니다.
       status_.lens_shading.reset();
+      status_.camera_temperature.reset();
       continue;
     }
     if (!frame) {
@@ -234,11 +238,17 @@ void ThermalStream::ReceiveLoop() {
     recent.push_back(frame->host_time);
     if (recent.size() > kRecentFrames) recent.pop_front();
     const int64_t median_us = timing::MedianIntervalUs(std::vector<Timestamp>(recent.begin(), recent.end()));
+    const std::optional<CameraTemperature> temperature = camera_.LastCameraTemperature();
+    if (temperature) {
+      warmup = timing::AfterCameraTemperature(std::move(warmup), frame->host_time, temperature->fpa, kTeEv1WarmupRule);
+    }
     {
       std::lock_guard<std::mutex> lock(status_mutex_);
       status_.connection = connection;
       ++status_.received;
       status_.measured_fps = median_us > 0 ? 1e6 / static_cast<double>(median_us) : 0.0;
+      status_.camera_temperature = temperature;
+      status_.warmup = warmup.status;
     }
     if (preview_sink_ && preview_every_ > 0 && static_cast<int64_t>(frame->view.index) % preview_every_ == 0) {
       preview_sink_(frame->view);
@@ -249,7 +259,7 @@ void ThermalStream::ReceiveLoop() {
     arrival.height = frame->view.height;
     arrival.record = {frame->view.index, frame->view.time, frame->host_time, 0, 0};
     arrival.median_interval_us = median_us;
-    arrival.camera_temperature = camera_.LastCameraTemperature();
+    arrival.camera_temperature = temperature;
     {
       std::lock_guard<std::mutex> lock(slot_mutex_);
       if (!free_slots_.empty()) {

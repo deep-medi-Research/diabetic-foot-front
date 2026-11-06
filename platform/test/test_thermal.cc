@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 
 #include <algorithm>
+#include <cmath>
 #include <cstdint>
 #include <cstring>
 #include <filesystem>
@@ -479,27 +480,28 @@ TEST(FakeThermal, LensShadingNeedsFolder) {
   std::string error;
   ASSERT_TRUE(camera.Open(&error));
   EXPECT_EQ(camera.LensShading(), std::nullopt);
-  EXPECT_FALSE(camera.CorrectLensShading(&error));
+  EXPECT_FALSE(camera.CorrectLensShading(std::nullopt, &error));
   EXPECT_FALSE(error.empty());
 }
 
-// 보정 파일이 없으면 kNone이고, 보정하면 파일을 쓰며, 닫았다 다시 열면 그 파일을 불러옵니다.
 TEST(FakeThermal, LensShadingSavesAndLoadsFile) {
   using hwlab::record::LensShadingSource;
   const std::string folder = EmptyLensShadingFolder("save_load");
   FakeThermalCamera camera(FakeThermalScript{});
   camera.SetLensShadingFolder(folder);
+  const hwlab::timing::LensShadingConditions made{36.79, 97.234, hwlab::timing::WarmupPhase::kReady};
   std::string error;
-  EXPECT_FALSE(camera.CorrectLensShading(&error));  // 열기 전
+  EXPECT_FALSE(camera.CorrectLensShading(made, &error));  // 열기 전
   ASSERT_TRUE(camera.Open(&error));
   ASSERT_TRUE(camera.LensShading());
   EXPECT_EQ(camera.LensShading()->record.source, LensShadingSource::kNone);
   EXPECT_EQ(camera.LensShading()->record.file_unix_s, std::nullopt);
 
-  ASSERT_TRUE(camera.CorrectLensShading(&error)) << error;
+  ASSERT_TRUE(camera.CorrectLensShading(made, &error)) << error;
   const auto corrected = camera.LensShading();
   ASSERT_TRUE(corrected && corrected->record.file_unix_s);
   EXPECT_EQ(corrected->record.source, LensShadingSource::kCorrected);
+  EXPECT_EQ(corrected->made, made);
   EXPECT_TRUE(std::filesystem::exists(std::filesystem::path(folder) / "lens_shading_FakeThermal.cal"));
 
   camera.Close();
@@ -508,6 +510,23 @@ TEST(FakeThermal, LensShadingSavesAndLoadsFile) {
   ASSERT_TRUE(camera.LensShading());
   EXPECT_EQ(camera.LensShading()->record.source, LensShadingSource::kLoaded);
   EXPECT_EQ(camera.LensShading()->record.file_unix_s, corrected->record.file_unix_s);
+  EXPECT_EQ(camera.LensShading()->made, made);
+}
+
+TEST(FakeThermal, LensShadingRemadeWithoutConditionsHasNoRecord) {
+  const std::string folder = EmptyLensShadingFolder("remade");
+  const std::filesystem::path cal = std::filesystem::path(folder) / "lens_shading_FakeThermal.cal";
+  std::filesystem::create_directories(folder);
+  std::ofstream(cal) << 1762400000 << "\n";
+  ASSERT_TRUE(hwlab::platform::WriteLensShadingConditions(
+      cal, 1762300000, {38.23, 98.2, hwlab::timing::WarmupPhase::kReady}));
+  FakeThermalCamera camera(FakeThermalScript{});
+  camera.SetLensShadingFolder(folder);
+  std::string error;
+  ASSERT_TRUE(camera.Open(&error));
+  ASSERT_TRUE(camera.LensShading());
+  EXPECT_EQ(camera.LensShading()->record.file_unix_s, 1762400000);
+  EXPECT_EQ(camera.LensShading()->made, std::nullopt);
 }
 
 // 보정이 실패하면 kFailed와 이유를 남기고 파일을 쓰지 않습니다.
@@ -520,7 +539,7 @@ TEST(FakeThermal, LensShadingFailureKeepsNoFile) {
   camera.SetLensShadingFolder(folder);
   std::string error;
   ASSERT_TRUE(camera.Open(&error));
-  EXPECT_FALSE(camera.CorrectLensShading(&error));
+  EXPECT_FALSE(camera.CorrectLensShading(std::nullopt, &error));
   EXPECT_FALSE(error.empty());
   ASSERT_TRUE(camera.LensShading());
   EXPECT_EQ(camera.LensShading()->record.source, LensShadingSource::kFailed);
@@ -531,6 +550,54 @@ TEST(FakeThermal, LensShadingFailureKeepsNoFile) {
 // 보정 파일 이름에는 장치 이름(모델과 코어 번호)을 넣어 카메라마다 따로 둡니다.
 TEST(LensShadingFile, NameHasDevice) {
   EXPECT_EQ(hwlab::platform::LensShadingFileName("TE-EV1-001234"), "lens_shading_TE-EV1-001234.cal");
+}
+
+TEST(LensShadingFile, ConditionsBelongToOneCalibrationFile) {
+  using hwlab::timing::WarmupPhase;
+  const std::filesystem::path cal = std::filesystem::path(EmptyLensShadingFolder("conditions")) / "lens_shading_X.cal";
+  std::filesystem::create_directories(cal.parent_path());
+  EXPECT_EQ(hwlab::platform::ReadLensShadingConditions(cal, 1762400000), std::nullopt);
+  for (const WarmupPhase phase : {WarmupPhase::kMeasuring, WarmupPhase::kWarming, WarmupPhase::kSettling, WarmupPhase::kReady}) {
+    const hwlab::timing::LensShadingConditions made{35.125, 96.5, phase};
+    ASSERT_TRUE(hwlab::platform::WriteLensShadingConditions(cal, 1762400000, made));
+    EXPECT_EQ(hwlab::platform::ReadLensShadingConditions(cal, 1762400000), made);
+    EXPECT_EQ(hwlab::platform::ReadLensShadingConditions(cal, 1762400001), std::nullopt);
+  }
+  EXPECT_TRUE(std::filesystem::exists(std::filesystem::path(cal.string() + ".json")));
+  std::ofstream(cal.string() + ".json") << "{\"file_unix_s\": 1762400000}";
+  EXPECT_EQ(hwlab::platform::ReadLensShadingConditions(cal, 1762400000), std::nullopt);
+}
+
+TEST(FakeThermal, CameraTemperatureFollowsWarmupCurve) {
+  FakeThermalScript script;
+  script.width = 8;
+  script.height = 6;
+  script.wall_period_us = 0;
+  script.device_period_us = 1'000'000;
+  script.fpa_tau_us = 60'000'000;
+  FakeThermalCamera camera(script);
+  std::string error;
+  ASSERT_TRUE(camera.Open(&error));
+  EXPECT_EQ(camera.LastCameraTemperature(), std::nullopt);
+  std::vector<double> fpa;
+  for (int i = 0; i < 120; ++i) {
+    ASSERT_TRUE(camera.ReadFrame(2'000'000));
+    const auto t = camera.LastCameraTemperature();
+    ASSERT_TRUE(t);
+    fpa.push_back(t->fpa);
+    EXPECT_NEAR(std::fmod(t->fpa / 0.061 + 0.5, 1.0), 0.5, 1e-3);
+    EXPECT_NEAR(t->shutter_c, 1.460 * t->fpa - 105.20, 0.01);
+  }
+  EXPECT_GE(fpa.front(), 88.6);
+  EXPECT_LE(fpa.back(), 98.2);
+  EXPECT_TRUE(std::is_sorted(fpa.begin(), fpa.end()));
+  EXPECT_GT(fpa.back() - fpa.front(), 5.0);
+
+  script.fpa_tau_us = 0;
+  FakeThermalCamera silent(script);
+  ASSERT_TRUE(silent.Open(&error));
+  ASSERT_TRUE(silent.ReadFrame(2'000'000));
+  EXPECT_EQ(silent.LastCameraTemperature(), std::nullopt);
 }
 
 }  // namespace

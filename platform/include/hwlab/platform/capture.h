@@ -35,6 +35,11 @@ struct ThermalStatus {
   // 지금 연결의 렌즈 셰이딩 보정 상태(ThermalCamera::LensShading). 열기 전, 끊긴 동안, 보정 기능이 없으면 비웁니다
   std::optional<LensShadingStatus> lens_shading;
   bool lens_shading_busy = false;  // 렌즈 셰이딩 보정 요청을 제어 스레드가 아직 끝내지 않음(Capture::CorrectThermalLensShading)
+  // 마지막으로 받은 프레임과 함께 읽은 카메라 온도(ThermalCamera::LastCameraTemperature). 주지 않는 카메라, 받기 전,
+  // 끊긴 동안은 비웁니다
+  std::optional<CameraTemperature> camera_temperature;
+  // 카메라 온도로 잰 예열 판정(kTeEv1WarmupRule). 1분 넘게 끊겼다 다시 연 카메라는 처음부터 잽니다
+  timing::WarmupStatus warmup;
 };
 
 /** LED 조명 상태의 사본입니다. CaptureStatus::light에 들어갑니다. */

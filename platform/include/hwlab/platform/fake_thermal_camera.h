@@ -31,6 +31,13 @@ struct FakeThermalScript {
   bool pc_clock = false;
   bool calibration_supported = true;  // false이면 CalibrateNow와 HoldAutoCalibration이 실패합니다(원래 설정을 모르는 장치)
   bool lens_shading_fails = false;    // true이면 CorrectLensShading이 실패합니다
+  // 카메라 온도(LastCameraTemperature)입니다. FPA 값은 처음 연 때부터 fpa_start에서 fpa_end로 시간 상수 fpa_tau_us에 따라
+  // 다가갑니다(장치처럼 0.061 단위). 셔터 온도는 FPA 값을 이전 레포 이슈 #49의 식(1.460 x FPA 값 - 105.20)으로 옮깁니다.
+  // fpa_tau_us가 0 이하이면 카메라 온도를 주지 않습니다
+  double fpa_start = 88.6;  // 2026-10-28 식은 카메라를 연 때의 셔터 24.2 °C
+  double fpa_end = 98.2;    // 같은 날 60분 뒤 38.2 °C
+  int64_t fpa_tau_us = 0;
+  int64_t warmed_before_open_us = 0;  // 처음 연 때 이미 데워진 시간. 곡선을 이만큼 앞에서 시작합니다
 };
 
 /**
@@ -42,7 +49,7 @@ struct FakeThermalScript {
  *
  * 렌즈 셰이딩 보정은 실제 구현과 같게 동작합니다. 보정 파일 폴더를 정하면 열 때마다 lens_shading_FakeThermal.cal이 있으면
  * 불러오고, CorrectLensShading이 그 파일을 씁니다. 파일 내용은 보정한 PC 시각(UTC 유닉스 초) 한 줄이며, 그 값을
- * file_unix_s로 씁니다. 화소 값은 바꾸지 않습니다.
+ * file_unix_s로 씁니다. 보정 때의 카메라 온도 기록 파일도 실제 구현과 같게 쓰고 읽습니다. 화소 값은 바꾸지 않습니다.
  */
 class FakeThermalCamera final : public ThermalCamera {
  public:
@@ -60,7 +67,8 @@ class FakeThermalCamera final : public ThermalCamera {
   std::string AutoCalibrationSetting() const override;
   void SetLensShadingFolder(const std::string& folder) override;
   std::optional<LensShadingStatus> LensShading() const override;
-  bool CorrectLensShading(std::string* error) override;
+  bool CorrectLensShading(const std::optional<timing::LensShadingConditions>& made, std::string* error) override;
+  std::optional<CameraTemperature> LastCameraTemperature() const override;
 
   /**
    * 장치 프레임의 화소 값입니다. 행마다, 프레임마다 값이 달라 바이트 순서나 행 어긋남을 찾을 수 있습니다.
@@ -112,6 +120,8 @@ class FakeThermalCamera final : public ThermalCamera {
   std::string lens_shading_folder_;  // 비면 보정 기능이 없는 장치
   std::optional<LensShadingStatus> lens_shading_;  // 지금 연결의 보정 상태
   std::chrono::steady_clock::time_point next_due_{};
+  std::optional<int64_t> first_opened_us_;
+  std::optional<CameraTemperature> last_temperature_;
 };
 
 }  // namespace hwlab::platform

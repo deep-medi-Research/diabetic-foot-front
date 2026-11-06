@@ -2,6 +2,7 @@
 #define HWLAB_PLATFORM_THERMAL_CAMERA_H_
 
 #include <cstdint>
+#include <filesystem>
 #include <memory>
 #include <optional>
 #include <string>
@@ -10,6 +11,7 @@
 #include "hwlab/platform/rgb_camera.h"
 #include "hwlab/record/sidecar.h"
 #include "hwlab/timestamp.h"
+#include "hwlab/timing/warmup.h"
 
 namespace hwlab::platform {
 
@@ -57,6 +59,8 @@ ThermalConnection JudgeThermalConnection(bool open, Timestamp opened_at, std::op
 struct LensShadingStatus {
   record::LensShadingRecord record;
   std::string error;  // 불러오기, 보정, 저장이 실패한 이유. 실패가 없으면 빈 문자열
+  // 적용된 보정을 한 때의 카메라 온도와 예열 단계. 보정이 없거나, 기록 없이 만든 보정 파일이면 비웁니다
+  std::optional<timing::LensShadingConditions> made;
 
   friend bool operator==(const LensShadingStatus&, const LensShadingStatus&) = default;
 };
@@ -201,6 +205,8 @@ class ThermalCamera {
   /**
    * 렌즈 셰이딩 보정을 하고 이 카메라의 보정 파일로 저장합니다. 다음에 열 때 그 파일을 불러옵니다.
    *
+   * @param made 지금 카메라 온도와 예열 단계. 보정 파일 옆 기록 파일(WriteLensShadingConditions)에 남기고 LensShading의
+   *        made에 넣습니다. 카메라 온도를 모르면 nullopt이고 기록 파일을 쓰지 않습니다
    * @param error 실패하면 이유를 씁니다
    * @return 보정했으면 true. 보정했지만 저장하지 못하면 true이고 LensShading의 file_unix_s가 비며 error에 이유가 남습니다.
    *         열려 있지 않거나 보정 기능이 없거나 보정이 실패하면 false
@@ -208,7 +214,8 @@ class ThermalCamera {
    *       보정하지 않았을 때보다 영상이 고르지 않게 됩니다(설계 문서 표 10). 수신 스레드가 ReadFrame을 부르는 동안 다른
    *       스레드에서 부르며, 보정하는 동안(TE-EV1 실측 1.5~1.8초) ReadFrame은 기다립니다.
    */
-  virtual bool CorrectLensShading(std::string* error) {
+  virtual bool CorrectLensShading(const std::optional<timing::LensShadingConditions>& made, std::string* error) {
+    (void)made;
     if (error != nullptr) *error = "이 열화상 구현은 렌즈 셰이딩 보정을 지원하지 않습니다";
     return false;
   }
@@ -234,6 +241,28 @@ inline std::string LensShadingFileName(const std::string& device_name) {
 }
 
 /**
+ * 보정 파일을 만든 때의 카메라 온도와 예열 단계를 보정 파일 옆 기록 파일(<보정 파일 이름>.json)에 씁니다.
+ *
+ * @param cal_path 보정 파일 경로
+ * @param file_unix_s 보정 파일의 수정 시각. 읽을 때 이 값이 다르면 다른 보정 파일의 기록으로 봅니다
+ * @param made 보정한 때의 카메라 온도와 예열 단계
+ * @return 썼으면 true
+ * @note SDK가 쓰는 보정 파일에는 다른 값을 넣을 수 없어 따로 둡니다.
+ */
+bool WriteLensShadingConditions(const std::filesystem::path& cal_path, int64_t file_unix_s,
+                                const timing::LensShadingConditions& made);
+
+/**
+ * 보정 파일 옆 기록 파일을 읽습니다(WriteLensShadingConditions).
+ *
+ * @param cal_path 보정 파일 경로
+ * @param file_unix_s 지금 보정 파일의 수정 시각
+ * @return 기록. 기록 파일이 없거나, 읽지 못하거나, 기록한 수정 시각이 file_unix_s와 다르면(기록 없이 다시 만든 보정 파일) nullopt
+ */
+std::optional<timing::LensShadingConditions> ReadLensShadingConditions(const std::filesystem::path& cal_path,
+                                                                       int64_t file_unix_s);
+
+/**
  * TE-EV1의 셔터 교정 판정 수치입니다(설계 문서 표 5).
  *
  * @note 실측(2026-10-20, 교정 명령 14회, 열기 5회, 교정 밖 20,108장):
@@ -253,6 +282,33 @@ inline constexpr pixel::CalibrationRule kTeEv1CalibrationRule{3, 15, 130, 105};
  *       14.35~14.37초에 시작했습니다.
  */
 inline constexpr int64_t kTeEv1CalibrationUs = 4'900'000;
+
+/**
+ * TE-EV1의 예열 판정과 렌즈 셰이딩 보정 유효 판정 수치입니다(timing::AfterCameraTemperature, timing::JudgeLensShadingFit).
+ *
+ * @note 근거는 이전 레포 이슈 #49의 연구소 실측(2026-10-26~11-05, 카메라 한 대)뿐이라 판정은 화면에 보이기만 하고 촬영을 막지
+ *       않습니다. 방 온도, 거치 상태, 다른 카메라에서는 확인하지 않았습니다.
+ *       - window_us 10분: #49의 오르는 속도는 지난 10분 동안 오른 양을 10으로 나눈 값입니다. FPA 값은 0.061 단위로 바뀌어
+ *         1분 구간으로는 재기 어렵습니다
+ *       - sample_period_us 10초: #49에 없는 값입니다. 10분 구간을 61개 값으로 재고, 판정이 최대 10초 늦습니다
+ *       - max_gap_us 1분: #49에 없는 값입니다. 꽂아 둔 채 열화상만 닫은 카메라는 분당 0.01~0.02 °C로 식어(#49) 1분 끊긴
+ *         동안의 변화는 0.02 °C 안입니다. 더 오래 끊기면 식었을 수 있어 처음부터 잽니다
+ *       - ready_fpa_per_min 0.034: 2026-10-26, 10-28 측정에서 정한 셔터 온도 분당 약 0.05 °C를 FPA 값으로 옮긴 값입니다
+ *       - hold_us 15분: #49는 기준 아래에 정한 시간 동안 머물면 완료로 본다고만 하고 값을 정하지 않았습니다. 식은
+ *         카메라(2026-11-05)는 43분에 기준에 닿은 뒤에도 FPA 값이 30분 넘게 올랐고, 60분에 다시 보정한 값은 맞았습니다.
+ *         15분이면 그 날을 58분에 완료로 봅니다. 꽂아 둔 카메라(2026-11-04)는 30분에 닿아 45분입니다
+ *       - shutter_c_per_fpa 1.46: 2026-10-28 예열 기록에서 셔터 온도 = 1.460 x FPA 값 - 105.20(상관계수 0.9995)이고,
+ *         11-04는 1.45, 11-05는 1.460이었습니다
+ *       - lens_fit_max_c 0.7: 데워진 카메라에 셔터 온도가 0.6~0.7 °C 다른 보정 파일을 불러와도 5분 평균이 -1.54로 ±3
+ *         안이었고(2026-10-30), 0.3~0.5 °C는 너무 엄격했습니다
+ */
+inline constexpr timing::WarmupRule kTeEv1WarmupRule{.window_us = 10 * 60'000'000LL,
+                                                     .sample_period_us = 10'000'000,
+                                                     .max_gap_us = 60'000'000,
+                                                     .ready_fpa_per_min = 0.034,
+                                                     .hold_us = 15 * 60'000'000LL,
+                                                     .shutter_c_per_fpa = 1.46,
+                                                     .lens_fit_max_c = 0.7};
 
 /**
  * 이 OS의 실제 열화상 카메라를 만듭니다.
