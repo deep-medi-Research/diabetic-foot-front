@@ -17,14 +17,17 @@
 #include <thread>
 #include <vector>
 
+#include "../src/json_reader.h"
 #include "hwlab/platform/fake_ppg_device.h"
 #include "hwlab/platform/fake_serial_port.h"
+#include "hwlab/timing/clock_map.h"
 
 using hwlab::Timestamp;
 using hwlab::platform::BuildPpgCommand;
 using hwlab::platform::FakePpgDevice;
 using hwlab::platform::FakeSerialLine;
 using hwlab::platform::FakeSerialPort;
+using hwlab::platform::JsonReader;
 using hwlab::platform::PpgCrc16;
 using hwlab::platform::PpgLink;
 using hwlab::platform::PpgReading;
@@ -261,6 +264,63 @@ TEST(PpgLink, RestartGapSplitsClockSegments) {
   EXPECT_NE(json.find("\"last_device_us\": 46000"), std::string::npos) << json;
   EXPECT_NE(json.find("\"count\": 2880,\n    \"messages\": 120"), std::string::npos) << json;
   EXPECT_NE(json.find("\"gaps\": [\n      {\n        \"after_sample\": 23,"), std::string::npos) << json;
+}
+
+// 사이드카의 측정 데이터별 시각 쌍(anchor_device_us, anchor_host_us)을 FitClockSegments로 다시 맞추면 사이드카의 clock과
+// 같습니다. 다시 시작 직후의 수신 빈틈으로 시계 구간이 둘인 기록이고, PC 시각은 부팅 뒤 수 일이 지난 크기입니다.
+TEST(PpgShotRecord, SidecarAnchorsRefitToStoredClock) {
+  constexpr int64_t kBootUs = 400'000'000'000;
+  constexpr int kMessages = 60;
+  PpgShotRecord record(Timestamp{kBootUs});
+  hwlab::platform::PpgMeasure measure;
+  measure.samples.assign(24, 30'000);
+  for (int m = 0; m < kMessages; ++m) {
+    const int64_t last_device_us = (int64_t{24} * m + 23) * 2000;
+    const int64_t gap_us = m >= 1 ? 128'000 : 0;
+    const int64_t jitter_us = (m * 7) % 5 * 1'000;
+    record.AddMeasure(measure, int64_t{24} * m,
+                      Timestamp{kBootUs + gap_us + last_device_us * 1005 / 1000 + 3'000 + jitter_us});
+  }
+  record.Close(Timestamp{kBootUs + 4'000'000});
+  const auto result = record.Finish();
+  ASSERT_EQ(result.clock.size(), 2u);
+
+  const auto dir = std::filesystem::temp_directory_path() / "hwlab_test_ppg";
+  std::filesystem::create_directories(dir);
+  const std::string path = (dir / "anchors_ppg.json").string();
+  std::string error;
+  ASSERT_TRUE(WritePpgSidecar(path, result, "anchors_ppg.csv", "COM6", std::nullopt, &error)) << error;
+  const std::string json = ReadText(path);
+
+  const auto device = JsonReader(json).FindArray({"anchor_device_us"});
+  const auto host = JsonReader(json).FindArray({"anchor_host_us"});
+  ASSERT_TRUE(device.has_value() && host.has_value()) << json;
+  ASSERT_EQ(device->size(), static_cast<size_t>(kMessages));
+  ASSERT_EQ(host->size(), static_cast<size_t>(kMessages));
+  // 첫 측정 데이터의 마지막 표본(23번)의 장치 시각과 그 데이터를 받은 PC 시각입니다.
+  EXPECT_EQ(device->front().text, "46000");
+  EXPECT_EQ(host->front().text, std::to_string(kBootUs + 46'230 + 3'000));
+  const auto messages = JsonReader(json).FindScalar({"samples", "messages"});
+  ASSERT_TRUE(messages.has_value()) << json;
+  EXPECT_EQ(messages->text, std::to_string(kMessages));
+
+  std::vector<hwlab::timing::ClockSample> pairs;
+  for (size_t i = 0; i < device->size(); ++i) {
+    pairs.push_back({Timestamp{std::stoll((*device)[i].text)}, Timestamp{std::stoll((*host)[i].text)}});
+  }
+  const auto refit = hwlab::timing::FitClockSegments(pairs, PpgLink::kReceiveGapUs);
+  ASSERT_EQ(refit.size(), 2u);
+  for (size_t k = 0; k < refit.size(); ++k) {
+    const auto stored = [&](const char* name) {
+      const auto value = JsonReader(json).FindScalar({"clock", std::to_string(k), name});
+      return value ? value->text : std::string();
+    };
+    EXPECT_EQ(stored("last_device_us"), std::to_string(refit[k].last_device.us)) << k;
+    EXPECT_EQ(stored("offset_us"), std::to_string(refit[k].map.offset_us)) << k;
+    // rate는 소수점 아래 9자리로 씁니다.
+    EXPECT_NEAR(std::stod(stored("rate")), refit[k].map.rate, 0.5e-9) << k;
+    EXPECT_EQ(stored("max_residual_us"), std::to_string(refit[k].map.max_residual_us)) << k;
+  }
 }
 
 // 가짜 장치는 시작에 상태 'v', 측정 중 다시 시작에 오류 's', 중지에 상태 'u', 정보 요청에 장치 정보로 답합니다.

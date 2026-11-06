@@ -18,7 +18,8 @@ namespace {
 constexpr int kSchemaVersion = 8;
 // PPG 사이드카는 영상 사이드카와 따로 셉니다.
 // 2: device_info(장치 정보 응답) 추가
-constexpr int kPpgSchemaVersion = 2;
+// 3: anchor_device_us, anchor_host_us(측정 데이터마다 마지막 표본의 장치 시각과 PC 수신 시각) 추가
+constexpr int kPpgSchemaVersion = 3;
 
 void AppendEscaped(std::string& out, const std::string& text) {
   out.push_back('"');
@@ -474,10 +475,12 @@ std::string BuildPpgSidecarJson(const PpgSidecar& s) {
     w.Close('}');
   }
   w.Close(']');
+  w.IntArray("anchor_device_us", s.anchors.size(), [&](size_t i) { return s.anchors[i].device.us; });
+  w.IntArray("anchor_host_us", s.anchors.size(), [&](size_t i) { return s.anchors[i].host.us; });
 
   w.Open("samples", '{');
   w.Int("count", s.samples);
-  w.Int("messages", s.messages);
+  w.Int("messages", static_cast<int64_t>(s.anchors.size()));
   w.Int("first_time_us", s.first_sample.us);
   w.Int("last_time_us", s.last_sample.us);
   w.Int("median_interval_us", s.median_interval_us);

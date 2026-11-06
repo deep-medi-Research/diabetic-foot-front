@@ -207,8 +207,10 @@ struct PpgSidecar {
   Timestamp record_begin;  // 기록을 시작한 PC 시각
   Timestamp record_end;    // 기록을 끝낸 PC 시각
   std::vector<timing::ClockSegment> clock;
+  // 표본을 담은 측정 데이터마다 (마지막 표본의 장치 시각, PC 수신 시각)입니다. clock은 이 쌍을 FitClockSegments로 맞춘
+  // 결과이고, 쌍의 개수가 측정 데이터 수(samples.messages)입니다
+  std::vector<timing::ClockSample> anchors;
   int64_t samples = 0;
-  int64_t messages = 0;  // 표본을 담은 측정 데이터 수. 시계 맞춤 표본 수와 같습니다
   Timestamp first_sample;  // 첫 표본의 공통 시각
   Timestamp last_sample;   // 마지막 표본의 공통 시각
   int64_t median_interval_us = 0;      // 공통 시각으로 잰 표본 간격의 중앙값. 장치 시계 속도가 드러납니다
@@ -227,6 +229,8 @@ struct PpgSidecar {
  * PPG 사이드카 JSON을 만듭니다.
  *
  * 시계 구간마다 식(last_device_us, offset_us, rate, max_residual_us)을 남겨 CSV의 공통 시각을 다시 계산하고 검사할 수 있게 합니다.
+ * 식을 맞춘 측정 데이터별 시각 쌍도 배열 두 개(anchor_device_us, anchor_host_us)로 남겨, 맞추는 방법을 고친 뒤에도 지난 기록의
+ * 식을 다시 구할 수 있게 합니다.
  * 측정 오류 구간(measure_errors.spans)은 공통 시각과 함께, RGB 녹화 구간을 알면 RGB 첫 장을 0초로 잰 초(rgb_begin_s,
  * rgb_end_s)로도 씁니다. 결과 창의 가로축과 같은 값입니다.
  *

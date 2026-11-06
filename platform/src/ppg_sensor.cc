@@ -598,8 +598,8 @@ bool WritePpgSidecar(const std::string& path, const PpgRecord& record, const std
   s.record_begin = record.begin_time;
   s.record_end = record.end_time;
   s.clock = record.clock;
+  s.anchors = record.anchors;
   s.samples = static_cast<int64_t>(record.values.size());
-  s.messages = static_cast<int64_t>(record.anchors.size());
   if (!record.common_time.empty()) {
     s.first_sample = record.common_time.front();
     s.last_sample = record.common_time.back();

@@ -312,7 +312,8 @@ TEST(Sidecar, WritesExternalLightWithNulls) {
   EXPECT_NE(json.find(expected), std::string::npos) << json;
 }
 
-// PPG 사이드카는 장치 정보, 시계 구간마다 식, 표본 수와 누락, 통신 집계, 장치 상태를 키 순서와 들여쓰기까지 고정된 바이트로 남깁니다.
+// PPG 사이드카는 장치 정보, 시계 구간마다 식, 측정 데이터별 시각 쌍, 표본 수와 누락, 통신 집계, 장치 상태를 키 순서와 들여쓰기까지
+// 고정된 바이트로 남깁니다. 측정 데이터 수(messages)는 시각 쌍의 개수입니다.
 TEST(PpgSidecar, WritesFixedLayout) {
   hwlab::record::PpgSidecar s;
   s.samples_file = "a_ppg.csv";
@@ -322,8 +323,8 @@ TEST(PpgSidecar, WritesFixedLayout) {
   s.record_begin = {1000};
   s.record_end = {40'000'000};
   s.clock = {{{46'000}, ClockMap{1'000'000, 1.005, 4'000}}, {{30'000'000}, ClockMap{1'128'000, 1.005, 9'000}}};
+  s.anchors = {{{46'000}, {1'050'230}}, {{94'000}, {1'225'470}}, {{30'000'000}, {31'287'000}}};
   s.samples = 15'000;
-  s.messages = 625;
   s.first_sample = {1'000'000};
   s.last_sample = {31'160'000};
   s.median_interval_us = 2010;
@@ -337,7 +338,7 @@ TEST(PpgSidecar, WritesFixedLayout) {
   s.rgb_window = hwlab::record::PpgErrorWindow{{6'000'000}, {35'966'667}, 14'990, {{'s', 12, 12, 1}}};
 
   const std::string expected = R"({
-  "schema_version": 2,
+  "schema_version": 3,
   "samples_file": "a_ppg.csv",
   "port": "COM6",
   "device_info": "100002280280320",
@@ -360,9 +361,11 @@ TEST(PpgSidecar, WritesFixedLayout) {
       "max_residual_us": 9000
     }
   ],
+  "anchor_device_us": [46000, 94000, 30000000],
+  "anchor_host_us": [1050230, 1225470, 31287000],
   "samples": {
     "count": 15000,
-    "messages": 625,
+    "messages": 3,
     "first_time_us": 1000000,
     "last_time_us": 31160000,
     "median_interval_us": 2010,
@@ -424,12 +427,13 @@ TEST(PpgSidecar, WritesFixedLayout) {
   EXPECT_EQ(hwlab::record::BuildPpgSidecarJson(s), expected);
 }
 
-// 표본이 없으면 시계 구간, 누락, 측정 오류 구간, 장치 상태가 빈 배열이고, RGB 녹화 구간과 장치 정보를 모르면 null입니다.
+// 표본이 없으면 시계 구간, 시각 쌍, 누락, 측정 오류 구간, 장치 상태가 빈 배열이고, RGB 녹화 구간과 장치 정보를 모르면 null입니다.
 TEST(PpgSidecar, WritesEmptyArrays) {
   const std::string json = hwlab::record::BuildPpgSidecarJson({});
 
   EXPECT_NE(json.find("\"device_info\": null,"), std::string::npos) << json;
-  EXPECT_NE(json.find("\"clock\": [],"), std::string::npos) << json;
+  EXPECT_NE(json.find("\"clock\": [],\n  \"anchor_device_us\": [],\n  \"anchor_host_us\": [],"), std::string::npos) << json;
+  EXPECT_NE(json.find("\"messages\": 0,"), std::string::npos) << json;
   EXPECT_NE(json.find("\"gaps\": []\n"), std::string::npos) << json;
   EXPECT_NE(json.find("\"spans\": [],\n    \"rgb_window\": null\n"), std::string::npos) << json;
   EXPECT_NE(json.find("\"events\": []\n}"), std::string::npos) << json;
