@@ -81,13 +81,13 @@ TEST(ShotLimits, WarnsWhenFreeSpaceIsBelowLowBoundary) {
   EXPECT_EQ(JudgeFreeSpace(20'500, 20'000, 500, 10'000).verdict, FreeSpace::kEnough);
 }
 
-// 분석 이름이 촬영 폴더 이름이면 가장 긴 경로는 촬영 폴더 안의 분석 결과 그림 perfusion/v10/20260915_142233_pi_timecourse.png로
-// 40 + 47 = 87자입니다. results 폴더로 모은 결과(82자, 아래 테스트)보다 깁니다. 한글은 UTF-16 한 단위로 셉니다.
+// 분석 이름이 촬영 폴더 이름이면 가장 긴 경로는 촬영 폴더 안의 분석 결과 그림 perfusion/v11/20260915_142233_report_propagation.png로
+// 40 + 52 = 92자입니다. results 폴더로 모은 결과(87자, 아래 테스트)보다 깁니다. 한글은 UTF-16 한 단위로 셉니다.
 TEST(ShotLimits, LongestPathCountsAnalysisResults) {
   const ShotLayout layout = MakeLayout();
   // "C:\\data"(7) + 구분자(1) + 폴더(31) + 구분자(1) = 40
-  EXPECT_EQ(LongestShotPathLength("C:\\data", layout, "20260915_142233"), 87);
-  EXPECT_EQ(LongestShotPathLength("C:\\data\\", layout, "20260915_142233"), 87);
+  EXPECT_EQ(LongestShotPathLength("C:\\data", layout, "20260915_142233"), 92);
+  EXPECT_EQ(LongestShotPathLength("C:\\data\\", layout, "20260915_142233"), 92);
   // 분석 이름이 없으면 가장 긴 파일 20260915_142233_thermal.raw16(29자)입니다.
   EXPECT_EQ(LongestShotPathLength("C:\\data", layout, ""), 40 + 29);
 }
@@ -95,12 +95,12 @@ TEST(ShotLimits, LongestPathCountsAnalysisResults) {
 // 분석결과 폴더로 모은 결과 경로(재분석 번호 99까지)도 상한 안에 들어가는지 셉니다.
 TEST(ShotLimits, LongestPathCoversCollectedResults) {
   const ShotLayout layout = MakeLayout();
-  // "C:\\data"(7) + 구분자(1) + results(7) + 구분자(1) + 앞부분(31) + "_reanalysis99"(13) + "_v10"(4) + "_pi_timecourse.png"(18) = 82
+  // "C:\\data"(7) + 구분자(1) + results(7) + 구분자(1) + 앞부분(31) + "_reanalysis99"(13) + "_v11"(4) + "_report_propagation.png"(23) = 87
   EXPECT_EQ(hwlab::record::CollectedResultPrefix(layout, hwlab::record::kMaxReanalysisNumber),
             "홍길동_19551103_40_20260915_142233_reanalysis99");
-  EXPECT_GE(LongestShotPathLength("C:\\data", layout, "20260915_142233"), 82);
-  // 분석 이름이 한 글자이면 촬영 폴더 안 결과 경로(40 + 9 + 1 + 3 + 1 + 1 + 18 = 73)보다 모은 결과 경로(82)가 깁니다.
-  EXPECT_EQ(LongestShotPathLength("C:\\data", layout, "a"), 82);
+  EXPECT_GE(LongestShotPathLength("C:\\data", layout, "20260915_142233"), 87);
+  // 분석 이름이 한 글자이면 촬영 폴더 안 결과 경로(40 + 9 + 1 + 3 + 1 + 1 + 23 = 78)보다 모은 결과 경로(87)가 깁니다.
+  EXPECT_EQ(LongestShotPathLength("C:\\data", layout, "a"), 87);
 }
 
 // U+10000 이상 문자는 UTF-16 두 단위입니다. 한글 저장 위치는 한 글자 한 단위입니다.
