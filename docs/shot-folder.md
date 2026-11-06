@@ -39,7 +39,7 @@
 | `_thermal.avi` | 열화상 확인용 영상 | 165.9 MB |
 | `thermal_left.npy`, `thermal_right.npy` | 열화상 좌우 발 | 82.9 MB씩 |
 | `_thermal.json` | 열화상 사이드카 | 18 KB |
-| `_ppg.csv`, `_ppg.json` | PPG 파형과 사이드카 | 0.58 MB, 1.8 KB |
+| `_ppg.csv`, `_ppg.json` | PPG 파형과 사이드카 | 0.58 MB, 23 KB |
 | `perfusion/<판>/` | 분석 결과 | 0.4 MB |
 
 크기는 `specs/see3cam_manual_720p60.json`(1280x720, 60 fps, 1800장)으로 macOS에서 `--fake` 촬영한 값입니다. PPG는 `--ppg-port COM6`을 준 촬영에서 쟀고, 분석 결과는 분석 API 저장소의 가짜 분석 프로그램이 쓴 값입니다.
@@ -121,7 +121,8 @@
 ## PPG 파일
 
 - **`_ppg.csv`**<br>첫 줄이 열 이름 `common_time_us,value,measure_error,heart_rate,spo2`이고 표본마다 한 줄입니다(500 Hz). `common_time_us`는 RGB 사이드카의 `common_time_us`와 같은 시계라 바로 견줍니다. `measure_error`는 0 정상, 102(`'f'`) 손가락 빠짐, 115(`'s'`) 신호 나쁨, 112(`'p'`) 센서 연결 안 됨입니다
-- **`_ppg.json`**<br>`schema_version` 2입니다. 필드는 `samples_file`, `port`, `device_info`(장치가 답하지 않았으면 `null`), `sample_rate_hz`, `record`(`begin_us`, `end_us`), `clock`(시계 구간마다 `last_device_us`, `offset_us`, `rate`, `max_residual_us`), `samples`(`count`, `messages`, `first_time_us`, `last_time_us`, `median_interval_us`, `missing`, `measure_error`, `gaps`), `measure_errors`(`spans`, `rgb_window`), `link`(`crc_failures`, `bad_lengths`, `implausible`, `skipped_bytes`), `events`입니다
+- **`_ppg.json`**<br>`schema_version` 3입니다. 필드는 `samples_file`, `port`, `device_info`(장치가 답하지 않았으면 `null`), `sample_rate_hz`, `record`(`begin_us`, `end_us`), `clock`(시계 구간마다 `last_device_us`, `offset_us`, `rate`, `max_residual_us`), `anchor_device_us`, `anchor_host_us`, `samples`(`count`, `messages`, `first_time_us`, `last_time_us`, `median_interval_us`, `missing`, `measure_error`, `gaps`), `measure_errors`(`spans`, `rgb_window`), `link`(`crc_failures`, `bad_lengths`, `implausible`, `skipped_bytes`), `events`입니다
+- **측정 데이터별 시각 쌍**<br>`anchor_device_us[i]`와 `anchor_host_us[i]`는 측정 데이터 하나의 마지막 표본 장치 시각과 PC가 그 데이터를 받은 시각이고, 배열 길이는 `samples.messages`입니다. 이 쌍을 `timing::FitClockSegments`에 수신 빈틈 50 ms(`PpgLink::kReceiveGapUs`)로 넣으면 `clock`과 같은 값이 나옵니다. 그래서 시계 맞춤 방법을 고친 뒤에도 지난 촬영의 공통 시각을 다시 계산할 수 있습니다. schema 2까지의 사이드카에는 이 두 배열이 없습니다
 - **PPG는 RGB 녹화보다 깁니다**<br>촬영 버튼을 누른 때부터 저장할 때까지 기록하고 PPG 안정 대기도 들어갑니다. 같은 촬영에서 RGB 녹화 구간 안의 표본은 `samples`가 아니라 `measure_errors.rgb_window.samples`가 셉니다
 
 ## 분석 결과 `perfusion/<판>/`과 `results/`
