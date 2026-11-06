@@ -7,10 +7,10 @@ namespace hwlab::record {
 namespace {
 
 // 관류 분석 결과는 촬영 폴더 안 이 폴더의 판 폴더(perfusion/<판>/)에 분석이름_*로 쓰고, results 폴더로 모을 때는 이름 앞부분
-// 뒤에 _<판>을 붙입니다. 결과 파일 중 가장 긴 뒷부분은 보고서 그림의 23자입니다(_report_propagation.png).
+// 뒤에 _<판>을 붙입니다. 판 이름은 3자, 분석이름 뒤에 붙는 결과 파일 이름의 뒷부분은 23자까지로 보고 길이를 셉니다.
 constexpr char kAnalysisFolder[] = "perfusion";
-constexpr char kLongestVariantId[] = "v11";
-constexpr char kLongestResultSuffix[] = "_report_propagation.png";
+constexpr int32_t kLongestVariantIdLength = 3;
+constexpr int32_t kLongestResultSuffixLength = 23;
 
 int64_t FrameBytes(VideoSize size) {
   if (size.width <= 0 || size.height <= 0) return 0;
@@ -77,14 +77,14 @@ int32_t LongestShotPathLength(const std::string& root, const ShotLayout& layout,
   int32_t longest = 0;
   for (const ShotFile& file : layout.files) longest = std::max(longest, folder + Utf16Length(file.name));
   if (!analysis_name.empty()) {
-    const int32_t result = Utf16Length(kAnalysisFolder) + 1 + Utf16Length(kLongestVariantId) + 1 +
-                           Utf16Length(analysis_name) + Utf16Length(kLongestResultSuffix);
+    const int32_t result = Utf16Length(kAnalysisFolder) + 1 + kLongestVariantIdLength + 1 +
+                           Utf16Length(analysis_name) + kLongestResultSuffixLength;
     longest = std::max(longest, folder + result);
     // 분석결과 폴더로 모은 결과는 가장 큰 재분석 번호까지 셉니다.
     const int32_t collected = Utf16Length(root) + (root.empty() || EndsWithSeparator(root) ? 0 : 1) +
                               Utf16Length(kCollectedResultFolder) + 1 +
                               Utf16Length(CollectedResultPrefix(layout, kMaxReanalysisNumber)) + 1 +
-                              Utf16Length(kLongestVariantId) + Utf16Length(kLongestResultSuffix);
+                              kLongestVariantIdLength + kLongestResultSuffixLength;
     longest = std::max(longest, collected);
   }
   return longest;

@@ -196,23 +196,9 @@ void AnalysisController::SetEnabled(bool on) {
 
 QString AnalysisController::variantSource() const {
   const auto& v = variant_;
-  const auto asset = [](const hwlab::platform::AnalyzerVariant::Asset& a) {
-    if (a.name.empty()) return QString();
-    return QString::fromStdString(a.uploaded) + QStringLiteral(" (") + QString::fromStdString(a.sha256.substr(0, 8)) +
-           QStringLiteral(")");
-  };
-  QStringList parts;
-  if (!v.upstream_commit.empty()) {
-    parts.append(QStringLiteral("연구 ") + QString::fromStdString(v.upstream_commit.substr(0, 7)) + QStringLiteral(" ") +
-                 QString::fromStdString(v.upstream_date));
-  }
-  QStringList assets;
-  for (const auto& [role, a] : {std::pair{QStringLiteral("판정 "), &v.classifier},
-                                std::pair{QStringLiteral("템플릿 "), &v.pulse_template}}) {
-    if (const QString text = asset(*a); !text.isEmpty()) assets.append(role + text);
-  }
-  if (!assets.isEmpty()) parts.append(QString::fromStdString(v.release_tag) + QStringLiteral(": ") + assets.join(QStringLiteral(", ")));
-  return parts.join(QStringLiteral("\n"));
+  if (v.upstream_commit.empty()) return QString();
+  return QStringLiteral("연구 ") + QString::fromStdString(v.upstream_commit.substr(0, 7)) + QStringLiteral(" ") +
+         QString::fromStdString(v.upstream_date);
 }
 
 bool AnalysisController::Active() const {

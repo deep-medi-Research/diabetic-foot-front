@@ -21,6 +21,12 @@ if(NOT TARGET hwlab_vocabulary)
   add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../core core)
 endif()
 
+# 앱이 따르는 분석 API의 버전입니다. 분석 API 저장소의 같은 태그(v<버전>)를 시험에서 받고, 분석 프로그램이 준비 줄로 알린
+# 버전의 주 버전과 견줍니다.
+set(HWLAB_ANALYSIS_API_VERSION_FILE ${CMAKE_CURRENT_SOURCE_DIR}/../ANALYSIS_API_VERSION)
+set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS ${HWLAB_ANALYSIS_API_VERSION_FILE})
+file(STRINGS ${HWLAB_ANALYSIS_API_VERSION_FILE} HWLAB_ANALYSIS_API_VERSION LIMIT_COUNT 1)
+
 add_library(hwlab_platform STATIC
   src/capture.cc
   src/fake_camera.cc
@@ -169,6 +175,7 @@ target_link_libraries(hwlab_platform PUBLIC Threads::Threads)
 if(HWLAB_PLATFORM_TESTS)
   add_executable(fake_analyzer test/fake_analyzer.cc)
   target_compile_options(fake_analyzer PRIVATE ${HWLAB_WARNINGS})
+  target_compile_definitions(fake_analyzer PRIVATE HWLAB_ANALYSIS_API_VERSION="${HWLAB_ANALYSIS_API_VERSION}")
   if(MSVC)
     target_compile_definitions(fake_analyzer PRIVATE _CRT_SECURE_NO_WARNINGS)
   endif()
@@ -279,6 +286,7 @@ endif()
 
 # 관류 분석 프로그램 프로세스와 요청 대기열. 가짜 관류 분석 프로그램으로 macOS와 Windows에서 시험합니다.
 target_sources(hwlab_platform PRIVATE src/analyzer.cc)
+set_source_files_properties(src/analyzer.cc PROPERTIES COMPILE_DEFINITIONS HWLAB_ANALYSIS_API_VERSION="${HWLAB_ANALYSIS_API_VERSION}")
 if(HWLAB_PLATFORM_TESTS)
   add_executable(test_analyzer test/test_analyzer.cc)
   target_link_libraries(test_analyzer PRIVATE hwlab_platform GTest::gtest_main)
@@ -375,10 +383,17 @@ if(HWLAB_PLATFORM_TESTS)
   gtest_discover_tests(test_template_map)
 endif()
 
-# 가짜 분석 프로그램(tools/fake_analysis)을 앱과 같은 명령줄로 띄워 Analyzer와 결과 읽기까지 시험합니다. 파이썬 3.9 이상이 없으면 시험을 건너뜁니다.
+# 분석 API 저장소의 가짜 분석 프로그램(fake/fake_analyzer.py)을 앱과 같은 명령줄로 띄워 Analyzer와 결과 읽기까지 시험합니다.
+# 저장소는 ANALYSIS_API_VERSION의 태그로 받습니다. 파이썬 3.9 이상이 없으면 시험을 건너뜁니다.
 if(HWLAB_PLATFORM_TESTS)
+  FetchContent_Declare(
+    diabetic_foot_api
+    GIT_REPOSITORY https://github.com/deep-medi-Research/diabetic-foot-api.git
+    GIT_TAG v${HWLAB_ANALYSIS_API_VERSION}
+    GIT_SHALLOW TRUE)
+  FetchContent_MakeAvailable(diabetic_foot_api)
   find_package(Python3 3.9 COMPONENTS Interpreter)
-  get_filename_component(HWLAB_FAKE_ANALYSIS_SCRIPT ${CMAKE_CURRENT_SOURCE_DIR}/../tools/fake_analysis/dfr_worker.py ABSOLUTE)
+  get_filename_component(HWLAB_FAKE_ANALYSIS_SCRIPT ${diabetic_foot_api_SOURCE_DIR}/fake/fake_analyzer.py ABSOLUTE)
   add_executable(test_fake_analysis test/test_fake_analysis.cc)
   target_link_libraries(test_fake_analysis PRIVATE hwlab_platform GTest::gtest_main)
   target_compile_options(test_fake_analysis PRIVATE ${HWLAB_WARNINGS})

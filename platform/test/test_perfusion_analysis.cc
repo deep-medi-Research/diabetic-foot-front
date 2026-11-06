@@ -200,8 +200,9 @@ TEST(PerfusionAnalysis, ParsesWorkerMarks) {
 // ready 뒤의 버전 JSON을 읽고, JSON이 깨졌거나 키가 없어도 준비 완료로 봅니다.
 TEST(PerfusionAnalysis, ParsesReadyWithVersion) {
   const AnalyzerLine line =
-      ParseAnalyzerLine("[dfr] ready {\"worker_version\": \"2026.10.19\", \"upstream_commit\": \"5e5178d\"}");
+      ParseAnalyzerLine("[dfr] ready {\"api_version\": \"1.0.0\", \"worker_version\": \"2026.10.19\", \"upstream_commit\": \"5e5178d\"}");
   EXPECT_EQ(line.kind, AnalyzerLineKind::kReady);
+  EXPECT_EQ(line.api_version, "1.0.0");
   EXPECT_EQ(line.worker_version, "2026.10.19");
   EXPECT_EQ(line.upstream_commit, "5e5178d");
 
@@ -218,14 +219,16 @@ TEST(PerfusionAnalysis, ReadsWorkerStampFromSummary) {
       "{\n \"n_frames\": 900,\n \"fps\": 30.0,\n \"pi\": NaN,\n \"windows\": [1.5, -Infinity, {\"upstream_commit\": \"x\"}],\n"
       " \"classification\": {\"decision\": \"normal\", \"upstream_commit\": \"wrong\"},\n"
       " \"dfr\": {\n  \"upstream_commit\": \"5e5178d3836c\",\n  \"detector_edge\": 400,\n"
-      "  \"models\": null,\n  \"worker_version\": \"2026.10.19\"\n }\n}\n";
+      "  \"models\": null,\n  \"api_version\": \"1.0.0\",\n  \"worker_version\": \"2026.10.19\"\n }\n}\n";
   const hwlab::platform::WorkerStamp stamp = hwlab::platform::ReadWorkerStamp(summary);
   EXPECT_EQ(stamp.upstream_commit, "5e5178d3836c");
+  EXPECT_EQ(stamp.api_version, "1.0.0");
   EXPECT_EQ(stamp.worker_version, "2026.10.19");
 
   const hwlab::platform::WorkerStamp old = hwlab::platform::ReadWorkerStamp("{\"dfr\": {\"upstream_commit\": \"abc\"}}");
   EXPECT_EQ(old.upstream_commit, "abc");
   EXPECT_EQ(old.worker_version, "");
+  EXPECT_EQ(old.api_version, "");
   EXPECT_EQ(hwlab::platform::ReadWorkerStamp("{\"pi\": 1}").upstream_commit, "");
   EXPECT_EQ(hwlab::platform::ReadWorkerStamp("{\"dfr\": {\"upstream_commit\": ").upstream_commit, "");
 }

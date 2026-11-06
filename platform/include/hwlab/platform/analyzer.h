@@ -56,7 +56,8 @@ struct AnalyzerStatus {
   int32_t sub_total = 0;
   /** 마지막 하위 단계 줄의 문구입니다. */
   std::string sub_message;
-  /** `[dfr] ready` 뒤 JSON의 값입니다. 버전을 찍지 않는 관류 분석 프로그램이면 빈 문자열입니다. */
+  /** `[dfr] ready` 뒤 JSON의 값입니다. 준비 줄에 없으면 빈 문자열입니다. */
+  std::string api_version;
   std::string worker_version;
   std::string upstream_commit;
   /** kBusy일 때 분석 중인 요청의 이름입니다. */
@@ -94,13 +95,14 @@ struct AnalyzerTiming {
 };
 
 /**
- * 관류 분석 프로그램(dfr_worker.py) 프로세스 하나와 요청 대기열입니다.
+ * 관류 분석 프로그램 프로세스 하나와 요청 대기열입니다.
  *
  * 프로세스를 띄워 둔 채 요청을 먼저 온 순서대로 한 건씩 보냅니다. 내부 스레드 하나가 출력 줄을 읽어 상태를
  * 바꾸고, 호출자는 Status를 주기적으로 읽습니다. 요청 한 건이 끝나는 동안 나온 출력은 모두 그 요청의
  * `<output_dir>/analyzer_log.txt`에 덧붙입니다(관류 분석 프로그램의 예외 기록을 남기기 위함).
  *
  * - 준비 줄(`[dfr] ready`)을 받으면, 보류 중이 아닐 때 모델 미리 올리기 요청을 보내고 응답을 받은 뒤 요청을 보냅니다
+ * - 준비 줄의 `api_version`이 앱이 따르는 API와 주 버전이 다르거나 없으면 그 프로세스를 끝내고 kFailed로 둡니다
  * - 분석 중 진행 줄이 AnalyzerTiming::stage_timeout_ms 동안 없으면 강제 종료하고 그 요청을 실패로 두고 다시 띄웁니다
  * - 분석 중이나 대기 중에 프로세스가 끝나면 그 요청을 실패로 두고 다시 띄웁니다. 준비 전에 끝나면 kFailed가 됩니다
  * - 성공은 완료 줄의 ok와 요약 JSON 파일이 함께 있을 때입니다
@@ -150,7 +152,7 @@ class Analyzer {
    * 새 요청과 모델 미리 올리기를 보내지 않게 하거나 다시 보내게 합니다.
    *
    * @param hold true이면 보내지 않습니다. 이미 보낸 요청은 계속 분석합니다
-   * @note 안정화와 녹화 중에 켭니다. 관류 분석 프로그램 시작(모델 약 400MB 읽기)이 영상 쓰기와 디스크를 나눠 쓰지 않게 하기 위함입니다.
+   * @note 안정화와 녹화 중에 켭니다. 관류 분석 프로그램 시작(모델 파일 읽기)이 영상 쓰기와 디스크를 나눠 쓰지 않게 하기 위함입니다.
    */
   void SetHold(bool hold);
 
@@ -184,20 +186,35 @@ class Analyzer {
 };
 
 /**
+ * 앱이 따르는 분석 API의 버전입니다(레포 루트의 `ANALYSIS_API_VERSION`).
+ */
+std::string AnalysisApiVersion();
+
+/**
+ * 분석 프로그램이 준비 줄로 알린 API 버전을 앱이 따르는 버전과 견줍니다.
+ *
+ * @param reported 준비 줄의 `api_version`. 빈 문자열이면 알리지 않은 것입니다
+ * @param pinned 앱이 따르는 버전(AnalysisApiVersion의 값)
+ * @return 주 버전이 같으면 빈 문자열, 아니면 이유(UTF-8)
+ */
+std::string AnalysisApiProblem(const std::string& reported, const std::string& pinned);
+
+/**
  * 배포 폴더에서 관류 분석 프로그램을 띄우는 방법을 정합니다. 파일이 있는지는 보지 않습니다.
  *
  * 기본은 `<app_dir>/python/python.exe`(Windows가 아니면 `<app_dir>/python/bin/python3`)로
- * `<app_dir>/analysis/dfr_worker.py --idle-exit 0`을 낮은 우선순위로 띄웁니다. 환경 변수
+ * `<app_dir>/analysis/<entry> --idle-exit 0`을 낮은 우선순위로 띄웁니다. 환경 변수
  * PYTHONUNBUFFERED=1, PYTHONUTF8=1, PYTHONIOENCODING=utf-8을 더하고, 작업 폴더는 스크립트가 있는 폴더입니다.
  *
  * @param app_dir 앱 실행 파일이 있는 폴더(UTF-8)
+ * @param entry 분석 프로그램 폴더 안 진입 스크립트의 이름. 분석 API가 이름을 정하지 않아 빌드 구성(`HWLAB_ANALYZER_ENTRY`)이 줍니다
  * @param python_override 비어 있지 않으면 이 파이썬을 씁니다(개발용 명령줄 인자)
  * @param script_override 비어 있지 않으면 이 스크립트를 씁니다(개발용 명령줄 인자)
  * @return 실행 정보. 경로 구분자는 '/'입니다
  * @note 배포 폴더의 파이썬이 없다고 시스템 PATH의 파이썬으로 물러나지 않습니다. 패키지 판이 다른 파이썬으로 분석하면 결과가 달라질 수 있습니다.
  *       개발용 인자의 이름만 준 파이썬을 PATH에서 찾는 일은 ResolveAnalyzerOverride가 합니다.
  */
-ProcessLaunch AnalyzerLaunch(const std::string& app_dir, const std::string& python_override,
+ProcessLaunch AnalyzerLaunch(const std::string& app_dir, const std::string& entry, const std::string& python_override,
                              const std::string& script_override);
 
 /** 개발용 인자 `--analyzer-python`, `--analyzer-script`를 풀어 쓴 값입니다. 비어 있으면 배포 폴더 기본값을 씁니다. */
@@ -226,38 +243,23 @@ struct AnalyzerOverrides {
 AnalyzerOverrides ResolveAnalyzerOverrides(const std::string& python, const std::string& script,
                                            const std::string& cwd, const std::string& path_env);
 
-/** 관류 분석 프로그램의 분석 판 하나입니다. `<analysis>/variants/<판>/VARIANT.json`에서 읽습니다. */
+/** 관류 분석 프로그램의 분석 판 하나입니다. `<analysis>/variants/<판>/VARIANT.json`에서 읽습니다. 형식은 분석 API가 정합니다. */
 struct AnalyzerVariant {
-  /** 릴리즈 자산 하나입니다. */
-  struct Asset {
-    /** 릴리즈 자산 이름(`name`). */
-    std::string name;
-    /** 판 폴더 안 파일의 SHA-256(`sha256`, 소문자 16진수). */
-    std::string sha256;
-    /** 릴리즈에 올라온 날(`uploaded`, YYYY-MM-DD). */
-    std::string uploaded;
-  };
   /** 판 이름(`id`, 폴더 이름과 같음). 관류 분석 프로그램 인자 `--variant`와 결과 폴더 이름(PerfusionOutputDir)에 씁니다. */
   std::string id;
   /** 화면에 보이는 이름(`label`). */
   std::string label;
-  /** 한 줄 설명(`summary`). 예: "규칙 판정". */
+  /** 한 줄 설명(`summary`). */
   std::string summary;
   /** 소스 저장소 커밋(`upstream.commit`)과 그 날짜(`upstream.date`, YYYY-MM-DD). */
   std::string upstream_commit;
   std::string upstream_date;
-  /** 모델 파일을 올린 릴리즈 태그(`release.tag`). */
-  std::string release_tag;
-  /** 커프 단계 판정 파일(`release.classifier`)입니다. */
-  Asset classifier;
-  /** 맥동 템플릿(`release.template`)입니다. */
-  Asset pulse_template;
 };
 
 /**
  * 관류 분석 프로그램 폴더의 분석 판을 찾습니다.
  *
- * @param analysis_dir `dfr_worker.py`가 있는 폴더(UTF-8)
+ * @param analysis_dir 분석 프로그램 폴더(UTF-8)
  * @param error 읽지 못한 판이 있거나 판이 하나도 없으면 이유를 씁니다. nullptr이면 쓰지 않습니다
  * @return `variants/` 아래 `VARIANT.json`에 `id`가 있고 폴더 이름과 같은 판. 판 이름 순입니다
  */

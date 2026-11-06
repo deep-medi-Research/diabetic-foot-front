@@ -255,7 +255,6 @@ std::pair<pixel::Rect, pixel::Rect> ThermalFootRegions(int32_t frame_width, int3
 std::vector<InputFinding> CheckAnalysisInputs(const AnalysisFiles& files, int64_t min_thermal_frames) {
   std::vector<InputFinding> findings;
   // 좌우 영상이 없으면 분석할 수 없습니다. 커프 단계 추정은 RGB 영상만 쓰므로 열화상 문제는 막지 않는 경고로 남깁니다.
-  // 이진 PAD 판정을 켠 분석에서는 열화상을 빼고 RGB만으로 판정합니다.
   static constexpr FileRole kRgbRoles[] = {FileRole::kLeftVideo, FileRole::kLeftSidecar, FileRole::kRightVideo,
                                            FileRole::kRightSidecar};
   static constexpr FileRole kThermalRoles[] = {FileRole::kThermalSidecar, FileRole::kThermalLeftArray,

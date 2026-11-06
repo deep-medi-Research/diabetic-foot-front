@@ -46,23 +46,23 @@ struct PerfusionDetail {
    * `maps`: 시간 창별 관류 지도(관류지수 %, 발 영역 격자). 순서는 [발(0 왼발, 1 오른발)][시간 창][행][열]이고
    * 발 영역 밖 칸은 NaN입니다. 없으면 비었습니다.
    *
-   * @note v6, v7은 영상의 발 영역(좌우반전 전)을 32 x 16으로 나눈 격자이고, v8은 표준 발 틀을 40 x 15로 나눈 격자입니다.
-   *       v8 격자의 행은 발끝(0)에서 뒤꿈치까지 발 길이를 같은 간격으로 나누고, 열은 그 행의 발 폭을 같은 간격으로 나눕니다.
+   * @note 옛 형식은 영상의 발 영역(좌우반전 전)을 32 x 16으로 나눈 격자이고, 표준 발 틀 형식은 표준 발 틀을 40 x 15로 나눈 격자입니다.
+   *       표준 발 틀 격자의 행은 발끝(0)에서 뒤꿈치까지 발 길이를 같은 간격으로 나누고, 열은 그 행의 발 폭을 같은 간격으로 나눕니다.
    */
   std::vector<double> maps;
   int32_t map_rows = 0;
   int32_t map_cols = 0;
-  /** `map_valid`: v8 표준 발 틀 격자에서 PI를 계산하는 칸이면 1입니다. 순서는 [행][열]입니다. 없으면 비었습니다. */
+  /** `map_valid`: 표준 발 틀 격자에서 PI를 계산하는 칸이면 1입니다. 순서는 [행][열]입니다. 없으면 비었습니다. */
   std::vector<uint8_t> map_valid;
   /**
-   * `outline`: v8 표준 발 틀의 윤곽입니다. outline_u는 발끝 0에서 뒤꿈치 1까지의 길이 위치이고, outline_left와
+   * `outline`: 표준 발 틀의 윤곽입니다. outline_u는 발끝 0에서 뒤꿈치 1까지의 길이 위치이고, outline_left와
    * outline_right는 그 위치의 왼쪽과 오른쪽 끝(발 길이를 1로 둔 가로 위치)입니다. 셋의 길이는 같습니다. 없으면 비었습니다.
    */
   std::vector<double> outline_u;
   std::vector<double> outline_left;
   std::vector<double> outline_right;
 
-  /** v8 표준 발 틀 지도를 그릴 값(maps, map_valid, outline)이 모두 있으면 true입니다. */
+  /** 표준 발 틀 지도를 그릴 값(maps, map_valid, outline)이 모두 있으면 true입니다. */
   bool HasTemplateMap() const;
 
   /** 관류 지도 한 칸의 값입니다. 범위를 벗어나면 NaN입니다. */

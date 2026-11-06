@@ -1,5 +1,7 @@
-// tools/fake_analysis/dfr_worker.py를 앱과 같은 명령줄로 띄워 Analyzer와 결과 읽기가 모든 결과 파일을 읽는지 확인합니다.
-// 파이썬 3.9 이상이 없으면 시험을 건너뜁니다. 구성할 때 -DPython3_EXECUTABLE=<python>으로 지정합니다.
+// 분석 API 저장소의 가짜 분석 프로그램(fake/fake_analyzer.py)을 앱과 같은 명령줄로 띄워 Analyzer와 결과 읽기가 모든 결과 파일을
+// 읽는지 확인합니다. 가짜 분석 프로그램은 받은 줄을 API의 요청 스키마로 확인하고 어긴 줄에는 종료 코드 4로 끝나므로, 이 시험이
+// 통과하면 앱이 보내는 요청 줄이 API를 지킨다는 뜻입니다. 파이썬 3.9 이상이 없으면 시험을 건너뜁니다.
+// 구성할 때 -DPython3_EXECUTABLE=<python>으로 지정합니다.
 #include <gtest/gtest.h>
 
 #include <chrono>
@@ -14,7 +16,6 @@
 #include <vector>
 
 #include "hwlab/platform/analyzer.h"
-#include "hwlab/platform/child_process.h"
 #include "hwlab/platform/npy_archive.h"
 #include "hwlab/platform/perfusion_analysis.h"
 #include "hwlab/platform/perfusion_detail.h"
@@ -84,10 +85,10 @@ PerfusionRequest RequestFor(const Shot& shot, const std::string& name) {
 }
 
 // main.cc가 판 하나를 띄우는 명령줄과 같습니다.
-ProcessLaunch AppLaunch(const std::string& variant = "fake") {
-  ProcessLaunch launch = AnalyzerLaunch("", kPython, kScript);
+ProcessLaunch AppLaunch() {
+  ProcessLaunch launch = AnalyzerLaunch("", "", kPython, kScript);
   launch.arguments.insert(launch.arguments.end(), {"--presegment-threads", "2", "--prestream"});
-  return AnalyzerVariantLaunch(std::move(launch), variant);
+  return AnalyzerVariantLaunch(std::move(launch), "fake");
 }
 
 AnalyzerStatus WaitFor(const Analyzer& analyzer, const std::function<bool(const AnalyzerStatus&)>& done,
@@ -222,6 +223,7 @@ TEST_F(FakeAnalysis, IsFoundAsOneVariantAndGetsReady) {
   ASSERT_NE(analyzer, nullptr);
   const AnalyzerStatus status = analyzer->Status();
   EXPECT_EQ(status.state, AnalyzerState::kIdle);
+  EXPECT_EQ(status.api_version, hwlab::platform::AnalysisApiVersion());
   EXPECT_EQ(status.worker_version, "fake-1");
   EXPECT_EQ(status.upstream_commit, "fake");
 }
@@ -252,6 +254,8 @@ TEST_F(FakeAnalysis, WritesResultsTheAppCanRead) {
   EXPECT_EQ(summary->frames, kFrames);
   EXPECT_EQ(summary->variant, "fake");
   EXPECT_EQ(summary->upstream_commit, "fake");
+  EXPECT_EQ(summary->api_version, hwlab::platform::AnalysisApiVersion());
+  EXPECT_EQ(summary->worker_version, "fake-1");
   EXPECT_FALSE(std::isnan(summary->left.pi_toes));
   EXPECT_FALSE(std::isnan(summary->right.pi_heel));
   EXPECT_FALSE(std::isnan(summary->left.detection_score));
@@ -335,31 +339,6 @@ TEST_F(FakeAnalysis, WritesResultsTheAppCanRead) {
   EXPECT_EQ(collected->copied, 5);
 }
 
-// 같은 요청이면 npz, GIF, PNG가 바이트까지 같고, 요약의 값도 같습니다.
-TEST_F(FakeAnalysis, GivesTheSameResultForEveryRequest) {
-  const Shot first = MakeShot("twin_a");
-  const Shot second = MakeShot("twin_b");
-  auto analyzer = StartIdle();
-  ASSERT_NE(analyzer, nullptr);
-  ASSERT_TRUE(analyzer->Submit(RequestFor(first, "twin")));
-  ASSERT_TRUE(analyzer->Submit(RequestFor(second, "twin")));
-  ASSERT_TRUE(WaitFinished(*analyzer, 2).ok);
-  WaitFor(*analyzer, [](const AnalyzerStatus& s) { return s.figures_count >= 2; });
-  const fs::path a = FromUtf8(PerfusionOutputDir(ToUtf8(first.dir), "fake"));
-  const fs::path b = FromUtf8(PerfusionOutputDir(ToUtf8(second.dir), "fake"));
-  for (const char* file : {"twin_perfusion.npz", "twin_waveforms.npz", "twin_perfusion.gif", "twin_segmentation.png",
-                           "twin_template.png", "twin_pi_map.png"}) {
-    const std::string bytes = ReadFile(a / file);
-    EXPECT_FALSE(bytes.empty()) << file;
-    EXPECT_TRUE(bytes == ReadFile(b / file)) << file;
-  }
-  const auto summary_a = ReadPerfusionSummary(ReadFile(a / "twin_summary.json"));
-  const auto summary_b = ReadPerfusionSummary(ReadFile(b / "twin_summary.json"));
-  ASSERT_TRUE(summary_a && summary_b);
-  EXPECT_EQ(summary_a->pi_left, summary_b->pi_left);
-  EXPECT_EQ(summary_a->pi_right, summary_b->pi_right);
-}
-
 // 녹화 중 미리 분할과 미리 읽기를 받은 영상의 요약에는 쓰지 못한 이유가 없습니다. 미리 읽기는 녹화 한 번에 한 번만 쓰므로
 // 같은 영상의 두 번째 요청에는 not_started가 남습니다.
 TEST_F(FakeAnalysis, RecordsWhetherPresegmentWasUsed) {
@@ -441,43 +420,6 @@ TEST_F(FakeAnalysis, ReportsFailures) {
   EXPECT_NE(done.error.find("종료 코드 3"), std::string::npos) << done.error;
   ASSERT_TRUE(analyzer->Submit(RequestFor(shot, "after_crash")));
   EXPECT_TRUE(WaitFinished(*analyzer, 6).ok);
-}
-
-std::vector<std::string> ReadUntilClosed(ChildProcess& process, int64_t timeout_ms = 10'000) {
-  std::vector<std::string> lines;
-  std::string line;
-  while (process.ReadLine(&line, timeout_ms) == LineStatus::kLine) lines.push_back(line);
-  return lines;
-}
-
-// 표준 입력의 줄이 BOM으로 시작하면 실제 분석 프로그램처럼 읽지 못해 실패 완료 줄로 답하고 다음 요청을 받습니다.
-TEST_F(FakeAnalysis, RejectsLineWithBomAndKeepsServing) {
-  std::string error;
-  auto process = ChildProcess::Start(AppLaunch(), &error);
-  ASSERT_NE(process, nullptr) << error;
-  std::string line;
-  ASSERT_EQ(process->ReadLine(&line, 10'000), LineStatus::kLine);
-  EXPECT_EQ(line.rfind("[dfr] ready {", 0), 0u) << line;
-  ASSERT_TRUE(process->WriteLine("\xEF\xBB\xBF{\"preload\":true}"));
-  ASSERT_EQ(process->ReadLine(&line, 10'000), LineStatus::kLine);
-  EXPECT_EQ(line.rfind("[dfr] done {\"ok\": false, \"error\": \"요청을 읽지 못했습니다", 0), 0u) << line;
-  ASSERT_TRUE(process->WriteLine("{\"preload\":true}"));
-  ASSERT_EQ(process->ReadLine(&line, 10'000), LineStatus::kLine);
-  EXPECT_EQ(line, "[dfr] preloaded");
-  process->CloseInput();
-  EXPECT_EQ(process->Wait(10'000), std::optional<int32_t>(0));
-}
-
-// 판 이름이 없거나 variants에 없으면 준비 줄 전에 끝나 앱이 이유를 분석 칸에 보입니다.
-TEST_F(FakeAnalysis, ExitsBeforeReadyOnUnknownVariant) {
-  std::string error;
-  auto process = ChildProcess::Start(AppLaunch("nope"), &error);
-  ASSERT_NE(process, nullptr) << error;
-  const auto lines = ReadUntilClosed(*process);
-  EXPECT_EQ(process->Wait(10'000), std::optional<int32_t>(1));
-  ASSERT_FALSE(lines.empty());
-  for (const auto& line : lines) EXPECT_NE(line.rfind("[dfr] ready", 0), 0u) << line;
-  EXPECT_NE(lines.back().find("fake"), std::string::npos) << lines.back();
 }
 
 }  // namespace

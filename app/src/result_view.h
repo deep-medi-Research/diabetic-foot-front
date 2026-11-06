@@ -71,22 +71,22 @@ class ResultView : public QObject {
   Q_PROPERTY(bool cuffApplicable READ cuffApplicable NOTIFY resultChanged)
   /** 커프 단계 기준값을 맞춘 카메라 설정(수동, 게인 1, 노출 -5 또는 -9)으로 찍은 촬영이면 true입니다. */
   Q_PROPERTY(bool cuffFixedSetting READ cuffFixedSetting NOTIFY resultChanged)
-  /** 경계별 규칙 판정(v7, v8)이나 커프 상태 판정(v9)의 결과이면 true, 로지스틱 회귀 판정이면 false입니다. */
+  /** 경계별 규칙 판정이나 커프 상태 판정의 결과이면 true, 규칙이 없는 옛 확률 합 판정이면 false입니다. */
   Q_PROPERTY(bool cuffRuleBased READ cuffRuleBased NOTIFY resultChanged)
-  /** 커프 상태 0, V, D, O(v9)의 결과이면 true입니다. */
+  /** 커프 상태 0, V, D, O의 결과이면 true입니다. */
   Q_PROPERTY(bool cuffStates READ cuffStates NOTIFY resultChanged)
   /**
    * 판정의 줄입니다. 원소는 `[이름, 값, 기준, 걸림]`입니다.
    *
-   * v8까지는 120%, 80%, 40% 규칙 순서이고 기준에 든 규칙이 걸림입니다. v9는 정상, 정상 (경계), 경증, 폐색 네 상태의 확률이고,
+   * 옛 형식은 120%, 80%, 40% 규칙 순서이고 기준에 든 규칙이 걸림입니다. 커프 상태 형식은 정상, 정상 (경계), 경증, 폐색 네 상태의 확률이고,
    * 기준은 비었고 고른 상태(품질 검사를 무시한 상태 포함)가 걸림입니다. 읽는 법은 cuffModelText입니다.
    */
   Q_PROPERTY(QVariantList cuffRuleRows READ cuffRuleRows NOTIFY resultChanged)
-  /** v9 판정의 읽는 법입니다(네트워크가 네 상태 확률을 내고 가장 큰 상태를 고름). 그 전 판이면 빈 문자열입니다. */
+  /** 커프 상태 판정의 읽는 법입니다(네 상태 확률 중 가장 큰 상태를 고름). 옛 형식이면 빈 문자열입니다. */
   Q_PROPERTY(QString cuffModelText READ cuffModelText NOTIFY resultChanged)
-  /** 판정 계기 둘레의 네 칸 이름입니다. v9는 0, V, D, O이고 그 전 판은 0, 40, 80, 120입니다. */
+  /** 판정 계기 둘레의 네 칸 이름입니다. 커프 상태 형식은 0, V, D, O이고 옛 형식은 0, 40, 80, 120입니다. */
   Q_PROPERTY(QStringList cuffGaugeLabels READ cuffGaugeLabels NOTIFY resultChanged)
-  /** 판정 계기 가운데의 단계입니다. v9는 요약의 `level_ko`(예: "경증")이고 그 전 판은 "40%"처럼 씁니다. 없으면 "-"입니다. */
+  /** 판정 계기 가운데의 단계입니다. 커프 상태 형식은 요약의 `level_ko`(예: "경증")이고 옛 형식은 "40%"처럼 씁니다. 없으면 "-"입니다. */
   Q_PROPERTY(QString cuffGaugeValue READ cuffGaugeValue NOTIFY resultChanged)
   /** 판정 계기 아래의 설명입니다. 예: "커프 상태 D, PAD 확률 0.76", "수축기 혈압 대비 커프 압력". */
   Q_PROPERTY(QString cuffGaugeCaption READ cuffGaugeCaption NOTIFY resultChanged)
@@ -156,25 +156,25 @@ class ResultView : public QObject {
   Q_PROPERTY(double positionSeconds READ positionSeconds NOTIFY positionChanged)
   /**
    * 녹화 전체를 요약한 관류 분석 프로그램 그림입니다. 원소는 `{title, detail, url}`이고 발 분할, 양발 정합, 표준 발 PI 지도
-   * 순서입니다. 파일이 있는 그림만 넣습니다(v8 결과). 결과 창 오른쪽 열에 보입니다.
+   * 순서입니다. 파일이 있는 그림만 넣습니다. 결과 창 오른쪽 열에 보입니다.
    */
   Q_PROPERTY(QVariantList summaryFigures READ summaryFigures NOTIFY resultChanged)
-  /** 시간 창별 표준 발 틀 PI 지도를 그릴 수 있으면 true입니다(v8 결과). 영상은 "image://result/<번호>/tmap/<창>"입니다. */
+  /** 시간 창별 표준 발 틀 PI 지도를 그릴 수 있으면 true입니다. 영상은 "image://result/<번호>/tmap/<창>"입니다. */
   Q_PROPERTY(bool hasTemplateMap READ hasTemplateMap NOTIFY resultChanged)
   /** 표준 발 틀 PI 지도의 색표 범위 문장입니다. 예: "0 ~ 0.228%". */
   Q_PROPERTY(QString templateMapRangeText READ templateMapRangeText NOTIFY resultChanged)
   /**
    * 커프 단계의 순번입니다. 판정 계기가 씁니다. 단계가 없으면 -1입니다.
    *
-   * v9는 0, V, D가 0~2이고 O(폐색)가 3입니다. 옛 요약의 M과 S도 3입니다. 그 전 판은 0, 40, 80, 120%가 0~3입니다.
+   * 커프 상태 형식은 0, V, D가 0~2이고 O(폐색)가 3입니다. 옛 요약의 M과 S도 3입니다. 옛 퍼센트 형식은 0, 40, 80, 120%가 0~3입니다.
    */
   Q_PROPERTY(int cuffLevelIndex READ cuffLevelIndex NOTIFY resultChanged)
-  /** 촬영 때 입력한 값을 적는 줄의 이름입니다. v9는 "고른 발목 혈압 단계", 그 전 판은 "촬영 때 입력한 기준"입니다. */
+  /** 촬영 때 입력한 값을 적는 줄의 이름입니다. 커프 상태 형식은 "고른 발목 혈압 단계", 옛 형식은 "촬영 때 입력한 기준"입니다. */
   Q_PROPERTY(QString criterionLabel READ criterionLabel NOTIFY resultChanged)
   /**
    * 촬영 때 입력한 값입니다. 예: "M", "40%". 견줄 값이 매니페스트에 없으면 빈 문자열입니다.
    *
-   * @note v9 결과는 발목 혈압 단계와 견줍니다. M과 S를 골랐으면 폐색(O)과 같은 칸입니다. 검사 기준 %는 상태와 뜻이 달라 견주지 않습니다.
+   * @note 커프 상태 형식의 결과는 발목 혈압 단계와 견줍니다. M과 S를 골랐으면 폐색(O)과 같은 칸입니다. 검사 기준 %는 상태와 뜻이 달라 견주지 않습니다.
    */
   Q_PROPERTY(QString criterionText READ criterionText NOTIFY resultChanged)
   /** 입력한 기준과 추정 단계를 견준 문장입니다. 예: "추정과 같음". 둘 중 하나가 없으면 빈 문자열입니다. */
@@ -422,7 +422,7 @@ class ResultView : public QObject {
   hwlab::pixel::Y16Range thermal_range_;
   std::vector<uint8_t> uyvy_;
   std::vector<uint16_t> y16_;
-  std::optional<hwlab::platform::PerfusionDetail> detail_;  // 표준 발 틀 PI 지도를 그릴 결과 배열(v8)
+  std::optional<hwlab::platform::PerfusionDetail> detail_;  // 표준 발 틀 PI 지도를 그릴 결과 배열
 };
 
 /** QML Image가 "image://result/<번호>/<스트림>/<위치>"로 결과 창 영상을 받아 가는 곳입니다. */

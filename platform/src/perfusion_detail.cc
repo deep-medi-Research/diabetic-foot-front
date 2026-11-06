@@ -72,7 +72,7 @@ std::optional<PerfusionDetail> PerfusionDetailOf(const NpzContents& contents, st
     d.map_rows = static_cast<int32_t>(maps->shape[2]);
     d.map_cols = static_cast<int32_t>(maps->shape[3]);
   }
-  // 표준 발 틀(v8)의 칸 표시와 윤곽입니다. 모양이 지도 격자와 맞지 않으면 틀 지도를 그리지 않도록 비워 둡니다.
+  // 표준 발 틀의 칸 표시와 윤곽입니다. 모양이 지도 격자와 맞지 않으면 틀 지도를 그리지 않도록 비워 둡니다.
   if (const NpyArray* valid = Find(contents, "map_valid"); valid != nullptr && valid->shape.size() == 2 &&
                                                             valid->shape[0] == d.map_rows && valid->shape[1] == d.map_cols) {
     for (const double v : valid->values) d.map_valid.push_back(v != 0.0 ? 1 : 0);

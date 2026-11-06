@@ -41,7 +41,7 @@ class AnalysisVariants : public QObject {
   Q_PROPERTY(QList<QObject*> lanes READ lanes CONSTANT)
   /** 켜 둔 판 중 하나라도 분석 중이거나 대기열에 촬영이 있으면 true입니다. 촬영 버튼을 막는 데 씁니다. */
   Q_PROPERTY(bool blocksShot READ blocksShot NOTIFY changed)
-  /** 분석 중인 판의 남은 시간 문장("v7 약 5초 남음")입니다. 분석 중인 판이 없으면 비어 있습니다. */
+  /** 분석 중인 판의 남은 시간 문장("A 약 5초 남음")입니다. 분석 중인 판이 없으면 비어 있습니다. */
   Q_PROPERTY(QString remainingText READ remainingText NOTIFY changed)
   /** 켜 둔 판 수입니다. */
   Q_PROPERTY(int enabledCount READ enabledCount NOTIFY changed)

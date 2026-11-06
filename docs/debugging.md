@@ -107,7 +107,7 @@
 
 - **`shutdown_log.txt`**<br>창을 닫은 뒤 장치를 닫는 단계가 15초 안에 끝나지 않으면 프로세스를 끝내는데(종료 코드 3), 그때 마지막 단계가 남습니다. 1MB를 넘으면 시작할 때 비우고 새로 씁니다. 같은 단계가 로그 파일에도 `종료 단계:`로 남습니다. `--fake` 실행도 이 파일에 덧붙입니다
 - **`camera_restore_log.txt`**<br>종료할 때 카메라를 실행 전 설정으로 되돌린 결과 가운데 실행 전과 다른 항목과, 실행 전 값을 몰라 되돌리지 못한 항목입니다. 남길 줄이 있을 때만 쓰고 지우지 않으므로 오래 쓰면 커집니다. 같은 문장이 로그 파일에도 `카메라 복원:`으로 남습니다
-- **`analyzer_log.txt`**<br>보낸 요청 줄은 `> `, 앱이 정한 실패 이유는 `! `를 앞에 붙입니다. 분석 프로그램이 준비 전에 끝나면 그 출력은 이 파일에 남지 않고 화면 분석 칸에 마지막 6줄만 보입니다([분석 연동 약속](analysis-contract.md)의 5, 6절)
+- **`analyzer_log.txt`**<br>보낸 요청 줄은 `> `, 앱이 정한 실패 이유는 `! `를 앞에 붙입니다. 분석 프로그램이 준비 전에 끝나면 그 출력은 이 파일에 남지 않고 화면 분석 칸에 마지막 6줄만 보입니다([분석 API](https://github.com/deep-medi-Research/diabetic-foot-api/blob/v1.0.0/docs/analysis-api.md)의 6절)
 
 ## 장비 없이 실행
 
@@ -142,9 +142,29 @@ build/macos-debug/app/hwlab_app --spec specs/see3cam_manual_720p60.json --out bu
 
 ## 분석 결과를 장비 없이 재현
 
-`--fake`에 [가짜 분석 프로그램](../tools/fake_analysis/README.md)을 더하면 촬영, 분석 상태 막대, 결과 창을 끝까지 볼 수 있습니다. 실행 명령, 고정 결과 값, 분석 시간 늘리기(`FAKE_ANALYSIS_STAGE_MS`)는 그 문서에 있습니다.
+`--fake`에 분석 API 저장소의 [가짜 분석 프로그램](https://github.com/deep-medi-Research/diabetic-foot-api/tree/v1.0.0/fake)(`fake/fake_analyzer.py`)을 더하면 촬영, 분석 상태 막대, 결과 창을 끝까지 볼 수 있습니다. 모든 촬영에 같은 고정 결과를 냅니다. 파이썬 3.9 이상이 필요하고, 가짜 분석 프로그램은 구성할 때 `ANALYSIS_API_VERSION`의 태그로 `build/<프리셋>/_deps/diabetic_foot_api-src/fake/`에 받습니다.
 
-- **분석 실패를 만들 때**<br>촬영 폴더를 복사해 이름을 `fail`, `hang`, `crash`, `nosummary`로 바꾸고 `--analyze <그 폴더>`로 분석하게 합니다. 실패, 멈춤, 비정상 종료, 결과 파일 없음을 각각 흉내 냅니다
+```bash
+build/macos-debug/app/hwlab_app --spec specs/see3cam_manual_720p60.json --out build/shots --fake \
+  --analyzer-python python3 \
+  --analyzer-script build/macos-debug/_deps/diabetic_foot_api-src/fake/fake_analyzer.py
+```
+
+- **분석 시간 늘리기**<br>환경 변수 `FAKE_ANALYSIS_STAGE_MS`(기본 200)가 진행 단계 사이 대기 밀리초입니다. 앱이 분석 프로그램에 인자를 더 줄 수 없어 환경 변수로 받습니다
+- **분석 실패를 만들 때**<br>촬영 폴더를 복사해 이름을 `fail`, `hang`, `crash`, `nosummary`로 바꾸고, 매니페스트 이름을 `<바꾼 이름>_shot.json`으로 바꾼 뒤 `--analyze <그 폴더>`로 분석하게 합니다. 실패, 멈춤, 비정상 종료, 결과 파일 없음을 각각 흉내 냅니다
+- **화면을 직접 채우지 않고 확인**<br>환자 정보 인자와 `--press-start`로 촬영을 자동으로 시작하고, `--screenshot`으로 화면과 결과 창을 저장합니다. 녹화는 `--after` 시각의 3분의 1에 시작하고 촬영과 분석에 약 40초가 걸리므로 `--after`는 100000 이상을 줍니다. `/tmp/main.png`는 촬영 화면, `/tmp/main_result.png`는 결과 창입니다
+
+  ```bash
+  build/macos-debug/app/hwlab_app --spec specs/see3cam_manual_720p60.json --out /tmp/shots --fake \
+    --patient 테스트 --birth 1955-11-03 --arm-pressure 120/80 --ankle-pressure 120/80 --ankle-level 0 \
+    --analyzer-python python3 \
+    --analyzer-script build/macos-debug/_deps/diabetic_foot_api-src/fake/fake_analyzer.py \
+    --press-start --after 100000 --screenshot /tmp/main.png
+  ```
+
+- **이미 만든 촬영 폴더의 결과 창만 저장**<br>`hwlab_app --result <촬영 폴더> --result-position 0.5 --screenshot /tmp/result.png --after 5000`을 씁니다
+- **화면이 없는 Windows SSH 세션**<br>`$env:QT_QPA_PLATFORM = 'offscreen'`을 먼저 정합니다. 빌드 폴더에 offscreen 플러그인이 함께 들어 있습니다
+- **앱이 보낸 요청이 API를 어기면**<br>가짜 분석 프로그램이 어긴 키를 적은 실패 완료 줄을 찍고 종료 코드 4로 끝납니다. 분석 칸과 `analyzer_log.txt`에서 그 문장을 봅니다
 - **분석 프로그램이 안 뜰 때**<br>`--analyzer-script`와 `--analyzer-python`의 상대 경로는 앱을 띄운 폴더 기준이고, `python`처럼 이름만 준 파이썬은 PATH에서 찾습니다. 찾지 못하면 분석 칸에 "파이썬 없음: python (PATH에서 찾지 못했습니다)"가 보입니다
 - **분석 프로그램 없이 빌드한 경우**<br>시작 로그에 `분석 판: 분석 판이 없습니다`가 남고 화면 분석 칸은 "관류 분석 프로그램 없음"을 보입니다. 촬영과 저장은 그대로 됩니다
 
@@ -325,7 +345,7 @@ rm -r ~/Library/Application\ Support/deepmedi/hwlab-dev
 | 인자 | 설명 |
 | --- | --- |
 | `--analyzer-python <python.exe>` | 배포 폴더의 python 대신 쓸 파이썬입니다. python처럼 이름만 주면 PATH에서 찾고, 상대 경로는 앱을 띄운 폴더 기준입니다 |
-| `--analyzer-script <dfr_worker.py>` | 배포 폴더의 analysis 대신 쓸 dfr_worker.py입니다. 상대 경로는 앱을 띄운 폴더 기준입니다 |
+| `--analyzer-script <진입 스크립트>` | 배포 폴더의 analysis 대신 쓸 분석 프로그램의 진입 스크립트입니다. 상대 경로는 앱을 띄운 폴더 기준입니다 |
 | `--analyze <촬영 폴더>` | 시작하자마자 그 촬영 폴더를 분석 대기열에 넣습니다 |
 | `--no-prestream` | 녹화 중 미리 분석(첫 장 발 분할, 영상 미리 읽기)을 쓰지 않고 화면의 스위치도 숨깁니다 |
 | `--presegment-threads <n>` | 녹화 중 첫 장 분할에 쓸 스레드 수입니다. 기본은 2이고, 0이면 분석과 같은 모델을 같이 씁니다 |

@@ -92,8 +92,7 @@ struct AnalysisFiles {
  * 있는 사이드카를 읽었는지, 좌우 영상의 저장 영역이 세로로 긴지(높이 > 폭), RGB 녹화 구간 안 열화상 장 수가
  * min_thermal_frames 이상인지, 열화상에 누락이 있는지입니다.
  *
- * 좌우 영상 문제는 분석을 막습니다(blocking). 열화상 문제는 막지 않는 경고입니다. 커프 단계 추정은 RGB 영상만 쓰고,
- * 이진 PAD 판정을 켠 분석도 열화상이 없거나 모자라면 열화상을 빼고 RGB만으로 판정하기 때문입니다.
+ * 좌우 영상 문제는 분석을 막습니다(blocking). 열화상 문제는 막지 않는 경고입니다. 커프 단계 추정은 RGB 영상만 쓰기 때문입니다.
  *
  * @param files 촬영 폴더에서 읽은 결과
  * @param min_thermal_frames RGB 녹화 구간 안 열화상 장 수의 최솟값. 보통 kMinThermalFramesInRgbWindow
