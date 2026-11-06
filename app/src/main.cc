@@ -49,6 +49,7 @@
 #include "hwlab/platform/fake_camera.h"
 #include "hwlab/platform/fake_serial_port.h"
 #include "hwlab/platform/fake_thermal_camera.h"
+#include "hwlab/platform/keep_awake.h"
 #include "hwlab/platform/light.h"
 #include "hwlab/platform/serial_port.h"
 #include "hwlab/platform/thermal_camera.h"
@@ -516,6 +517,10 @@ int main(int argc, char* argv[]) {
                                {QStringLiteral("analysis"), QVariant::fromValue(&analysis)}});
   engine.loadFromModule("HwLab", "Main");
   if (engine.rootObjects().isEmpty()) return 1;
+  // 창이 떠 있는 동안 Windows가 PC를 잠자기 모드로 바꾸지 않게 합니다. 잠자기에서 깨어나면 USB 장치가 다시 연결되어 열어 둔
+  // 장치 연결이 끊기기 때문입니다. main을 나가면 풀고, 종료 제한 시간에 걸려 프로세스가 끝나면 Windows가 풉니다.
+  const hwlab::platform::KeepAwake keep_awake;
+  if (keep_awake.State() == hwlab::platform::KeepAwakeState::kRefused) qWarning("시스템 잠자기를 막지 못함");
 
   // 분석이 끝나면 결과 창을 띄웁니다. 분석결과 폴더 복사는 AnalysisController가 화면 스레드 밖에서 하고 결과를 알립니다.
   // 다음 촬영의 안정화나 녹화 중에 끝난 분석은 결과 창을 바로 띄우지 않고 녹화가 끝난 뒤 띄웁니다.

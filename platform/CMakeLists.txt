@@ -195,6 +195,19 @@ if(HWLAB_PLATFORM_TESTS)
   gtest_discover_tests(test_perfusion_analysis)
 endif()
 
+# 앱이 떠 있는 동안 시스템 잠자기 막기. Windows만 OS를 부르고 다른 OS는 아무것도 하지 않습니다. 켜고 푸는 순서는 모든 OS에서 시험합니다.
+target_sources(hwlab_platform PRIVATE src/keep_awake.cc)
+if(WIN32)
+  target_sources(hwlab_platform PRIVATE src/windows/keep_awake_windows.cc)
+endif()
+if(HWLAB_PLATFORM_TESTS)
+  add_executable(test_keep_awake test/test_keep_awake.cc)
+  target_link_libraries(test_keep_awake PRIVATE hwlab_platform GTest::gtest_main)
+  target_compile_options(test_keep_awake PRIVATE ${HWLAB_WARNINGS})
+  hwlab_copy_ffmpeg_dlls(test_keep_awake)
+  gtest_discover_tests(test_keep_awake)
+endif()
+
 # 열화상: 장치 인터페이스, 가짜 열화상, 원시값 파일과 확인용 영상과 .npy 저장
 target_sources(hwlab_platform PRIVATE src/thermal_camera.cc src/fake_thermal_camera.cc src/thermal_writer.cc)
 if(HWLAB_PLATFORM_TESTS)
