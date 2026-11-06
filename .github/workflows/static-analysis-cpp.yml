@@ -1,0 +1,68 @@
+# C++ 정적 분석입니다. C++ 소스나 헤더, cppcheck 설정이 바뀐 PR에서만 돕니다.
+# 빌드와 시험은 하지 않으므로 Qt, FFmpeg, 제조사 SDK 없이 돕니다.
+name: static-analysis-cpp
+
+on:
+  pull_request:
+    paths:
+      - '**/*.cc'
+      - '**/*.cpp'
+      - '**/*.h'
+      - '**/*.hpp'
+      - '!vendor/**'
+      - 'tools/cppcheck/**'
+      - '.github/workflows/static-analysis-cpp.yml'
+  push:
+    branches: [main]
+    paths:
+      - '**/*.cc'
+      - '**/*.cpp'
+      - '**/*.h'
+      - '**/*.hpp'
+      - '!vendor/**'
+      - 'tools/cppcheck/**'
+      - '.github/workflows/static-analysis-cpp.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: static-analysis-cpp-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  cppcheck:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: cppcheck 판 읽기
+        id: version
+        run: echo "value=$(tr -d '[:space:]' < tools/cppcheck/version.txt)" >> "$GITHUB_OUTPUT"
+
+      - name: cppcheck 캐시
+        id: cache
+        uses: actions/cache@caa296126883cff596d87d8935842f9db880ef25 # v5.1.0
+        with:
+          path: ~/cppcheck
+          key: cppcheck-${{ steps.version.outputs.value }}-${{ runner.os }}-${{ runner.arch }}
+
+      # Linux용 실행 파일을 배포하지 않아 정해 둔 판의 소스를 빌드하고, 결과를 캐시에 둡니다.
+      - name: cppcheck 빌드
+        if: steps.cache.outputs.cache-hit != 'true'
+        env:
+          CPPCHECK_VERSION: ${{ steps.version.outputs.value }}
+        run: |
+          curl -fsSL "https://github.com/danmar/cppcheck/archive/refs/tags/${CPPCHECK_VERSION}.tar.gz" | tar xz -C "$RUNNER_TEMP"
+          cmake -S "$RUNNER_TEMP/cppcheck-${CPPCHECK_VERSION}" -B "$RUNNER_TEMP/cppcheck-build" \
+            -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTS=OFF -DBUILD_GUI=OFF -DCMAKE_INSTALL_PREFIX="$HOME/cppcheck"
+          cmake --build "$RUNNER_TEMP/cppcheck-build" -j "$(nproc)"
+          cmake --install "$RUNNER_TEMP/cppcheck-build"
+
+      - name: cppcheck 실행
+        env:
+          CPPCHECK_TEMPLATE: '::error file={file},line={line},col={column},title=cppcheck {id}::{message}'
+        run: |
+          export CPPCHECK="$HOME/cppcheck/bin/cppcheck"
+          bash tools/cppcheck/run.sh

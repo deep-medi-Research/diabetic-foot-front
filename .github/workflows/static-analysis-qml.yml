@@ -1,0 +1,57 @@
+# QML 정적 분석입니다. QML 파일이 바뀐 PR에서만 돕니다.
+name: static-analysis-qml
+
+on:
+  pull_request:
+    paths:
+      - '**/*.qml'
+      - '.github/workflows/static-analysis-qml.yml'
+  push:
+    branches: [main]
+    paths:
+      - '**/*.qml'
+      - '.github/workflows/static-analysis-qml.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: static-analysis-qml-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  qmllint:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      # 앱이 쓰는 Qt는 6.8.1이지만, 그 판의 qmllint에는 아래에서 쓰는 분류 옵션이 없어 새 판의 qmllint만 받습니다.
+      - uses: jurplel/install-qt-action@a9c63c7c123f3069cff414e7e482d95dfa9d8125 # v4.4.1
+        with:
+          version: 6.12.0
+          host: linux
+          target: desktop
+          arch: linux_gcc_64
+          archives: icu qtbase qtdeclarative
+          cache: true
+
+      # 앱의 HwLab 모듈(C++ 형식)은 빌드해야 생겨 형식 해석이 필요한 분류(unqualified, missing-property,
+      # unresolved-type, compiler)는 켜지 않습니다. 구문과 형식 해석이 필요 없는 분류만 켭니다.
+      # Quick.layout-positioning은 기존 코드에 18건이 있어 화면 확인 없이 고칠 수 없으므로 뺍니다.
+      - name: qmllint
+        run: |
+          categories=(
+            syntax syntax.duplicate-ids syntax.id-quotation
+            alias-cycle comma deprecated duplicate-enum-entries duplicate-import duplicate-inline-component
+            duplicate-property-binding duplicated-name enum-entry-matches-enum eval inheritance-cycle
+            invalid-lint-directive property-override read-only-property required signal-handler-parameters
+            unreachable-code unterminated-case with
+            Quick.anchor-combinations Quick.attached-property-type Quick.color
+            Quick.property-changes-parsed Quick.state-no-child-item
+          )
+          args=(--only-explicit-categories --max-warnings 0)
+          for category in "${categories[@]}"; do
+            args+=("--$category" warning)
+          done
+          "$QT_ROOT_DIR/bin/qmllint" "${args[@]}" app/qml/*.qml
