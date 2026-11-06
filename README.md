@@ -176,3 +176,10 @@ cmake --preset windows-debug -DFETCHCONTENT_SOURCE_DIR_GOOGLETEST=C:/src/googlet
 
 - **설치 폴더에 넣기**<br>구성할 때 `-DHWLAB_ANALYZER_DIR=<레포 전체 경로>/tools/fake_analysis`를 주면 `cmake --install`이 `bin/analysis`로 설치합니다. 앱은 `bin/python`의 파이썬을 쓰므로 Windows는 `HWLAB_PYTHON_DIR`도 줍니다
 - **인자, 고정 결과 값, 실패 흉내**<br>[`tools/fake_analysis/README.md`](tools/fake_analysis/README.md)
+
+## 라이선스
+
+**이 레포의 코드와 문서는 저작권이 딥메디에 있고, 사용, 복제, 수정, 배포를 허락하는 라이선스를 두지 않습니다(All rights reserved).** 협력사와 함께 개발하려고 공개해 두었으며, 공개되어 있다고 해서 사용을 허락한다는 뜻은 아닙니다. 이 코드를 쓰려면 딥메디와 따로 합의해야 합니다.
+
+- **제조사 SDK**<br>`vendor/`의 파일은 각 제조사의 조건을 따릅니다
+- **함께 배포하는 오픈 소스**<br>Qt, FFmpeg 등의 고지는 [`app/package/licenses/NOTICE.txt`](app/package/licenses/NOTICE.txt)에 있습니다
