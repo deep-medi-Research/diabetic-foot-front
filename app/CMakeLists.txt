@@ -117,8 +117,8 @@ target_sources(hwlab_app PRIVATE src/rgb_trace.h src/rgb_trace.cc)
 set_source_files_properties(qml/RgbText.qml PROPERTIES QT_QML_SINGLETON_TYPE TRUE)
 qt_target_qml_sources(hwlab_app QML_FILES qml/RgbPanel.qml qml/RgbChart.qml qml/RgbAreaPicker.qml qml/RgbText.qml)
 
-# 관류 분석 막대: 촬영이 끝나면 관류 분석 프로그램(dfr_worker.py)에 자동으로 분석을 요청하고 진행을 보입니다.
-# 분석 판(analysis/variants)마다 하나씩 띄우고, 판 고르기와 판 순서 실행은 AnalysisVariants가 맡습니다.
+# 관류 분석 막대: 촬영이 끝나면 관류 분석 프로그램에 자동으로 분석을 요청하고 진행을 보입니다.
+# 분석 판마다 하나씩 띄우고, 판 고르기와 판 순서 실행은 AnalysisVariants가 맡습니다.
 target_sources(hwlab_app PRIVATE src/analysis_controller.h src/analysis_controller.cc src/analysis_variants.h
   src/analysis_variants.cc)
 qt_target_qml_sources(hwlab_app QML_FILES qml/AnalysisBar.qml)
@@ -138,27 +138,29 @@ qt_target_qml_sources(hwlab_app QML_FILES qml/RestoreNotice.qml qml/CloseConfirm
 target_sources(hwlab_app PRIVATE src/scripted_rgb_camera.h src/late_rgb_camera.h)
 
 # 배포 패키지: 관류 분석 프로그램, VC++ 런타임, 실행 명령, 라이선스 고지입니다. 이 레포 밖의 배포 스크립트가 이 옵션을 채웁니다.
-# 관류 분석 프로그램은 실행 파일 폴더 기준 python/python.exe와 analysis/dfr_worker.py로 찾으므로 둘 다 실행 파일 옆에 둡니다.
+# 관류 분석 프로그램은 실행 파일 폴더 기준 python/python.exe와 analysis/<진입 스크립트>로 찾으므로 둘 다 실행 파일 옆에 둡니다.
 set(HWLAB_PYTHON_DIR "" CACHE PATH "관류 분석 프로그램용 임베디드 파이썬 폴더(python.exe, 고정 판 패키지 설치됨)")
 # 관류 분석 프로그램은 이 레포에 없습니다. 기본값은 비어 있어 분석 없이 빌드하고 설치하며, 배포 패키지는 분석 프로그램 폴더를 이 값으로 넘깁니다.
-set(HWLAB_ANALYZER_DIR "" CACHE PATH "관류 분석 프로그램 폴더(dfr_worker.py가 있는 폴더). 비우면 분석 프로그램을 설치하지 않습니다")
+set(HWLAB_ANALYZER_DIR "" CACHE PATH "관류 분석 프로그램 폴더. 비우면 분석 프로그램을 설치하지 않습니다")
+# 분석 API는 진입 스크립트의 이름을 정하지 않으므로 구성이 받습니다. 기본값은 지금 배포 패키지가 쓰는 이름이라, 패키지가 이 옵션을 넘기지 않아도 동작합니다.
+set(HWLAB_ANALYZER_ENTRY "dfr_worker.py" CACHE STRING "관류 분석 프로그램 폴더 안 진입 스크립트의 파일 이름")
+set_source_files_properties(src/main.cc PROPERTIES COMPILE_DEFINITIONS HWLAB_ANALYZER_ENTRY="${HWLAB_ANALYZER_ENTRY}")
 # 기본은 1280x720 60 fps, 고정 노출 -9단계입니다(2026-11-03 결정). 60 fps에서 한 장은 16.7 ms라 노출은 -6단계 이하만 됩니다.
-# 관류 분석 판 v10이 60 fps 녹화를 두 장씩 평균해 30 fps로 분석합니다.
 set(HWLAB_RUN_SPEC "see3cam_manual_720p60.json" CACHE STRING "run_app.cmd가 넘기는 specs/ 아래 촬영 선언 파일")
 if(HWLAB_PYTHON_DIR)
   install(DIRECTORY ${HWLAB_PYTHON_DIR}/ DESTINATION ${CMAKE_INSTALL_BINDIR}/python
     PATTERN __pycache__ EXCLUDE PATTERN *.pyc EXCLUDE)
 endif()
 if(HWLAB_ANALYZER_DIR)
-  if(NOT EXISTS "${HWLAB_ANALYZER_DIR}/dfr_worker.py")
-    message(FATAL_ERROR "HWLAB_ANALYZER_DIR에 dfr_worker.py가 없습니다: ${HWLAB_ANALYZER_DIR}")
+  if(NOT EXISTS "${HWLAB_ANALYZER_DIR}/${HWLAB_ANALYZER_ENTRY}")
+    message(FATAL_ERROR "HWLAB_ANALYZER_DIR에 HWLAB_ANALYZER_ENTRY(${HWLAB_ANALYZER_ENTRY})가 없습니다: ${HWLAB_ANALYZER_DIR}")
   endif()
   install(DIRECTORY ${HWLAB_ANALYZER_DIR}/ DESTINATION ${CMAKE_INSTALL_BINDIR}/analysis
     PATTERN __pycache__ EXCLUDE PATTERN *.pyc EXCLUDE PATTERN tests EXCLUDE PATTERN test_*.py EXCLUDE)
 endif()
 if(WIN32)
   # VC++ 런타임은 설치 프로그램(vc_redist) 대신 DLL로 넣습니다. Windows는 실행 파일 폴더에서 DLL을 찾으므로
-  # 앱 폴더와 python.exe 폴더 두 곳에 넣습니다. scikit-learn은 OpenMP(vcomp140.dll)가 필요합니다.
+  # 앱 폴더와 python.exe 폴더 두 곳에 넣습니다. 분석 프로그램의 파이썬 패키지가 OpenMP(vcomp140.dll)를 쓸 수 있어 함께 넣습니다.
   set(CMAKE_INSTALL_SYSTEM_RUNTIME_LIBS_SKIP ON)
   set(CMAKE_INSTALL_OPENMP_LIBRARIES ON)
   include(InstallRequiredSystemLibraries)

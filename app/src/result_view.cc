@@ -52,7 +52,7 @@ QString Number(double value, int digits) {
 }
 
 // 커프 단계 기준값을 맞춘 고정 노출입니다. 지그 조명에서 -5(2026-10-27까지), 외부 배터리 조명 최대 밝기에서 -9입니다.
-// 관류 분석 프로그램 v9가 인정하는 고정 노출과 같습니다.
+// 관류 분석 프로그램이 커프 단계를 내는 고정 노출과 같습니다.
 bool IsFixedExposure(double step) { return step == -5 || step == -9; }
 
 // 커프 상태 문자와 발목 혈압 단계 문자를 결과 창의 네 칸으로 바꿉니다. 발목 혈압 단계 M과 S는
@@ -468,7 +468,7 @@ void ResultView::LoadChart(const std::string& out_dir) {
       chart_[QStringLiteral("corrTimes")] = ToList(detail->window_centers_s);
       chart_[QStringLiteral("corr")] = ToList(detail->template_corr);
     }
-    // 표준 발 틀 PI 지도(v8)는 이미지 제공자가 시간 창마다 그리므로 결과 배열을 남겨 둡니다.
+    // 표준 발 틀 PI 지도는 이미지 제공자가 시간 창마다 그리므로 결과 배열을 남겨 둡니다.
     if (detail->HasTemplateMap()) {
       template_top_ = hwlab::platform::TemplateMapTop(*detail);
       if (template_top_) detail_ = detail;
@@ -829,7 +829,7 @@ QVariantList ResultView::cuffRuleRows() const {
   const auto row = [](const QString& name, const QString& value, const QString& rule, bool hit) {
     return QVariant(QVariantList{name, value, rule, hit});
   };
-  // v9 이후 요약은 기준값이 있는 규칙이 아니라 네 상태 확률을 냅니다. 고른 상태(품질을 무시한 상태 포함)의 줄을 밝게 보입니다.
+  // 커프 상태 형식의 요약은 기준값이 있는 규칙이 아니라 네 상태 확률을 냅니다. 고른 상태(품질을 무시한 상태 포함)의 줄을 밝게 보입니다.
   if (c.states) {
     const int chosen = StateIndex(c.level_code_if_quality_ignored);
     const double p[] = {c.p_state_0, c.p_state_v, c.p_state_d, c.p_state_o};
@@ -984,9 +984,18 @@ QString ResultView::thermalText() const {
 QString ResultView::disclaimer() const { return QString::fromUtf8(hwlab::platform::kPerfusionDisclaimer); }
 
 QString ResultView::analyzerText() const {
-  if (!summary_ || summary_->upstream_commit.empty()) return {};
-  const QString commit = QStringLiteral("분석 코드 ") + QString::fromStdString(summary_->upstream_commit.substr(0, 7));
-  return summary_->variant.empty() ? commit : QString::fromStdString(summary_->variant) + QStringLiteral(", ") + commit;
+  if (!summary_) return {};
+  QStringList parts;
+  if (!summary_->variant.empty()) parts.append(QString::fromStdString(summary_->variant));
+  if (!summary_->upstream_commit.empty()) {
+    parts.append(QStringLiteral("분석 코드 ") + QString::fromStdString(summary_->upstream_commit.substr(0, 7)));
+  }
+  if (!summary_->worker_version.empty()) {
+    QString program = QStringLiteral("분석 프로그램 ") + QString::fromStdString(summary_->worker_version);
+    if (!summary_->api_version.empty()) program += QStringLiteral(" (API ") + QString::fromStdString(summary_->api_version) + QLatin1Char(')');
+    parts.append(program);
+  }
+  return parts.join(QStringLiteral(", "));
 }
 
 QString ResultView::firstFoot() const {
@@ -1042,7 +1051,7 @@ QVariantList ResultView::qualityRows() const {
   if (summary_->quality) {
     for (const auto& item : summary_->quality->items) {
       QString value = QString::fromStdString(item.value);
-      // 맥박 타이밍 기준(v9)은 관류 분석 프로그램이 고른 템플릿 이름을 영어로 냅니다(footcells.pulse_reference의 source).
+      // 맥박 타이밍 기준은 관류 분석 프로그램이 고른 템플릿 이름을 영어로 냅니다(footcells.pulse_reference의 source).
       if (item.code == "pulse_timing") {
         if (item.value == "contact PPG") value = QStringLiteral("손가락 PPG");
         if (item.value == "v106w-foot left") value = QStringLiteral("왼발 영상");
@@ -1075,7 +1084,7 @@ QVariantList ResultView::qualityRows() const {
   const auto& l = summary_->left;
   const auto& r = summary_->right;
   const bool colour = l.mask_method == "colour" || r.mask_method == "colour";
-  // v8은 발 셀로 PI를 계산하고(foot_cells), 발 분할 검출 점수와 정확도가 같은 값입니다.
+  // 발 셀로 PI를 계산한 결과(foot_cells)는 발 분할 검출 점수와 정확도가 같은 값입니다.
   const bool cells = std::isfinite(summary_->cells_used);
   if (cells) {
     row(QStringLiteral("발 분할 점수"), pair(l.detection_score, r.detection_score, 2),
@@ -1127,7 +1136,7 @@ QVariantList ResultView::qualityRows() const {
              : QStringLiteral("주기의 1.2배를 넘은 간격이 없음. 1초 창 최저 %1fps").arg(Number(frame_check_.min_fps, 1)),
         slow);
   }
-  // v8 결과 창은 발 분할 점수와 PI 계산 셀을 그림 제목 줄에, 좌우 맥박 상관과 프레임 간격을 그래프로 보이므로
+  // 발 셀로 PI를 계산한 결과의 창은 발 분할 점수와 PI 계산 셀을 그림 제목 줄에, 좌우 맥박 상관과 프레임 간격을 그래프로 보이므로
   // 이 표에는 관류 분석 프로그램이 동작을 바꾼 줄만 남깁니다.
   if (cells) {
     QVariantList flagged;
@@ -1168,7 +1177,7 @@ QString ResultView::frameText() const {
 }
 
 void ResultView::LoadSummaryFigures(const std::string& out_dir) {
-  // 관류 분석 프로그램(v8)이 녹화 전체로 그린 그림입니다. 그림 속 글자는 결과 창 크기에서 읽기 어려워 핵심 값을 제목 줄에 따로 씁니다.
+  // 관류 분석 프로그램이 녹화 전체로 그린 그림입니다. 그림 속 글자는 결과 창 크기에서 읽기 어려워 핵심 값을 제목 줄에 따로 씁니다.
   const auto add = [&](const char* suffix, const QString& title, const QString& detail) {
     const QString path = QString::fromStdString(out_dir + "/" + Utf8(shot_name_) + suffix);
     if (!QFileInfo::exists(path)) return;

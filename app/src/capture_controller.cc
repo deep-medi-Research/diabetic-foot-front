@@ -1026,7 +1026,7 @@ void CaptureController::FinishInBackground(const PendingShot& shot, bool save_fa
   emit canShootChanged();
   SetAnalysis(shot.thermal ? QStringLiteral("열화상 좌우 배열 저장 중") : QStringLiteral("분석 입력 확인 중"), {});
   background_.start(QRunnable::create([this, shot, save_failed] {
-    // 관류 분석 프로그램(v9)이 분석을 시작할 때 촬영 폴더의 PPG 파일을 맥박 기준 후보로 읽어, 분석을 요청하기 전에 씁니다.
+    // 관류 분석 프로그램이 분석을 시작할 때 촬영 폴더의 PPG 파일을 맥박 기준 후보로 읽어, 분석을 요청하기 전에 씁니다.
     const PpgSaveResult ppg = shot.save_ppg ? shot.save_ppg() : PpgSaveResult{};
     // 분석을 막는 입력 문제는 좌우 영상과 사이드카에서만 나옵니다(CheckAnalysisInputs). 열화상 배열은 분석을 시작한 뒤에 씁니다.
     // 실촬영에서 열화상 배열 저장이 분석 요청을 약 3.6초 늦췄습니다(2026-10-26). 여기서 열화상 배열이 아직 없다는 경고는 버립니다.

@@ -467,8 +467,10 @@ int main(int argc, char* argv[]) {
       Arg(args, QStringLiteral("--analyzer-python")).toStdString(),
       Arg(args, QStringLiteral("--analyzer-script")).toStdString(), QDir::currentPath().toStdString(),
       qEnvironmentVariable("PATH").toStdString());
-  hwlab::platform::ProcessLaunch analyzer_launch = hwlab::platform::AnalyzerLaunch(
-      QCoreApplication::applicationDirPath().toStdString(), analyzer_overrides.python, analyzer_overrides.script);
+  // 진입 스크립트의 이름은 분석 API가 정하지 않아 빌드 구성(HWLAB_ANALYZER_ENTRY)이 줍니다.
+  hwlab::platform::ProcessLaunch analyzer_launch =
+      hwlab::platform::AnalyzerLaunch(QCoreApplication::applicationDirPath().toStdString(), HWLAB_ANALYZER_ENTRY,
+                                      analyzer_overrides.python, analyzer_overrides.script);
   // 녹화 중 첫 장 미리 분할은 노트북에서 프레임 누락이 늘지 않는지 실측하기 전까지 인자로만 켭니다.
   // 녹화 중 영상 미리 읽기는 미리 분할한 발 상자를 쓰므로 미리 분할도 켭니다. 같은 첫 장 신호로 시작합니다.
   // 녹화 중 미리 분석은 관류 분석 프로그램이 늘 할 수 있게 띄우고, 실제로 요청할지는 화면 스위치가 정합니다.
@@ -480,7 +482,7 @@ int main(int argc, char* argv[]) {
     analyzer_launch.arguments.push_back(threads.isEmpty() ? std::string("2") : threads.toStdString());
     analyzer_launch.arguments.push_back("--prestream");
   }
-  // 분석 판(analysis/variants)마다 관류 분석 프로그램을 하나씩 띄웁니다. 두 판은 모듈 이름이 같아 한 프로세스에 올리지 못합니다.
+  // 분석 판(analysis/variants)마다 관류 분석 프로그램을 하나씩 띄웁니다.
   std::string variants_error;
   std::vector<hwlab::platform::AnalyzerVariant> variants =
       hwlab::platform::FindAnalyzerVariants(analyzer_launch.working_dir, &variants_error);

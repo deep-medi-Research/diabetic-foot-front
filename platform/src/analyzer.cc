@@ -94,8 +94,10 @@ struct Analyzer::Impl {
   int32_t sub_step = 0;
   int32_t sub_total = 0;
   std::string sub_message;
+  std::string api_version;
   std::string worker_version;
   std::string upstream_commit;
+  std::string refused;  // 준비 줄의 API 판이 맞지 않아 프로세스를 끝낼 때의 이유
   int64_t finished_count = 0;
   AnalyzerOutcome last_done;
   int64_t presegmented = 0;
@@ -116,8 +118,10 @@ struct Analyzer::Impl {
     std::string error;
     child = ChildProcess::Start(launch, &error);
     recent.clear();
+    api_version.clear();
     worker_version.clear();
     upstream_commit.clear();
+    refused.clear();
     step = 0;
     total = 0;
     ClearSubStage();
@@ -228,8 +232,14 @@ struct Analyzer::Impl {
     switch (parsed.kind) {
       case AnalyzerLineKind::kReady:
         if (stage != Stage::kAwaitReady) break;
+        api_version = parsed.api_version;
         worker_version = parsed.worker_version;
         upstream_commit = parsed.upstream_commit;
+        if (refused = AnalysisApiProblem(parsed.api_version, AnalysisApiVersion()); !refused.empty()) {
+          // 프로세스가 끝나면 HandleExit가 이 이유로 kFailed를 둡니다.
+          child->Kill();
+          break;
+        }
         stage = Stage::kPreloadDue;
         message = "분석 모델 올리기 대기";
         last_activity = Clock::now();
@@ -300,8 +310,9 @@ struct Analyzer::Impl {
     if (stage == Stage::kAwaitReady || stage == Stage::kAwaitPreload) {
       // 준비 전에 끝나면 다시 띄워도 같은 이유로 끝나므로 반복하지 않고 사용자에게 보입니다.
       stage = Stage::kFailed;
-      message = timed_out_now ? "관류 분석 프로그램이 " + std::to_string(timing.stage_timeout_ms / 1000) + "초 안에 준비되지 않았습니다"
-                              : "관류 분석 프로그램이 준비 전에 끝났습니다(" + why + ")";
+      message = !refused.empty() ? refused
+                : timed_out_now  ? "관류 분석 프로그램이 " + std::to_string(timing.stage_timeout_ms / 1000) + "초 안에 준비되지 않았습니다"
+                                 : "관류 분석 프로그램이 준비 전에 끝났습니다(" + why + ")";
       return;
     }
     // 대기 중에 끝난 경우(유휴 종료, 비정상 종료)는 다음 요청을 받을 수 있게 다시 띄웁니다.
@@ -462,6 +473,7 @@ AnalyzerStatus Analyzer::Status() const {
   s.sub_step = m.sub_step;
   s.sub_total = m.sub_total;
   s.sub_message = m.sub_message;
+  s.api_version = m.api_version;
   s.worker_version = m.worker_version;
   s.upstream_commit = m.upstream_commit;
   if (m.current) {
@@ -538,7 +550,18 @@ AnalyzerOverrides ResolveAnalyzerOverrides(const std::string& python, const std:
   return out;
 }
 
-ProcessLaunch AnalyzerLaunch(const std::string& app_dir, const std::string& python_override,
+std::string AnalysisApiVersion() { return HWLAB_ANALYSIS_API_VERSION; }
+
+std::string AnalysisApiProblem(const std::string& reported, const std::string& pinned) {
+  const auto major = [](const std::string& version) { return version.substr(0, version.find('.')); };
+  if (reported.empty()) return "분석 프로그램이 따르는 API 판을 알리지 않았습니다(앱은 " + pinned + ")";
+  if (major(reported).empty() || major(reported) != major(pinned)) {
+    return "분석 프로그램이 따르는 API 판 " + reported + "은 앱의 " + pinned + "과 주 버전이 다릅니다";
+  }
+  return std::string();
+}
+
+ProcessLaunch AnalyzerLaunch(const std::string& app_dir, const std::string& entry, const std::string& python_override,
                              const std::string& script_override) {
   std::string base = app_dir;
   while (!base.empty() && (base.back() == '/' || base.back() == '\\')) base.pop_back();
@@ -549,7 +572,7 @@ ProcessLaunch AnalyzerLaunch(const std::string& app_dir, const std::string& pyth
 #endif
   ProcessLaunch launch;
   launch.program = python_override.empty() ? bundled_python : python_override;
-  const std::string script = script_override.empty() ? base + "/analysis/dfr_worker.py" : script_override;
+  const std::string script = script_override.empty() ? base + "/analysis/" + entry : script_override;
   // 0이면 관류 분석 프로그램이 스스로 끝나지 않습니다. 앱이 닫힐 때까지 띄워 두어 촬영마다 모델을 다시 올리지 않습니다.
   launch.arguments = {script, "--idle-exit", "0"};
   const size_t cut = script.find_last_of("/\\");
@@ -591,13 +614,6 @@ std::vector<AnalyzerVariant> FindAnalyzerVariants(const std::string& analysis_di
     v.summary = at({"summary"});
     v.upstream_commit = at({"upstream", "commit"});
     v.upstream_date = at({"upstream", "date"});
-    v.release_tag = at({"release", "tag"});
-    for (auto [role, asset] : {std::pair<const char*, AnalyzerVariant::Asset*>{"classifier", &v.classifier},
-                               std::pair<const char*, AnalyzerVariant::Asset*>{"template", &v.pulse_template}}) {
-      asset->name = at({"release", role, "name"});
-      asset->sha256 = at({"release", role, "sha256"});
-      asset->uploaded = at({"release", role, "uploaded"});
-    }
     out.push_back(std::move(v));
   }
   std::sort(out.begin(), out.end(), [](const AnalyzerVariant& a, const AnalyzerVariant& b) { return a.id < b.id; });

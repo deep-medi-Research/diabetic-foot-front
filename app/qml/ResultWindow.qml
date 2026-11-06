@@ -15,7 +15,7 @@ ApplicationWindow {
     // ViewModel입니다. ResultView가 만들며, 이 창의 모든 상태는 여기서 옵니다.
     required property ResultView result
 
-    // v8 결과(녹화 전체 요약 그림이 있는 결과)는 세 열 배치입니다: 왼쪽 숫자, 가운데 재생 시점을 따르는 영상과 그래프, 오른쪽 요약 그림.
+    // 녹화 전체 요약 그림이 있는 결과는 세 열 배치입니다: 왼쪽 숫자, 가운데 재생 시점을 따르는 영상과 그래프, 오른쪽 요약 그림.
     readonly property bool figureColumn: result.summaryFigures.length > 0
 
     // 이진 판정 색입니다. 색은 판정 상태에만 씁니다. 커프 단계는 좋고 나쁨을 정하지 않으므로 기본 글자색입니다.
@@ -128,7 +128,7 @@ ApplicationWindow {
         }
     }
     // 커프 단계 계기: 네 칸의 반원에서 추정 단계 칸만 칠하고 가운데에 단계를 크게 씁니다.
-    // 칸은 v9가 커프 상태 0, V, D, O(폐색)이고 그 전 판이 0, 40, 80, 120%입니다(ResultView::cuffGaugeLabels).
+    // 칸은 커프 상태 형식이 0, V, D, O(폐색)이고 옛 퍼센트 형식이 0, 40, 80, 120%입니다(ResultView::cuffGaugeLabels).
     component CuffGauge: Canvas {
         id: gauge
         property int level: -1   // ResultView::cuffLevelIndex
@@ -363,7 +363,7 @@ ApplicationWindow {
                 value: win.result.cuffGaugeValue
                 caption: win.result.cuffGaugeCaption
             }
-            // 촬영 때 입력한 값(v9는 발목 혈압 단계, 그 전 판은 검사 기준)과 추정 단계입니다. 같으면 발 색, 다르면 주의 색으로 적습니다.
+            // 촬영 때 입력한 값(커프 상태 형식은 발목 혈압 단계, 옛 형식은 검사 기준)과 추정 단계입니다. 같으면 발 색, 다르면 주의 색으로 적습니다.
             RowLayout {
                 Layout.topMargin: 8
                 Layout.fillWidth: true
@@ -421,7 +421,7 @@ ApplicationWindow {
                 sourceComponent: AnalysisBar { analysis: barLoader.lane }
             }
 
-            // 로지스틱 회귀 판정(v6): 세 확률의 합 E와 단계 기준입니다.
+            // 확률 합 판정(옛 형식, `rule`이 비어 있음): 세 확률의 합 E와 단계 기준입니다.
             GridLayout {
                 Layout.topMargin: 16
                 Layout.fillWidth: true
@@ -437,8 +437,8 @@ ApplicationWindow {
                 Key { text: "카메라 설정" }
                 Value { text: win.result.cuffSettingText; font.pixelSize: 13 }
             }
-            // 규칙 판정(v7, v8): 위 줄부터 차례로 보고 처음 기준에 든 규칙의 단계를 냅니다. 기준에 든 줄은 밝게 보입니다.
-            // 커프 상태 판정(v9): 네 상태 확률 줄이고, 고른 상태 줄이 밝습니다.
+            // 규칙 판정(옛 형식, `rule`이 있음): 위 줄부터 차례로 보고 처음 기준에 든 규칙의 단계를 냅니다. 기준에 든 줄은 밝게 보입니다.
+            // 커프 상태 판정(커프 상태 형식): 네 상태 확률 줄이고, 고른 상태 줄이 밝습니다.
             GridLayout {
                 Layout.topMargin: 16
                 Layout.fillWidth: true
@@ -460,7 +460,7 @@ ApplicationWindow {
                         color: row[3] ? Theme.text : Theme.textMuted
                     }
                 }
-                // 기준 칸이 빈 v9 줄의 읽는 법입니다. 줄을 바꿔 써서 왼쪽 칸 폭을 넓히지 않습니다.
+                // 기준 칸이 빈 커프 상태 줄의 읽는 법입니다. 줄을 바꿔 써서 왼쪽 칸 폭을 넓히지 않습니다.
                 Label {
                     Layout.columnSpan: 3
                     Layout.fillWidth: true
@@ -471,7 +471,7 @@ ApplicationWindow {
                     font.pixelSize: 12
                     color: Theme.textMuted
                 }
-                // v9 상태 확률 줄은 값 칸이 "0.80" 너비라, 품질 줄을 이름과 값 두 줄로 나눠 세 칸 전체 폭에 씁니다.
+                // 상태 확률 줄은 값 칸이 "0.80" 너비라, 품질 줄을 이름과 값 두 줄로 나눠 세 칸 전체 폭에 씁니다.
                 Key { Layout.columnSpan: win.result.cuffStates ? 3 : 1; text: "강한 발 맥박 품질" }
                 // 기준까지 읽히게 줄을 바꿔 씁니다. 너비를 1로 두어 긴 문장이 왼쪽 칸을 넓히지 않게 합니다.
                 Value {
@@ -544,7 +544,7 @@ ApplicationWindow {
                 Value { text: win.result.piRatioText; font.pixelSize: 18 }
                 Key { text: "더 낮은 발" }
                 Value { text: win.result.lowerFootText }
-                // v6, v7 결과는 분석 품질 표에 같은 값이 있습니다.
+                // 요약 그림이 없는 옛 결과는 분석 품질 표에 같은 값이 있습니다.
                 Key { visible: win.figureColumn; text: "좌우 맥박 상관 (30초 전체)" }
                 Value { visible: win.figureColumn; text: win.result.templateCorrText }
             }
@@ -595,7 +595,7 @@ ApplicationWindow {
                 color: win.result.thermalExcluded ? Theme.settling : Theme.text
             }
 
-            // v8 결과는 관류 분석 프로그램이 동작을 바꾼 줄만 있고, 없으면 이 절을 숨깁니다.
+            // 요약 그림이 있는 결과는 관류 분석 프로그램이 동작을 바꾼 줄만 있고, 없으면 이 절을 숨깁니다.
             readonly property bool qualityShown: win.result.loaded && (!win.figureColumn || win.result.qualityRows.length > 0)
             Rule { visible: parent.qualityShown }
             Caption { visible: parent.qualityShown; text: "분석 품질" }
@@ -685,7 +685,7 @@ ApplicationWindow {
             RowLayout {
                 Layout.fillWidth: true
                 Layout.fillHeight: true
-                // v8 결과는 그래프 줄이 늘어 영상 줄을 낮춥니다.
+                // 요약 그림이 있는 결과는 그래프 줄이 늘어 영상 줄을 낮춥니다.
                 Layout.preferredHeight: win.figureColumn ? 2.2 : 5
                 spacing: 12
 
@@ -754,7 +754,7 @@ ApplicationWindow {
                         currentFrame: win.result.gifFrame
                     }
                 }
-                // 같은 10초 구간의 PI를 표준 발 틀(v8)에 그린 지도입니다. 왼쪽이 왼발이고 오른발은 좌우반전입니다.
+                // 같은 10초 구간의 PI를 표준 발 틀에 그린 지도입니다. 왼쪽이 왼발이고 오른발은 좌우반전입니다.
                 Pane {
                     visible: win.result.hasTemplateMap
                     Layout.fillWidth: true
@@ -873,7 +873,7 @@ ApplicationWindow {
             }
         }
 
-        // 오른쪽: 녹화 전체를 요약한 관류 분석 프로그램 그림(v8). 그림 속 글자는 이 크기에서 읽기 어려워 핵심 값을 제목 줄에
+        // 오른쪽: 녹화 전체를 요약한 관류 분석 프로그램 그림. 그림 속 글자는 이 크기에서 읽기 어려워 핵심 값을 제목 줄에
         // 씁니다. 그림을 누르면 원본 크기로 엽니다.
         ColumnLayout {
             visible: win.figureColumn

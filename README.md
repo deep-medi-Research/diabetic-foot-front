@@ -12,11 +12,11 @@
 
 - **코드 길잡이(`hwlab` 이름, 기능별 파일 위치, 이 레포에 없는 것)**<br>[`docs/overview.md`](docs/overview.md)
 - **설계**<br>[`docs/00-architecture.md`](docs/00-architecture.md)
-- **분석 프로그램과 주고받는 형식**<br>[`docs/analysis-contract.md`](docs/analysis-contract.md)
+- **분석 프로그램과 주고받는 형식(분석 API 연동)**<br>[`docs/analysis-contract.md`](docs/analysis-contract.md)
 - **촬영 폴더의 파일과 크기**<br>[`docs/shot-folder.md`](docs/shot-folder.md)
 - **녹화 뒤 확인할 것(장 수, 누락, 프레임 시각, 장치 사이 시각)**<br>[`docs/recording-checklist.md`](docs/recording-checklist.md)
 - **로그, 기록 위치, 장비 없는 재현, 인자 전체**<br>[`docs/debugging.md`](docs/debugging.md)
-- **도구와 가짜 분석 프로그램**<br>[`tools/README.md`](tools/README.md), [`tools/fake_analysis/README.md`](tools/fake_analysis/README.md)
+- **도구**<br>[`tools/README.md`](tools/README.md)
 
 ## 구성
 
@@ -27,8 +27,8 @@
 | `app/` | 화면 |
 | `specs/` | 촬영 선언 |
 | `vendor/` | 제조사 SDK, 샘플, 문서 |
-| `docs/` | 코드 길잡이, 설계, 분석 연동 약속, 촬영 폴더, 디버깅 |
-| `tools/` | 그림 원본, 결과 창 확인 도구, 촬영 폴더 검사 도구, 가짜 분석 프로그램 |
+| `docs/` | 코드 길잡이, 설계, 분석 API 연동, 촬영 폴더, 디버깅 |
+| `tools/` | 그림 원본, 결과 창 확인 도구, 촬영 폴더 검사 도구 |
 
 ## 주요 기능
 
@@ -46,13 +46,13 @@
 
 ## 관류 분석 프로그램
 
-**앱은 분석 프로그램 폴더를 빌드할 때 `HWLAB_ANALYZER_DIR`로 받고, 비워 두면 분석 없이 빌드합니다.** 분석 프로그램이 없으면 앱은 분석 칸에 "관류 분석 프로그램 없음"을 보이고, 촬영과 저장은 그대로 합니다.
+**앱은 분석 프로그램 폴더와 그 안의 진입 스크립트 이름을 빌드할 때 `HWLAB_ANALYZER_DIR`, `HWLAB_ANALYZER_ENTRY`로 받고, 비워 두면 분석 없이 빌드합니다.** 분석 프로그램이 없으면 앱은 분석 칸에 "관류 분석 프로그램 없음"을 보이고, 촬영과 저장은 그대로 합니다.
 
-- **`HWLAB_ANALYZER_DIR`**<br>`dfr_worker.py`가 있는 폴더입니다. `cmake --install`이 `bin/analysis`로 설치합니다. 값을 줬는데 `dfr_worker.py`가 없으면 구성이 멈춥니다
+- **`HWLAB_ANALYZER_DIR`, `HWLAB_ANALYZER_ENTRY`**<br>분석 프로그램 폴더와 그 안의 진입 스크립트 파일 이름입니다. 이름의 기본값은 지금 배포 패키지가 쓰는 파일 이름이라 패키지가 넘기지 않아도 됩니다. `cmake --install`이 폴더를 `bin/analysis`로 설치합니다. 폴더에 그 파일이 없으면 구성이 멈춥니다
 - **`HWLAB_PYTHON_DIR`**<br>분석 프로그램이 쓰는 파이썬 폴더입니다. `bin/python`으로 설치합니다
-- **주고받는 방식**<br>앱이 분석 프로그램을 띄우고, 표준 입력의 JSON 한 줄과 표준 출력의 줄, 결과 파일로만 주고받습니다. 형식은 [`docs/analysis-contract.md`](docs/analysis-contract.md)에 있습니다
-- **개발할 때**<br>설치하지 않은 분석 프로그램은 앱 인자 `--analyzer-python <python 실행 파일> --analyzer-script <dfr_worker.py>`로 가리킵니다
-- **분석 프로그램 없이 개발할 때**<br>`tools/fake_analysis`의 가짜 분석 프로그램이 같은 인자로 뜨고, 모든 촬영에 같은 고정 결과를 냅니다. 실행 방법은 아래 [실행](#실행)에 있습니다
+- **주고받는 방식**<br>앱이 분석 프로그램을 띄우고, 표준 입력의 JSON 한 줄과 표준 출력의 줄, 결과 파일로만 주고받습니다. 형식은 [분석 API 저장소](https://github.com/deep-medi-Research/diabetic-foot-api)가 정하고, 앱이 따르는 판은 레포 루트의 `ANALYSIS_API_VERSION`입니다. 앱 쪽 구현은 [`docs/analysis-contract.md`](docs/analysis-contract.md)에 있습니다
+- **개발할 때**<br>설치하지 않은 분석 프로그램은 앱 인자 `--analyzer-python <python 실행 파일> --analyzer-script <진입 스크립트>`로 가리킵니다
+- **분석 프로그램 없이 개발할 때**<br>분석 API 저장소의 가짜 분석 프로그램(`fake/fake_analyzer.py`)이 같은 인자로 뜨고, 모든 촬영에 같은 고정 결과를 냅니다. 구성할 때 `ANALYSIS_API_VERSION`의 태그로 빌드 폴더의 `_deps/diabetic_foot_api-src`에 받습니다. 실행 방법은 아래 [실행](#실행)에 있습니다
 
 ## 준비물
 
@@ -109,7 +109,7 @@ Windows는 시작 메뉴의 **Developer PowerShell for VS 2022**를 열고 레�
 cmake --preset windows-debug
 cmake --build --preset windows-debug
 ctest --preset windows-debug
-.\build\windows-debug\app\hwlab_app.exe --spec specs\see3cam_manual_720p60.json --out build\shots --fake --analyzer-python python --analyzer-script tools\fake_analysis\dfr_worker.py
+.\build\windows-debug\app\hwlab_app.exe --spec specs\see3cam_manual_720p60.json --out build\shots --fake --analyzer-python python --analyzer-script build\windows-debug\_deps\diabetic_foot_api-src\fake\fake_analyzer.py
 ```
 
 macOS는 터미널에서 실행합니다.
@@ -119,7 +119,7 @@ cmake --preset macos-debug
 cmake --build --preset macos-debug
 ctest --preset macos-debug
 build/macos-debug/app/hwlab_app --spec specs/see3cam_manual_720p60.json --out build/shots --fake \
-  --analyzer-python python3 --analyzer-script tools/fake_analysis/dfr_worker.py
+  --analyzer-python python3 --analyzer-script build/macos-debug/_deps/diabetic_foot_api-src/fake/fake_analyzer.py
 ```
 
 - **Release**<br>프리셋 이름의 `debug`를 `release`로 바꿉니다. 빌드 폴더는 `build\windows-release`입니다
@@ -130,7 +130,7 @@ build/macos-debug/app/hwlab_app --spec specs/see3cam_manual_720p60.json --out bu
 
 ## 시험
 
-<mark>**`ctest --preset <프리셋>`이 core, platform, app의 시험 570개를 4개씩 함께 돌리고, 시험을 하나도 찾지 못하면 실패합니다.**</mark> Windows 시험 노트북에서 core 265개, platform 298개, app 7개가 모두 통과했습니다(Debug, 65초).
+<mark>**`ctest --preset <프리셋>`이 core, platform, app의 시험 569개를 4개씩 함께 돌리고, 시험을 하나도 찾지 못하면 실패합니다.**</mark> macOS Debug에서 core 265개, platform 297개, app 7개가 모두 통과했습니다(41초).
 
 - **하나만 돌리기**<br>`ctest --preset windows-debug -R Settle`처럼 시험 이름의 일부를 줍니다. gtest 실행 파일에는 `--gtest_filter`를 줍니다
 
@@ -150,10 +150,10 @@ build/macos-debug/app/hwlab_app --spec specs/see3cam_manual_720p60.json --out bu
 
 ### 네트워크 없이 구성
 
-github.com에 닿지 않는 PC는 googletest를 받는 데서 구성이 멈춥니다. 다른 PC에서 [googletest 1.15.2 소스 zip](https://github.com/google/googletest/archive/refs/tags/v1.15.2.zip)을 받아 풀고, 처음 구성할 때 그 폴더를 줍니다.
+github.com에 닿지 않는 PC는 googletest와 분석 API 저장소를 받는 데서 구성이 멈춥니다. 다른 PC에서 [googletest 1.15.2 소스 zip](https://github.com/google/googletest/archive/refs/tags/v1.15.2.zip)과 분석 API 저장소(`ANALYSIS_API_VERSION`의 태그 `v1.0.0`)를 받아 풀고, 처음 구성할 때 그 폴더를 줍니다.
 
 ```powershell
-cmake --preset windows-debug -DFETCHCONTENT_SOURCE_DIR_GOOGLETEST=C:/src/googletest-1.15.2
+cmake --preset windows-debug -DFETCHCONTENT_SOURCE_DIR_GOOGLETEST=C:/src/googletest-1.15.2 -DFETCHCONTENT_SOURCE_DIR_DIABETIC_FOOT_API=C:/src/diabetic-foot-api
 ```
 
 시험 없이 빌드하려면 `-DHWLAB_BUILD_TESTS=OFF -DHWLAB_PLATFORM_TESTS=OFF -DHWLAB_APP_TESTS=OFF`를 줍니다. 그때 `ctest --preset`은 시험이 없어 실패합니다.
@@ -173,10 +173,10 @@ cmake --preset windows-debug -DFETCHCONTENT_SOURCE_DIR_GOOGLETEST=C:/src/googlet
 
 ### 분석 프로그램 없이 결과 창까지 보기
 
-**`--fake`에 `tools/fake_analysis`의 가짜 분석 프로그램을 더하면 장비도 실제 분석 프로그램도 없이 촬영, 분석 상태 막대, 결과 창을 끝까지 볼 수 있습니다.** 파이썬 3.9 이상만 있으면 되고, 가짜 분석 프로그램은 모든 촬영에 같은 고정 결과를 냅니다. Visual Studio의 시작 항목 **앱: 가짜 장치와 가짜 분석**과 위 명령줄 실행이 이 방법입니다.
+**`--fake`에 분석 API 저장소의 가짜 분석 프로그램을 더하면 장비도 실제 분석 프로그램도 없이 촬영, 분석 상태 막대, 결과 창을 끝까지 볼 수 있습니다.** 파이썬 3.9 이상만 있으면 되고, 가짜 분석 프로그램은 모든 촬영에 같은 고정 결과를 냅니다. Visual Studio의 시작 항목 **앱: 가짜 장치와 가짜 분석**과 위 명령줄 실행이 이 방법입니다. 가짜 분석 프로그램은 구성할 때 받으므로 빌드 폴더가 있어야 합니다.
 
-- **설치 폴더에 넣기**<br>구성할 때 `-DHWLAB_ANALYZER_DIR=<레포 전체 경로>/tools/fake_analysis`를 주면 `cmake --install`이 `bin/analysis`로 설치합니다. 앱은 `bin/python`의 파이썬을 쓰므로 Windows는 `HWLAB_PYTHON_DIR`도 줍니다
-- **인자, 고정 결과 값, 실패 흉내**<br>[`tools/fake_analysis/README.md`](tools/fake_analysis/README.md)
+- **인자, 고정 결과 값, 실패 흉내**<br>분석 API 저장소의 `fake/fake_analyzer.py`에 있습니다. 앱이 보낸 요청 줄이 API를 어기면 가짜 분석 프로그램이 어긴 키를 적고 종료 코드 4로 끝납니다
+- **화면을 직접 채우지 않고 확인하는 방법**<br>[디버깅과 관찰](docs/debugging.md#분석-결과를-장비-없이-재현)에 있습니다
 
 ## 라이선스
 

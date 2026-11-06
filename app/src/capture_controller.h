@@ -335,7 +335,7 @@ class CaptureController : public QObject {
    * 좌우 발 영상과 사이드카가 저장되어 RGB 분석 입력을 확인했습니다. 녹화가 끝나면 PPG 파일을 쓴 뒤, 열화상 배열을 쓰기 전에
    * 한 번 내고, 그 뒤에 shotSaved를 냅니다. 분석은 RGB 영상과 PPG 파일만 쓰므로 이때 시작합니다(AnalysisController::onRgbSaved).
    *
-   * @note 관류 분석 프로그램 v9는 PPG 파일을 맥박 기준 후보로 읽습니다. PPG를 연 촬영이면 이 신호 전에 PPG 파일이 있습니다.
+   * @note 관류 분석 프로그램은 PPG 파일을 맥박 기준 후보로 읽습니다. PPG를 연 촬영이면 이 신호 전에 PPG 파일이 있습니다.
    *
    * @param folder 촬영 폴더(전체 경로)
    * @param ready 분석을 막는 문제가 없으면 true. 막는 문제는 모두 RGB 쪽이라 shotSaved의 ready와 같습니다

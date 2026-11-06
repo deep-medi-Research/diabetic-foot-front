@@ -27,9 +27,9 @@ inline constexpr const char kPerfusionDisclaimer[] =
 /**
  * 관류 분석 프로그램이 추정한 커프 단계입니다(요약의 `cuff_level` 항목).
  *
- * 분석 판 v9부터는 커프 상태 0(정상), V(정상 경계, 정맥만 막힘), D(경증, 동맥 부분 압박), O(폐색) 중
+ * 커프 상태 형식은 커프 상태 0(정상), V(정상 경계, 정맥만 막힘), D(경증, 동맥 부분 압박), O(폐색) 중
  * 하나입니다(states가 true). 네 상태 확률(p_state_*)과 PAD 확률(pad_probability)을 함께 내고 가장 큰 상태를 고릅니다.
- * 그 전 판은 커프 압력을 수축기 혈압 대비 퍼센트로 0, 40, 80, 120 네 단계 중 하나로 추정합니다.
+ * 옛 형식은 커프 압력을 수축기 혈압 대비 퍼센트로 0, 40, 80, 120 네 단계 중 하나로 추정합니다.
  *
  * @note 추정은 고정 카메라 설정(수동, 게인 1, 노출 -5 또는 -9)으로 찍은 촬영에 맞췄습니다. 다른 설정이면 applicable이
  *       false이고 값은 참고용입니다.
@@ -37,21 +37,21 @@ inline constexpr const char kPerfusionDisclaimer[] =
  */
 struct CuffLevel {
   /**
-   * 단계가 있으면 true입니다. v8까지는 `level_pct_sbp`가 숫자인지, v9는 `level`이 문자인지로 정합니다. 맥박 품질 부족으로
+   * 단계가 있으면 true입니다. 옛 형식은 `level_pct_sbp`가 숫자인지, 커프 상태 형식은 `level`이 문자인지로 정합니다. 맥박 품질 부족으로
    * 단계를 내지 않으면(`null`) false입니다.
    */
   bool has_level = true;
-  /** `level_pct_sbp`: 추정 단계(수축기 혈압 대비 %). 0, 40, 80, 120 중 하나입니다. has_level이 false이거나 v9 요약이면 0입니다. */
+  /** `level_pct_sbp`: 추정 단계(수축기 혈압 대비 %). 0, 40, 80, 120 중 하나입니다. has_level이 false이거나 커프 상태 형식이면 0입니다. */
   int32_t level_pct = 0;
-  /** 상태를 문자로 낸 요약(v9)이면 true입니다. `level_if_quality_ignored`가 문자이면 그렇습니다. */
+  /** 커프 상태 형식의 요약이면 true입니다. `level_if_quality_ignored`가 문자이면 그렇습니다. */
   bool states = false;
-  /** `level`: 추정 상태 0, V, D, O(옛 요약은 0, V, D, M, S). 품질 미달(`null`)이거나 v8까지의 요약이면 비었습니다. */
+  /** `level`: 추정 상태 0, V, D, O(옛 요약은 0, V, D, M, S). 품질 미달(`null`)이거나 옛 형식의 요약이면 비었습니다. */
   std::string level_code;
   /** `level_ko`: 분석 프로그램이 정한 상태 이름(정상, 정상 (경계), 경증, 폐색). 품질 미달이거나 없으면 비었습니다. */
   std::string level_ko;
-  /** v9의 `level_if_quality_ignored`: 품질 검사를 무시했을 때의 상태 문자입니다. 없으면 비었습니다. */
+  /** 커프 상태 형식의 `level_if_quality_ignored`: 품질 검사를 무시했을 때의 상태 문자입니다. 없으면 비었습니다. */
   std::string level_code_if_quality_ignored;
-  /** `pad_probability`: 네트워크가 낸 PAD(D 또는 O) 확률(0~1). 품질 미달이어도 있습니다. 없으면 kNoNumber입니다. */
+  /** `pad_probability`: 분석 프로그램이 낸 PAD(D 또는 O) 확률(0~1). 품질 미달이어도 있습니다. 없으면 kNoNumber입니다. */
   double pad_probability = kNoNumber;
   /** `pad`: 고른 상태가 D 또는 O이면 true입니다. 품질 미달(`null`)이거나 없으면 nullopt입니다. */
   std::optional<bool> pad;
@@ -81,13 +81,13 @@ struct CuffLevel {
   /** `window_centres_s`: 구간 가운데 시각(초). window_e와 같은 순서입니다. */
   std::vector<double> window_centres_s;
 
-  // 아래는 경계별 규칙 판정(2026-10-28 이후 요약)의 값입니다. 로지스틱 회귀 판정의 요약에는 없습니다.
+  // 아래는 경계별 규칙 판정의 값입니다. 규칙이 없는 옛 확률 합 판정의 요약에는 없습니다.
 
-  /** `rule`: 단계를 정한 규칙 문구. 예: `<지표> < <기준값>`, `none of the cuff rules`. 비어 있으면 로지스틱 회귀 판정입니다. */
+  /** `rule`: 단계를 정한 규칙 문구. 예: `<지표> < <기준값>`, `none of the cuff rules`. 비어 있으면 규칙이 없는 옛 확률 합 판정입니다. */
   std::string rule;
   /** `quality_ok`: 강한 발의 맥박 SNR이 기준 이상이면 true입니다. 키가 없으면 true입니다. */
   bool quality_ok = true;
-  /** v8까지의 `level_if_quality_ignored`: 품질 검사를 무시했을 때의 단계(%)입니다. 없거나 문자이면 -1입니다. */
+  /** 옛 형식의 `level_if_quality_ignored`: 품질 검사를 무시했을 때의 단계(%)입니다. 없거나 문자이면 -1입니다. */
   int32_t level_if_quality_ignored = -1;
   /** `features.h1re_30`: 약한 발과 강한 발의 맥박 기본파 비의 실수부(30초). 120% 규칙에 씁니다. */
   double h1re_30 = kNoNumber;
@@ -102,7 +102,7 @@ struct CuffLevel {
   /**
    * `thresholds`: 규칙의 기준값. h1re_30이 이보다 작으면 120%, delay2_30이 이보다 크면 80%, pi_ratio가 이보다 작으면 40%입니다.
    *
-   * @note v9에는 기준값이 없어 모두 kNoNumber입니다.
+   * @note 커프 상태 형식에는 기준값이 없어 모두 kNoNumber입니다.
    */
   double h1re_30_below = kNoNumber;
   double delay2_30_above_ms = kNoNumber;
@@ -112,9 +112,9 @@ struct CuffLevel {
 };
 
 /**
- * 요약의 `qc`: 측정자에게 보이는 측정 품질 안내입니다. 관류 분석 프로그램 v8 이후 요약에 있습니다.
+ * 요약의 `qc`: 측정자에게 보이는 측정 품질 안내입니다. 옛 요약에는 없을 수 있습니다.
  *
- * @note 형식은 `docs/analysis-contract.md`가 정합니다.
+ * @note 형식은 분석 API 7.2.2절이 정합니다.
  */
 struct MeasurementQuality {
   /** `status`: `ok`(측정 완료), `check`(측정 완료, 확인 필요), `retake`(재측정 필요). */
@@ -197,7 +197,7 @@ struct PerfusionSummary {
   /**
    * `dfr.thermal_skipped`: 판정에서 열화상을 뺀 이유 코드. 빼지 않았거나 기록이 없으면 빈 문자열입니다.
    *
-   * @note 코드는 `docs/analysis-contract.md`가 정합니다. DescribeThermalSkip으로 문장을 만듭니다.
+   * @note 분석 API 이전 결과에만 있는 키입니다(분석 API 10.1절). DescribeThermalSkip으로 문장을 만듭니다.
    */
   std::string thermal_skipped;
   /**
@@ -209,7 +209,7 @@ struct PerfusionSummary {
    * `dfr.prestream.reason`: 녹화 중 영상 미리 읽기 값을 분석이 쓰지 못하고 영상을 다시 읽은 이유 코드. 썼거나 꺼져 있었거나
    * 기록이 없으면 빈 문자열입니다.
    *
-   * @note 코드는 `docs/analysis-contract.md`의 이유 코드 표가 정합니다.
+   * @note 코드는 분석 API 7.2.4절의 이유 코드 표가 정합니다.
    *       DescribeSpeedupSkip으로 문장을 만듭니다. 결과 값은 어느 경우든 같고 시간만 달라집니다.
    */
   std::string prestream_skipped;
@@ -229,6 +229,10 @@ struct PerfusionSummary {
 
   /** `dfr.upstream_commit`: 관류 분석 프로그램이 소스 커밋으로 적은 값. 없으면 빈 문자열입니다. */
   std::string upstream_commit;
+  /** `dfr.worker_version`: 결과를 낸 관류 분석 프로그램의 빌드(릴리즈 태그나 커밋). 분석 API 이전 결과에는 없어 빈 문자열입니다. */
+  std::string worker_version;
+  /** `dfr.api_version`: 결과를 낸 관류 분석 프로그램이 따른 분석 API 판. 분석 API 이전 결과에는 없어 빈 문자열입니다. */
+  std::string api_version;
 
   /** 발 하나의 부위별 관류지수와 발 인식 품질입니다. 값이 없으면 kNoNumber입니다. */
   struct Foot {
@@ -243,11 +247,11 @@ struct PerfusionSummary {
     std::string mask_method;
     /** `foot_mask.<발>.det_score`: 발 검출 점수(0~1). */
     double detection_score = kNoNumber;
-    /** `foot_mask.<발>.sam_iou`: 발 마스크 정확도 예상값(0~1). v8은 det_score와 같은 값입니다. */
+    /** `foot_mask.<발>.sam_iou`: 발 마스크 정확도 예상값(0~1). 발 셀로 PI를 계산한 결과는 det_score와 같은 값입니다. */
     double mask_iou = kNoNumber;
-    /** `foot_mask.<발>.blocks`: 발 영역 안의 32x16 블록 수. v7까지는 이 블록으로 관류를 계산했습니다. */
+    /** `foot_mask.<발>.blocks`: 발 영역 안의 32x16 블록 수. 옛 형식은 이 블록으로 관류를 계산했습니다. */
     double blocks = kNoNumber;
-    /** `foot_mask.<발>.cells`: v8에서 이 발에 보인 발 셀 수(20x5 중). */
+    /** `foot_mask.<발>.cells`: 이 발에 보인 발 셀 수(20x5 중). */
     double cells = kNoNumber;
     /** `classification.thermal_mask.<발>.top_dice_vs_thermal_sam`: 열화상 발 마스크와 RGB에서 옮긴 마스크의 겹침(0~1). */
     double thermal_mask_dice = kNoNumber;
@@ -258,9 +262,9 @@ struct PerfusionSummary {
   double template_corr = kNoNumber;
   /** `n_light_ref_min`: 조명 잡음 제거에 쓴 배경 블록 수의 최솟값. 0이면 배경 기준 없이 계산한 구간이 있습니다. */
   double light_ref_min = kNoNumber;
-  /** `foot_cells.used`: v8에서 PI를 계산한 셀 수. 두 발 모두에서 보이고 잡음이 적은 셀입니다(100개 중). */
+  /** `foot_cells.used`: PI를 계산한 셀 수. 두 발 모두에서 보이고 잡음이 적은 셀입니다(100개 중). */
   double cells_used = kNoNumber;
-  /** `foot_cells.common`: v8에서 두 발 모두에서 보인 셀 수. used와의 차이는 잡음이 커 뺀 셀입니다. */
+  /** `foot_cells.common`: 두 발 모두에서 보인 셀 수. used와의 차이는 잡음이 커 뺀 셀입니다. */
   double cells_common = kNoNumber;
   /** `classification.window_centres_s`: 판정 구간 가운데 시각(초). window_probs와 같은 순서입니다. */
   std::vector<double> window_centres_s;

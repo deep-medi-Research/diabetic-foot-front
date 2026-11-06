@@ -27,7 +27,7 @@
         "--patient", "테스트", "--birth", "1955-11-03",
         "--arm-pressure", "120/80", "--ankle-pressure", "120/80", "--ankle-level", "0",
         "--analyzer-python", "python",
-        "--analyzer-script", "${workspaceRoot}\\tools\\fake_analysis\\dfr_worker.py"
+        "--analyzer-script", "${workspaceRoot}\\build\\windows-debug\\_deps\\diabetic_foot_api-src\\fake\\fake_analyzer.py"
       ]
     },
     {

@@ -13,7 +13,7 @@ namespace {
 // 관류 분석 프로그램을 띄우지 않는(Start를 부르지 않는) 판 두 개입니다. 판 순서와 켜고 끄는 규칙만 봅니다.
 std::unique_ptr<AnalysisVariants> TwoLanes() {
   std::vector<std::unique_ptr<AnalysisController>> lanes;
-  for (const char* id : {"v6", "v7"}) {
+  for (const char* id : {"a", "b"}) {
     hwlab::platform::AnalyzerVariant variant;
     variant.id = id;
     variant.label = id;
@@ -44,39 +44,39 @@ class AnalysisVariantsTest : public QObject {
   void keepsAtLeastOneVariant() {
     auto variants = TwoLanes();
     QSignalSpy changed(variants.get(), &AnalysisVariants::changed);
-    QCOMPARE(variants->Ids(), (QStringList{"v6", "v7"}));
+    QCOMPARE(variants->Ids(), (QStringList{"a", "b"}));
     QCOMPARE(variants->enabledCount(), 2);
-    QVERIFY(variants->setLaneEnabled("v6", false));
+    QVERIFY(variants->setLaneEnabled("a", false));
     QCOMPARE(variants->enabledCount(), 1);
-    QVERIFY(!variants->setLaneEnabled("v7", false));
+    QVERIFY(!variants->setLaneEnabled("b", false));
     QCOMPARE(variants->enabledCount(), 1);
-    QVERIFY(!variants->setLaneEnabled("v9", true));
-    QVERIFY(variants->setLaneEnabled("v6", true));
+    QVERIFY(!variants->setLaneEnabled("z", true));
+    QVERIFY(variants->setLaneEnabled("a", true));
     QCOMPARE(variants->enabledCount(), 2);
     QVERIFY(changed.count() >= 2);
-    QVERIFY(variants->lane("v7") != nullptr);
-    QVERIFY(variants->lane("v9") == nullptr);
-    QCOMPARE(variants->LabelOf("v9"), QStringLiteral("v9"));
+    QVERIFY(variants->lane("b") != nullptr);
+    QVERIFY(variants->lane("z") == nullptr);
+    QCOMPARE(variants->LabelOf("z"), QStringLiteral("z"));
   }
 
   // 기억한 값이 판을 끄고 있으면 그대로 따르고, 모든 판을 끄고 있으면 첫 판을 켭니다.
   void readsRememberedChoice() {
     RememberedValues remembered = RememberedValues::ThisRunOnly();
-    remembered.SetValue("analysis/variant/v6/enabled", false);
+    remembered.SetValue("analysis/variant/a/enabled", false);
     remembered.SetValue("analysis/prestream", false);
     auto variants = TwoLanes();
     variants->UseRemembered(&remembered);
-    QVERIFY(!qobject_cast<AnalysisController*>(variants->lane("v6"))->enabled());
-    QVERIFY(qobject_cast<AnalysisController*>(variants->lane("v7"))->enabled());
+    QVERIFY(!qobject_cast<AnalysisController*>(variants->lane("a"))->enabled());
+    QVERIFY(qobject_cast<AnalysisController*>(variants->lane("b"))->enabled());
     QVERIFY(!variants->prestream());
     variants->setPrestream(true);
     QCOMPARE(remembered.Value("analysis/prestream").toBool(), true);
 
-    remembered.SetValue("analysis/variant/v7/enabled", false);
+    remembered.SetValue("analysis/variant/b/enabled", false);
     auto all_off = TwoLanes();
     all_off->UseRemembered(&remembered);
     QCOMPARE(all_off->enabledCount(), 1);
-    QVERIFY(qobject_cast<AnalysisController*>(all_off->lane("v6"))->enabled());
+    QVERIFY(qobject_cast<AnalysisController*>(all_off->lane("a"))->enabled());
   }
 };
 

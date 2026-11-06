@@ -8,15 +8,14 @@
 namespace hwlab::platform {
 
 /**
- * 관류 분석 프로그램(dfr_worker.py)에 보내는 관류 분석 요청 하나입니다.
+ * 관류 분석 프로그램에 보내는 관류 분석 요청 하나입니다. 키와 값은 분석 API의 요청 스키마(`schema/request.schema.json`)를 따릅니다.
  *
  * 관류 분석 프로그램은 표준 입력으로 JSON 한 줄을 받고, 좌우 발 영상과 촬영 폴더 안의 `thermal_left.npy`,
  * `thermal_right.npy`(있을 때)를 읽어 `<output_dir>/<name>_summary.json` 등을 씁니다.
  * 영상 경로는 둘 다 주거나 둘 다 비웁니다. 둘 다 비우면 관류 분석 프로그램은 촬영 폴더의 `left.avi`, `right.avi`를
  * 찾습니다(기존 앱과 같은 동작). 장 수를 주면 관류 분석 프로그램은 영상 머리글의 장 수와 다를 때 분석을 거부합니다.
  *
- * @note 상주 관류 분석 프로그램(dfr_worker.py)만 씁니다. 단독 스크립트를 건마다 띄우는 길은 두지 않습니다.
- *       그 스크립트는 영상 이름을 `left.avi`, `right.avi`로 고정해 FFV1 MKV를 받지 못하고, 매번 모델을 다시 올립니다.
+ * @note 상주 관류 분석 프로그램만 씁니다. 건마다 띄우는 길은 두지 않습니다. 매번 모델을 다시 올리기 때문입니다.
  * @note 열화상은 관류 분석 프로그램이 촬영 폴더에서 `thermal_{left,right}.npy` 이름으로 찾으므로 경로 키가 없습니다.
  * @note 그 밖의 기본값은 기존 앱이 보내던 값과 같습니다.
  */
@@ -114,10 +113,11 @@ struct AnalyzerLine {
    */
   std::string message;
   /**
-   * kReady 뒤에 JSON이 있을 때 `worker_version`과 `upstream_commit` 값입니다. 없으면 빈 문자열입니다.
+   * kReady 뒤에 JSON이 있을 때 `api_version`, `worker_version`, `upstream_commit` 값입니다. 없으면 빈 문자열입니다.
    *
-   * @note 버전을 찍지 않는 기존 관류 분석 프로그램(`[dfr] ready`만 찍음)과도 동작합니다.
+   * @note 읽기는 JSON이 없거나 키가 빠져도 준비 완료로 봅니다. API 판의 호환 여부는 Analyzer가 `api_version`으로 정합니다.
    */
+  std::string api_version;
   std::string worker_version;
   std::string upstream_commit;
   /** kDone일 때 성공 여부입니다. 완료 JSON을 읽지 못하면 false입니다. */
@@ -138,6 +138,8 @@ AnalyzerLine ParseAnalyzerLine(const std::string& line);
 
 /** 요약 JSON에 관류 분석 프로그램이 넣은 버전 정보(`dfr` 항목) 중 버전 값입니다. */
 struct WorkerStamp {
+  /** `dfr.api_version`: 결과를 낸 분석 프로그램이 따른 API 판. 없으면 빈 문자열입니다. */
+  std::string api_version;
   /** `dfr.worker_version`. 없으면 빈 문자열입니다. */
   std::string worker_version;
   /** `dfr.upstream_commit`: 관류 분석 프로그램이 소스 커밋으로 적은 값. 없으면 빈 문자열입니다. */

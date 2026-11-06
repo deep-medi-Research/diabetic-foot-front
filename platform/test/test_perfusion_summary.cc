@@ -192,7 +192,7 @@ TEST(PerfusionSummary, ReadsRuleCuffLevelWithoutLevel) {
   EXPECT_NEAR(c.quality_snr_db, 14.0, 1e-12);
   EXPECT_FALSE(c.applicable);
   EXPECT_EQ(c.gain, 4);
-  EXPECT_TRUE(std::isnan(c.e));  // 로지스틱 회귀의 값은 없습니다
+  EXPECT_TRUE(std::isnan(c.e));  // 옛 확률 합 판정의 값은 없습니다
   EXPECT_TRUE(c.cuts.empty());
 }
 
@@ -349,7 +349,7 @@ TEST(PerfusionSummary, OlderSummaryHasNoFootCells) {
   EXPECT_TRUE(std::isnan(s->left.cells));
 }
 
-// 규칙 판정이 단계를 내면 has_level이 true이고, 로지스틱 회귀 요약은 rule이 비고 품질은 통과로 봅니다.
+// 규칙 판정이 단계를 내면 has_level이 true이고, 옛 확률 합 요약은 rule이 비고 품질은 통과로 봅니다.
 TEST(PerfusionSummary, ReadsRuleCuffLevelWithLevel) {
   const auto rule = ReadPerfusionSummary(R"({"pi_left": 0.1, "pi_right": 0.2,
       "cuff_level": {"level_pct_sbp": 120, "level_if_quality_ignored": 120, "rule": "h1re_30 < 0.2639",

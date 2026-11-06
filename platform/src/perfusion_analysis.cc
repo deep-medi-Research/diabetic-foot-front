@@ -198,6 +198,7 @@ AnalyzerLine ParseAnalyzerLine(const std::string& line) {
       // 버전 JSON은 덧붙인 정보라 읽지 못해도 준비 완료로 봅니다.
       if (rest.size() > 6) {
         if (const auto members = JsonReader(Trim(rest.substr(6))).Read()) {
+          if (const auto it = members->find("api_version"); it != members->end()) out.api_version = it->second;
           if (const auto it = members->find("worker_version"); it != members->end()) out.worker_version = it->second;
           if (const auto it = members->find("upstream_commit"); it != members->end()) out.upstream_commit = it->second;
         }
@@ -230,6 +231,8 @@ AnalyzerLine ParseAnalyzerLine(const std::string& line) {
 WorkerStamp ReadWorkerStamp(const std::string& summary_json) {
   WorkerStamp stamp;
   std::string value;
+  if (JsonReader(summary_json).FindString({"dfr", "api_version"}, &value)) stamp.api_version = value;
+  value.clear();
   if (JsonReader(summary_json).FindString({"dfr", "worker_version"}, &value)) stamp.worker_version = value;
   value.clear();
   if (JsonReader(summary_json).FindString({"dfr", "upstream_commit"}, &value)) stamp.upstream_commit = value;

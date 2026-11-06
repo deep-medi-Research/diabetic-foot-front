@@ -143,7 +143,7 @@ std::optional<PerfusionSummary> ReadPerfusionSummary(const std::string& json, st
     if (const auto ignored = NumberAt(json, {"cuff_level", "level_if_quality_ignored"}); ignored && std::isfinite(*ignored)) {
       c.level_if_quality_ignored = static_cast<int32_t>(std::lround(*ignored));
     }
-    // v9는 상태를 문자로 내고 level_pct_sbp가 없어, 단계가 있는지를 level 문자로 정합니다.
+    // 커프 상태 형식은 상태를 문자로 내고 level_pct_sbp가 없어, 단계가 있는지를 level 문자로 정합니다.
     c.level_code = StringAt(json, {"cuff_level", "level"});
     c.level_ko = StringAt(json, {"cuff_level", "level_ko"});
     c.level_code_if_quality_ignored = StringAt(json, {"cuff_level", "level_if_quality_ignored"});
@@ -212,6 +212,8 @@ std::optional<PerfusionSummary> ReadPerfusionSummary(const std::string& json, st
   s.presegment_skipped = StringAt(json, {"dfr", "presegment", "reason"});
   s.prestream_skipped = StringAt(json, {"dfr", "prestream", "reason"});
   s.upstream_commit = StringAt(json, {"dfr", "upstream_commit"});
+  s.worker_version = StringAt(json, {"dfr", "worker_version"});
+  s.api_version = StringAt(json, {"dfr", "api_version"});
   s.variant = StringAt(json, {"dfr", "variant"});
 
   if (const auto count = NumberAt(json, {"n_windows"}); count && std::isfinite(*count) && *count > 0) {

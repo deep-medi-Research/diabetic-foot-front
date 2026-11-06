@@ -26,7 +26,7 @@
         "--patient", "테스트", "--birth", "1955-11-03",
         "--arm-pressure", "120/80", "--ankle-pressure", "120/80", "--ankle-level", "0",
         "--analyzer-python", "python",
-        "--analyzer-script", "tools/fake_analysis/dfr_worker.py"
+        "--analyzer-script", "build/windows-debug/_deps/diabetic_foot_api-src/fake/fake_analyzer.py"
       ]
     },
     {
@@ -51,7 +51,7 @@
         "--patient", "테스트", "--birth", "1955-11-03",
         "--arm-pressure", "120/80", "--ankle-pressure", "120/80", "--ankle-level", "0",
         "--analyzer-python", "python3",
-        "--analyzer-script", "tools/fake_analysis/dfr_worker.py"
+        "--analyzer-script", "build/macos-debug/_deps/diabetic_foot_api-src/fake/fake_analyzer.py"
       ]
     }
   ],

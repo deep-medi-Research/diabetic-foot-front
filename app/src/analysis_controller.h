@@ -60,9 +60,9 @@ class AnalysisController : public QObject {
   Q_PROPERTY(QString variantId READ variantId CONSTANT)
   /** 화면에 보이는 판 이름입니다. */
   Q_PROPERTY(QString variantLabel READ variantLabel CONSTANT)
-  /** 판 한 줄 설명입니다. 예: "규칙 판정". */
+  /** 판 한 줄 설명입니다. */
   Q_PROPERTY(QString variantSummary READ variantSummary CONSTANT)
-  /** 판의 소스 커밋과 릴리즈 자산(올라온 날, SHA-256 앞 8자리)입니다. 판 고르기 줄에 보입니다. */
+  /** 판의 소스 커밋(앞 7자리)과 날짜입니다. 없으면 빈 문자열입니다. 판 고르기 줄에 보입니다. */
   Q_PROPERTY(QString variantSource READ variantSource CONSTANT)
   /** 이 판으로 분석할지입니다. false이면 새 촬영을 넣지 않고 녹화 중 미리 분석도 보내지 않습니다. */
   Q_PROPERTY(bool enabled READ enabled NOTIFY enabledChanged)

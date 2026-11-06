@@ -1,7 +1,10 @@
-// 시험용 가짜 관류 분석 프로그램입니다. dfr_worker.py와 같은 꼴의 줄을 찍고, 첫 인자로 동작을 고릅니다.
+// 시험용 가짜 관류 분석 프로그램입니다. 프로세스 관리(종료 코드, 시간 제한, 취소, 출력량, 우선순위)를 시험하려고
+// 분석 API의 줄 모양으로 답하고, 첫 인자로 동작을 고릅니다. API를 어긴 줄을 걸러 내지 않으므로 요청 줄이 API를 지키는지는
+// 분석 API 저장소의 가짜 분석 프로그램으로 시험합니다(test_fake_analysis.cc).
 //
 //   progress        진행 줄을 찍고 0으로 끝남
-//   worker [버전]   [dfr] ready(버전을 주면 뒤에 JSON) 뒤 표준 입력 요청마다 답함. 입력이 닫히면 0으로 끝남
+//   worker [버전] [API 판]  [dfr] ready {JSON} 뒤 표준 입력 요청마다 답함. 입력이 닫히면 0으로 끝남.
+//                   버전은 worker_version(기본 fake-1), API 판은 api_version(기본은 앱이 따르는 판, none이면 키를 뺌)
 //                   요청 이름이 fail이면 실패, hang이면 진행 줄 뒤 60초 출력 없음, crash이면 진행 줄 뒤 종료 코드 3,
 //                   nosummary이면 요약 파일 없이 성공, slow로 시작하면 단계마다 0.4초 대기 뒤 성공.
 //                   presegment 요청에는 발마다 [dfr] presegmented 한 줄로 답함.
@@ -112,12 +115,10 @@ void WriteSummary(const std::string& output, const std::string& name) {
   std::FILE* file = std::fopen(path.c_str(), "wb");
 #endif
   if (file == nullptr) return;
-  // 결과 창을 시험할 수 있게 실제 요약과 같은 키를 쓰고, 모델 이름으로 가짜 관류 분석 프로그램 결과임을 밝힙니다.
+  // 성공 판정에 필요한 요약의 최소 키만 씁니다. 요약 전체의 모양은 분석 API 저장소의 가짜 분석 프로그램으로 시험합니다.
   const std::string text =
       "{\"fps\": 30.0, \"n_frames\": 900, \"window_s\": 10, \"window_stride_s\": 2, \"n_windows\": 11, "
-      "\"pi_left\": 0.08, \"pi_right\": 0.1, \"pi_ratio_left_right\": 0.8, "
-      "\"classification\": {\"kind\": \"fake analyzer\", \"p_pad\": 0.2, \"threshold\": 0.45, "
-      "\"decision\": \"normal\"}, "
+      "\"pi_left\": 0.08, \"pi_right\": 0.1, \"pi_ratio_left_right\": 0.8, \"classification\": null, "
       "\"dfr\": {\"upstream_commit\": \"5e5178d\", \"worker_version\": \"fake-1\"}}\n";
   std::fwrite(text.data(), 1, text.size(), file);
   std::fclose(file);
@@ -125,9 +126,11 @@ void WriteSummary(const std::string& output, const std::string& name) {
 
 void PauseMs(int ms) { std::this_thread::sleep_for(std::chrono::milliseconds(ms)); }
 
-int Worker(const std::string& version) {
-  Out(version.empty() ? "[dfr] ready"
-                      : "[dfr] ready {\"worker_version\": \"" + version + "\", \"upstream_commit\": \"5e5178d\"}");
+int Worker(const std::string& version, const std::string& api_version) {
+  const std::string api = api_version.empty() ? HWLAB_ANALYSIS_API_VERSION : api_version;
+  Out("[dfr] ready {" + (api == "none" ? std::string() : "\"api_version\": \"" + api + "\", ") +
+      "\"worker_version\": \"" + (version.empty() ? "fake-1" : version) +
+      "\", \"variant\": \"fake\", \"upstream_commit\": \"5e5178d\"}");
   std::string line;
   while (ReadInputLine(&line)) {
     if (!line.empty() && line.back() == '\r') line.pop_back();
@@ -182,8 +185,8 @@ int Run(const std::vector<std::string>& args) {
     Out("[5/5] Done [9 s]");
     return 0;
   }
-  if (mode == "worker") return Worker(args.size() > 2 ? args[2] : "");
-  if (mode.size() > 3 && mode.compare(mode.size() - 3, 3, ".py") == 0) return Worker("");
+  if (mode == "worker") return Worker(args.size() > 2 ? args[2] : "", args.size() > 3 ? args[3] : "");
+  if (mode.size() > 3 && mode.compare(mode.size() - 3, 3, ".py") == 0) return Worker("", "");
   if (mode == "priority") {
 #ifdef _WIN32
     const DWORD priority = GetPriorityClass(GetCurrentProcess());

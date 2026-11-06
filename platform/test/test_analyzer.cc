@@ -307,6 +307,33 @@ TEST(Analyzer, FailsWhenWorkerExitsBeforeReady) {
   EXPECT_EQ(again.queued, 1);
 }
 
+// 분석 프로그램이 알린 API 판은 주 버전이 같을 때만 받아들입니다. 부 버전과 수정 버전은 보지 않습니다.
+TEST(AnalysisApi, AcceptsOnlyTheSameMajorVersion) {
+  using hwlab::platform::AnalysisApiProblem;
+  EXPECT_EQ(AnalysisApiProblem("1.0.0", "1.0.0"), "");
+  EXPECT_EQ(AnalysisApiProblem("1.7.2", "1.0.0"), "");
+  EXPECT_NE(AnalysisApiProblem("2.0.0", "1.0.0").find("2.0.0"), std::string::npos);
+  EXPECT_NE(AnalysisApiProblem("10.0.0", "1.0.0"), "");
+  EXPECT_NE(AnalysisApiProblem("", "1.0.0").find("알리지 않았습니다"), std::string::npos);
+  EXPECT_NE(AnalysisApiProblem("x.y", "1.0.0"), "");
+  EXPECT_EQ(hwlab::platform::AnalysisApiVersion().find_first_not_of("0123456789."), std::string::npos);
+}
+
+// 준비 줄의 API 판이 다르거나 없으면 그 프로세스를 끝내고 이유와 함께 실패 상태로 둡니다. 요청은 보내지 않습니다.
+TEST(Analyzer, RefusesWorkerWithOtherApiMajor) {
+  for (const char* api : {"99.0.0", "none"}) {
+    ProcessLaunch launch;
+    launch.program = HWLAB_FAKE_ANALYZER;
+    launch.arguments = {"worker", "fake-1", api};
+    auto analyzer = StartAnalyzer(launch);
+    ASSERT_NE(analyzer, nullptr);
+    const AnalyzerStatus failed =
+        WaitFor(*analyzer, [](const AnalyzerStatus& s) { return s.state == AnalyzerState::kFailed; });
+    EXPECT_NE(failed.message.find("API 판"), std::string::npos) << api << ": " << failed.message;
+    EXPECT_EQ(failed.finished_count, 0);
+  }
+}
+
 // 실행 파일이 없으면 Start가 이유와 함께 실패합니다.
 TEST(Analyzer, StartFailsWithoutExecutable) {
   ProcessLaunch launch;
@@ -336,14 +363,14 @@ TEST(Analyzer, StopCancelsWork) {
 
 // 배포 폴더의 파이썬과 스크립트를 낮은 우선순위, 유휴 종료 없음, UTF-8 출력으로 띄웁니다.
 TEST(AnalyzerLaunch, UsesBundledPythonAndScript) {
-  const ProcessLaunch launch = AnalyzerLaunch("C:/앱/", "", "");
+  const ProcessLaunch launch = AnalyzerLaunch("C:/앱/", "main.py", "", "");
 #ifdef _WIN32
   EXPECT_EQ(launch.program, "C:/앱/python/python.exe");
 #else
   EXPECT_EQ(launch.program, "C:/앱/python/bin/python3");
 #endif
   ASSERT_EQ(launch.arguments.size(), 3u);
-  EXPECT_EQ(launch.arguments[0], "C:/앱/analysis/dfr_worker.py");
+  EXPECT_EQ(launch.arguments[0], "C:/앱/analysis/main.py");
   EXPECT_EQ(launch.arguments[1], "--idle-exit");
   EXPECT_EQ(launch.arguments[2], "0");
   EXPECT_EQ(launch.working_dir, "C:/앱/analysis");
@@ -355,9 +382,9 @@ TEST(AnalyzerLaunch, UsesBundledPythonAndScript) {
 
 // 개발용으로 준 파이썬과 스크립트를 그대로 씁니다. PATH에서 찾지 않습니다.
 TEST(AnalyzerLaunch, UsesOverrides) {
-  const ProcessLaunch launch = AnalyzerLaunch("/app", "/venv/bin/python", "/src/analysis/dfr_worker.py");
+  const ProcessLaunch launch = AnalyzerLaunch("/app", "main.py", "/venv/bin/python", "/src/analysis/main.py");
   EXPECT_EQ(launch.program, "/venv/bin/python");
-  EXPECT_EQ(launch.arguments[0], "/src/analysis/dfr_worker.py");
+  EXPECT_EQ(launch.arguments[0], "/src/analysis/main.py");
   EXPECT_EQ(launch.working_dir, "/src/analysis");
 }
 
@@ -392,13 +419,12 @@ TEST(AnalyzerOverrides, MakesScriptAbsoluteAgainstStartFolder) {
   const std::string cwd = ToUtf8(dir);
   // 푼 경로는 구분자가 /입니다. Windows의 임시 폴더는 \로 오므로 기대값도 / 모양으로 만듭니다.
   const std::string root = dir.generic_string();
-  EXPECT_EQ(ResolveAnalyzerOverrides("", "tools/fake_analysis/dfr_worker.py", cwd, "").script,
-            root + "/tools/fake_analysis/dfr_worker.py");
-  EXPECT_EQ(ResolveAnalyzerOverrides("", "./tools/../tools/dfr_worker.py", cwd, "").script, root + "/tools/dfr_worker.py");
-  const std::string absolute = ToUtf8(dir / "elsewhere" / "dfr_worker.py");
+  EXPECT_EQ(ResolveAnalyzerOverrides("", "tools/analysis/main.py", cwd, "").script, root + "/tools/analysis/main.py");
+  EXPECT_EQ(ResolveAnalyzerOverrides("", "./tools/../tools/main.py", cwd, "").script, root + "/tools/main.py");
+  const std::string absolute = ToUtf8(dir / "elsewhere" / "main.py");
   EXPECT_EQ(ResolveAnalyzerOverrides("", absolute, cwd, "").script, FromUtf8(absolute).generic_string());
 
-  const ProcessLaunch launch = AnalyzerLaunch("/app", "", ResolveAnalyzerOverrides("", "tools/w.py", cwd, "").script);
+  const ProcessLaunch launch = AnalyzerLaunch("/app", "main.py", "", ResolveAnalyzerOverrides("", "tools/w.py", cwd, "").script);
   EXPECT_EQ(launch.working_dir, root + "/tools");
   EXPECT_EQ(launch.arguments[0], root + "/tools/w.py");
 }
@@ -429,9 +455,9 @@ TEST(AnalyzerOverrides, ReportsBarePythonNameNotOnPath) {
   const auto dir = TempDir("python_missing");
   const auto resolved = hwlab::platform::ResolveAnalyzerOverrides("python3", "", "/start", PathList({dir, dir / "x"}));
   EXPECT_EQ(resolved.python, "python3");
-  WriteFile(dir / "dfr_worker.py", "print()");
+  WriteFile(dir / "main.py", "print()");
   const auto problem = hwlab::platform::AnalyzerFilesProblem(
-      AnalyzerLaunch("/app", resolved.python, ToUtf8(dir / "dfr_worker.py")));
+      AnalyzerLaunch("/app", "main.py", resolved.python, ToUtf8(dir / "main.py")));
   ASSERT_TRUE(problem.has_value());
   EXPECT_NE(problem->find("파이썬 없음: python3"), std::string::npos) << *problem;
   EXPECT_NE(problem->find("PATH"), std::string::npos) << *problem;
@@ -469,47 +495,41 @@ TEST(AnalyzerOverrides, SkipsNonExecutableFileOnPath) {
 TEST(AnalyzerLaunch, ReportsMissingFiles) {
   const auto dir = TempDir("files");
   const std::string python = ToUtf8(dir / "python.exe");
-  const std::string script = ToUtf8(dir / "dfr_worker.py");
-  auto problem = hwlab::platform::AnalyzerFilesProblem(AnalyzerLaunch(ToUtf8(dir), python, script));
+  const std::string script = ToUtf8(dir / "main.py");
+  auto problem = hwlab::platform::AnalyzerFilesProblem(AnalyzerLaunch(ToUtf8(dir), "main.py", python, script));
   ASSERT_TRUE(problem.has_value());
   EXPECT_NE(problem->find("파이썬 없음"), std::string::npos) << *problem;
   WriteFile(dir / "python.exe", "x");
-  WriteFile(dir / "dfr_worker.py", "");
-  problem = hwlab::platform::AnalyzerFilesProblem(AnalyzerLaunch(ToUtf8(dir), python, script));
+  WriteFile(dir / "main.py", "");
+  problem = hwlab::platform::AnalyzerFilesProblem(AnalyzerLaunch(ToUtf8(dir), "main.py", python, script));
   ASSERT_TRUE(problem.has_value());
   EXPECT_NE(problem->find("분석 스크립트 크기 0"), std::string::npos) << *problem;
-  WriteFile(dir / "dfr_worker.py", "print()");
-  EXPECT_FALSE(hwlab::platform::AnalyzerFilesProblem(AnalyzerLaunch(ToUtf8(dir), python, script)).has_value());
+  WriteFile(dir / "main.py", "print()");
+  EXPECT_FALSE(hwlab::platform::AnalyzerFilesProblem(AnalyzerLaunch(ToUtf8(dir), "main.py", python, script)).has_value());
 }
 
 // variants/<판>/VARIANT.json을 판 이름 순으로 읽고, id가 폴더 이름과 다르거나 없는 판은 빼고 이유를 남깁니다.
 TEST(AnalyzerVariants, ReadsVariantFolders) {
   const auto dir = TempDir("variants");
-  std::filesystem::create_directories(dir / "variants" / "v7");
-  std::filesystem::create_directories(dir / "variants" / "v6");
+  std::filesystem::create_directories(dir / "variants" / "b");
+  std::filesystem::create_directories(dir / "variants" / "a");
   std::filesystem::create_directories(dir / "variants" / "bad");
   std::filesystem::create_directories(dir / "variants" / "empty");
-  WriteFile(dir / "variants" / "v7" / "VARIANT.json", R"({"id": "v7", "label": "v7", "summary": "규칙 판정, 템플릿 v7",
-    "upstream": {"repo": "r", "commit": "1f47dea", "date": "2026-10-28"},
-    "release": {"tag": "models-v2",
-      "classifier": {"name": "classifier.json", "file": "f", "uploaded": "2026-10-28", "sha256": "0a51"},
-      "template": {"name": "template.onnx", "file": "g", "uploaded": "2026-10-28", "sha256": "aee1"}}})");
-  WriteFile(dir / "variants" / "v6" / "VARIANT.json", R"({"id": "v6", "upstream": {"commit": "590da2d"}})");
+  WriteFile(dir / "variants" / "b" / "VARIANT.json", R"({"id": "b", "label": "판 B", "summary": "설명 한 줄",
+    "upstream": {"commit": "1f47dea", "date": "2026-10-28"}, "release": {"tag": "릴리즈는 앱이 읽지 않습니다"}})");
+  WriteFile(dir / "variants" / "a" / "VARIANT.json", R"({"id": "a", "upstream": {"commit": "590da2d"}})");
   WriteFile(dir / "variants" / "bad" / "VARIANT.json", R"({"id": "other"})");
   std::string error;
   const auto variants = hwlab::platform::FindAnalyzerVariants(ToUtf8(dir), &error);
   ASSERT_EQ(variants.size(), 2u);
-  EXPECT_EQ(variants[0].id, "v6");
-  EXPECT_EQ(variants[0].label, "v6");  // label이 없으면 id
+  EXPECT_EQ(variants[0].id, "a");
+  EXPECT_EQ(variants[0].label, "a");  // label이 없으면 id
   EXPECT_EQ(variants[0].upstream_commit, "590da2d");
-  EXPECT_EQ(variants[0].classifier.name, "");
-  const auto& v7 = variants[1];
-  EXPECT_EQ(v7.summary, "규칙 판정, 템플릿 v7");
-  EXPECT_EQ(v7.upstream_date, "2026-10-28");
-  EXPECT_EQ(v7.release_tag, "models-v2");
-  EXPECT_EQ(v7.classifier.name, "classifier.json");
-  EXPECT_EQ(v7.classifier.sha256, "0a51");
-  EXPECT_EQ(v7.pulse_template.uploaded, "2026-10-28");
+  const auto& b = variants[1];
+  EXPECT_EQ(b.label, "판 B");
+  EXPECT_EQ(b.summary, "설명 한 줄");
+  EXPECT_EQ(b.upstream_commit, "1f47dea");
+  EXPECT_EQ(b.upstream_date, "2026-10-28");
   EXPECT_NE(error.find("variants/bad/VARIANT.json"), std::string::npos) << error;
 
   const auto none = hwlab::platform::FindAnalyzerVariants(ToUtf8(dir / "nothing"), &error);
@@ -520,10 +540,10 @@ TEST(AnalyzerVariants, ReadsVariantFolders) {
 // 판 하나를 올리는 실행 정보는 기본 인자 끝에 --variant를 더합니다.
 TEST(AnalyzerVariants, AddsVariantArgument) {
   const ProcessLaunch launch =
-      hwlab::platform::AnalyzerVariantLaunch(AnalyzerLaunch("/app", "", ""), "v7");
+      hwlab::platform::AnalyzerVariantLaunch(AnalyzerLaunch("/app", "main.py", "", ""), "b");
   ASSERT_EQ(launch.arguments.size(), 5u);
   EXPECT_EQ(launch.arguments[3], "--variant");
-  EXPECT_EQ(launch.arguments[4], "v7");
+  EXPECT_EQ(launch.arguments[4], "b");
   EXPECT_EQ(launch.working_dir, "/app/analysis");
 }
 
@@ -531,7 +551,7 @@ TEST(AnalyzerVariants, AddsVariantArgument) {
 TEST(AnalyzerLaunch, RunsFakeWorkerThroughLaunch) {
   const auto dir = TempDir("launch");
   WriteFile(dir / "fake_worker.py", "# fake");
-  const ProcessLaunch launch = AnalyzerLaunch(ToUtf8(dir), HWLAB_FAKE_ANALYZER, ToUtf8(dir / "fake_worker.py"));
+  const ProcessLaunch launch = AnalyzerLaunch(ToUtf8(dir), "fake_worker.py", HWLAB_FAKE_ANALYZER, ToUtf8(dir / "fake_worker.py"));
   ASSERT_FALSE(hwlab::platform::AnalyzerFilesProblem(launch).has_value());
   auto analyzer = StartAnalyzer(launch);
   ASSERT_NE(analyzer, nullptr);
