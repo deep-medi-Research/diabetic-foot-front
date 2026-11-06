@@ -42,10 +42,10 @@
 | `_ppg.csv`, `_ppg.json` | PPG 파형과 사이드카 | 0.58 MB, 1.8 KB |
 | `perfusion/<판>/` | 분석 결과 | 0.4 MB |
 
-크기는 `specs/see3cam_manual_720p60.json`(1280x720, 60 fps, 1800장)으로 macOS에서 `--fake` 촬영한 값입니다. PPG는 `--ppg-port COM6`을 준 촬영에서 쟀고, 분석 결과는 `tools/fake_analysis`의 가짜 분석 프로그램이 쓴 값입니다.
+크기는 `specs/see3cam_manual_720p60.json`(1280x720, 60 fps, 1800장)으로 macOS에서 `--fake` 촬영한 값입니다. PPG는 `--ppg-port COM6`을 준 촬영에서 쟀고, 분석 결과는 분석 API 저장소의 가짜 분석 프로그램이 쓴 값입니다.
 
 - **쓰는 곳**<br>매니페스트는 `platform/src/shot_folder.cc`가 녹화 전에, 영상과 사이드카는 `platform/src/capture.cc`의 쓰기 스레드가, 열화상 세 파일은 `platform/src/thermal_stream.cc`가 녹화 중에, `.npy`는 녹화가 끝난 뒤 `platform/src/shot_folder.cc`(`WriteThermalArrays`)가, PPG 파일은 `platform/src/ppg_sensor.cc`가 촬영을 저장할 때 씁니다. JSON 바이트는 `core/src/record`가 만듭니다
-- **읽는 곳**<br>분석 프로그램은 두 발 영상, `.npy`, 사이드카, 매니페스트, `_ppg.csv`를 읽습니다([analysis-contract.md](analysis-contract.md) 11절). 결과 창은 매니페스트, 사이드카, 영상, `_ppg.csv`를 읽어 그립니다(`app/src/result_view.cc`)
+- **읽는 곳**<br>분석 프로그램은 두 발 영상, `.npy`, 사이드카, 매니페스트, `_ppg.csv`를 읽습니다([분석 API](https://github.com/deep-medi-Research/diabetic-foot-api/blob/v1.0.0/docs/analysis-api.md) 8절). 결과 창은 매니페스트, 사이드카, 영상, `_ppg.csv`를 읽어 그립니다(`app/src/result_view.cc`)
 - **분석 입력**<br>매니페스트의 `analysis_inputs`가 알려 주는 네 개입니다. 두 발 영상(`left_video`, `right_video`)과 두 열화상 배열(`thermal_left_array`, `thermal_right_array`)입니다. 분석 전에 앱이 촬영 폴더의 파일과 사이드카를 확인합니다. 영상 문제는 분석을 막고 열화상 문제(파일 없음, 장 수 부족, 누락)는 경고만 합니다(`record::CheckAnalysisInputs`)
 - **원본과 사본**<br>열화상의 원본은 `.raw16`입니다. `.npy`는 `.raw16`에서 다시 만들 수 있는 사본이고, `.avi`는 사람이 보는 확인용이라 분석에 쓰지 않습니다
 - **`.mkv.queue.txt`**<br>FFV1 쓰기 대기열의 기록 한 줄입니다(`platform/src/ffv1_file.cc`). 이 레포의 코드는 읽지 않고 진단용으로만 남습니다. 예: `frames=1800 limit_mb=768 max_queued_mb=0.0 producer_wait_ms=0 close_wait_ms=0 mux_failed=0`. `limit_mb`는 파일당 대기열 한도이고 환경 변수 `HWLAB_WRITE_QUEUE_MB`로 바꿉니다
@@ -135,7 +135,7 @@
 | `perfusion/<판>/` | `analyzer_log.txt` | 앱 |
 | `results/` | 위 파일 중 npz를 뺀 사본 | 앱 |
 
-- **분석 프로그램이 쓰는 파일**<br>형식은 [analysis-contract.md](analysis-contract.md) 7절에 있습니다
+- **분석 프로그램이 쓰는 파일**<br>형식은 [분석 API](https://github.com/deep-medi-Research/diabetic-foot-api/blob/v1.0.0/docs/analysis-api.md) 7절에 있습니다
 - **`_frame_timing.csv`, `_frame_windows.csv`**<br>분석이 끝난 뒤 앱이 사이드카로 만든 프레임 간격 기록입니다(`platform/src/frame_timing.cc`). 열은 [00-architecture.md](00-architecture.md) 표 2의 프레임 간격 파일에 있습니다
 - **`analyzer_log.txt`**<br>앱이 보낸 요청 줄과 그 요청이 끝나는 동안 분석 프로그램이 낸 출력 줄을 덧붙이는 기록입니다(`platform/src/analyzer.cc`)
 - **`results/` 이름**<br>`<이름>_<생년월일>_<단계>_<날짜_시각>_<판>_<뒷부분>`입니다. 예: `시험_19551103_D_20261105_164616_fake_summary.json`. 같은 촬영을 다시 분석해 내용이 달라지면 덮어쓰지 않고 `_reanalysis2`, `_reanalysis3`을 더합니다(최대 99). 이름이 길어지므로 앱은 촬영 전에 Windows 경로 길이 259자를 검사합니다
