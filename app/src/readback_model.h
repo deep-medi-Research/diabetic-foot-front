@@ -16,6 +16,8 @@ class ReadbackModel : public QAbstractListModel {
   Q_OBJECT
   QML_ELEMENT
   QML_UNCREATABLE("CaptureController가 만듭니다")
+  /** 보낸 값과 다르게 읽힌 행이 하나라도 있으면 true입니다. 표가 설정 패널에 있어 촬영 화면은 이 값으로 알립니다. */
+  Q_PROPERTY(bool anyMismatch READ anyMismatch NOTIFY anyMismatchChanged)
 
  public:
   struct Row {
@@ -35,6 +37,11 @@ class ReadbackModel : public QAbstractListModel {
 
   /** 행을 바꿉니다. 행 수가 같으면 바뀐 행만 화면에 알립니다. */
   void Update(const std::vector<Row>& rows);
+
+  bool anyMismatch() const;
+
+ signals:
+  void anyMismatchChanged();
 
  private:
   std::vector<Row> rows_;

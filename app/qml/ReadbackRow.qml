@@ -23,7 +23,7 @@ RowLayout {
         visible: row.mismatch && row.target !== ""
         text: "목표 " + row.target
         font.family: Theme.font
-        font.pixelSize: 12
+        font.pixelSize: 13
         color: Theme.textMuted
     }
     Text {
