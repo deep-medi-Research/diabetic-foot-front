@@ -7,10 +7,10 @@ namespace hwlab::record {
 namespace {
 
 // 관류 분석 결과는 촬영 폴더 안 이 폴더의 판 폴더(perfusion/<판>/)에 분석이름_*로 쓰고, results 폴더로 모을 때는 이름 앞부분
-// 뒤에 _<판>을 붙입니다. 결과 파일 중 가장 긴 뒷부분은 18자입니다(_pi_timecourse.png, _frame_windows.csv).
+// 뒤에 _<판>을 붙입니다. 결과 파일 중 가장 긴 뒷부분은 보고서 그림의 23자입니다(_report_propagation.png).
 constexpr char kAnalysisFolder[] = "perfusion";
-constexpr char kLongestVariantId[] = "v10";
-constexpr char kLongestResultSuffix[] = "_pi_timecourse.png";
+constexpr char kLongestVariantId[] = "v11";
+constexpr char kLongestResultSuffix[] = "_report_propagation.png";
 
 int64_t FrameBytes(VideoSize size) {
   if (size.width <= 0 || size.height <= 0) return 0;

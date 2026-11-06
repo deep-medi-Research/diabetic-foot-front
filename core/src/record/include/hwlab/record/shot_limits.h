@@ -76,9 +76,9 @@ FreeSpaceJudgement JudgeFreeSpace(std::optional<int64_t> free_bytes, int64_t est
 /**
  * 촬영 폴더 안에서 가장 긴 파일 경로의 길이를 셉니다.
  *
- * 배치의 모든 파일과 분석 결과 중 가장 긴 파일(perfusion/<판>/분석이름_pi_timecourse.png)의 경로를 저장 위치/폴더/파일 이름으로
+ * 배치의 모든 파일과 분석 결과 중 가장 긴 파일(perfusion/<판>/분석이름_report_propagation.png)의 경로를 저장 위치/폴더/파일 이름으로
  * 이어 셉니다. 분석 이름이 있으면 분석결과 폴더로 모은 결과
- * (저장 위치/분석결과/CollectedResultPrefix(layout, kMaxReanalysisNumber)_<판>_pi_timecourse.png)도 셉니다.
+ * (저장 위치/분석결과/CollectedResultPrefix(layout, kMaxReanalysisNumber)_<판>_report_propagation.png)도 셉니다.
  * 길이는 UTF-16 코드 단위입니다(Windows 경로 상한의 단위). 한글 한 글자는 1, U+10000 이상 문자는 2입니다.
  *
  * @param root 저장 위치(UTF-8). 끝에 '/'나 '\\'가 있으면 구분자를 더하지 않습니다
