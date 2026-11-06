@@ -137,6 +137,7 @@ platform 헤더는 `platform/include/hwlab/platform/`에 있고 네임스페이�
 | `hwlab/platform/shot_folder.h` | UTF-8 경로, 촬영 폴더 만들기, 매니페스트 쓰기 |
 | `hwlab/platform/child_process.h` | 외부 프로세스 실행, 출력 줄 읽기, 하위 프로세스까지 종료(`ChildProcess`) |
 | `hwlab/platform/perfusion_analysis.h` | 관류 분석 프로그램 요청 줄 만들기, 출력 줄 해석 |
+| `hwlab/platform/keep_awake.h` | 앱이 떠 있는 동안 시스템 잠자기 막기(`KeepAwake`). Windows만 OS를 부르고 다른 OS는 아무것도 하지 않음 |
 
 ## 표 2 도메인 용어
 
