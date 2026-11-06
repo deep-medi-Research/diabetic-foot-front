@@ -7,6 +7,8 @@ import HwLab
 ColumnLayout {
     id: bar
     required property AnalysisController analysis
+    // false이면 "다시 분석"을 숨깁니다. 촬영 화면은 진행과 결과만 보이고 다시 분석은 설정 패널에서 합니다
+    property bool retryVisible: true
     // 완료만 이 막대에서 쓰는 색입니다. 나머지 상태 색은 Theme을 따릅니다.
     readonly property color doneColor: "#30d158"
     readonly property color tone: analysis.state === "failed" || analysis.state === "missing" ? Theme.mismatch
@@ -45,14 +47,14 @@ ColumnLayout {
         Label {
             visible: text !== ""
             text: bar.analysis.queued > 0 ? "대기 " + bar.analysis.queued + "건" : ""
-            font.pixelSize: 12
+            font.pixelSize: 13
             color: Theme.textMuted
         }
         // 분석 중에는 진행 비율, 그 밖에는 경과나 걸린 시간입니다.
         Label {
             visible: text !== ""
             text: bar.analysis.state === "busy" ? Math.round(shownProgress.value * 100) + "%" : bar.analysis.elapsedText
-            font.pixelSize: bar.analysis.state === "busy" ? 14 : 12
+            font.pixelSize: bar.analysis.state === "busy" ? 14 : 13
             font.weight: bar.analysis.state === "busy" ? Font.DemiBold : Font.Normal
             font.features: { "tnum": 1 }
             color: bar.analysis.state === "busy" ? Theme.text : Theme.textMuted
@@ -81,7 +83,7 @@ ColumnLayout {
         Layout.topMargin: 6
         visible: bar.analysis.state === "busy"
         text: bar.analysis.elapsedText + (bar.analysis.remainingText !== "" ? ", " + bar.analysis.remainingText : "")
-        font.pixelSize: 12
+        font.pixelSize: 13
         font.features: { "tnum": 1 }
         color: Theme.textMuted
     }
@@ -107,7 +109,7 @@ ColumnLayout {
         wrapMode: Text.WrapAnywhere
         maximumLineCount: 5
         elide: Text.ElideRight
-        font.pixelSize: 12
+        font.pixelSize: 13
         color: Theme.textMuted
     }
 
@@ -127,7 +129,7 @@ ColumnLayout {
                 wrapMode: Text.WrapAnywhere
                 maximumLineCount: 4
                 elide: Text.ElideRight
-                font.pixelSize: 12
+                font.pixelSize: 13
                 color: bar.analysis.collectState === "failed" ? Theme.mismatch : Theme.textMuted
             }
             Label {
@@ -148,9 +150,9 @@ ColumnLayout {
     RowLayout {
         Layout.topMargin: 8
         spacing: 16
-        visible: bar.analysis.canRetry || bar.analysis.canCancel
+        visible: (bar.retryVisible && bar.analysis.canRetry) || bar.analysis.canCancel
         Label {
-            visible: bar.analysis.canRetry
+            visible: bar.retryVisible && bar.analysis.canRetry
             text: "다시 분석"
             font.pixelSize: 13
             font.weight: Font.DemiBold

@@ -15,8 +15,10 @@ Rectangle {
     property bool editable: true
     // 영상을 좌우로 뒤집어 그릴지(Main.qml mirrorPreview). 녹화 원시값은 뒤집지 않습니다.
     property bool mirror: false
+    // true이면 개발용 값(장치 이름과 실제 fps, 원시값 범위)을 영상 위에 그립니다. 설정 패널이 열린 동안 켭니다
+    property bool devInfo: false
     signal footClicked()
-    // 렌즈 보정 버튼. 렌즈를 가렸는지 묻는 안내를 엽니다
+    // 다시 보정하라는 알림을 눌렀습니다. 렌즈 보정 안내를 엽니다
     signal lensShadingClicked()
 
     readonly property string connState: thermal.state
@@ -59,6 +61,7 @@ Rectangle {
         rightFoot: pane.rightFoot
         editable: pane.editable
         mirror: pane.mirror
+        showSizes: pane.devInfo
         visible: image.visible && pane.regions.frameWidth > 0 && image.paintedWidth > 0
         onFootClicked: pane.footClicked()
     }
@@ -85,14 +88,16 @@ Rectangle {
         id: topInfo
         anchors { left: parent.left; top: parent.top; margins: 16 }
         spacing: 12
-        visible: pane.thermal.available
+        visible: pane.thermal.available && (pane.devInfo || pane.thermal.lensShadingText !== "")
         Label {
+            visible: pane.devInfo
             text: pane.thermal.deviceName !== "" ? pane.thermal.deviceName : "열화상"
             font.family: Theme.font
             font.pixelSize: 13
             color: Theme.textMuted
         }
         Label {
+            visible: pane.devInfo
             // 최근 31장의 수신 간격 중앙값으로 잰 fps입니다. 받지 않는 동안은 0입니다.
             text: pane.thermal.measuredFps.toFixed(1) + " fps"
             font.family: Theme.font
@@ -110,33 +115,6 @@ Rectangle {
             font.pixelSize: 13
             color: pane.thermal.lensShading === "none" || pane.thermal.lensShading === "failed" ? Theme.settling
                                                                                                 : Theme.textMuted
-        }
-        Rectangle {
-            id: lensButton
-            anchors.verticalCenter: parent.verticalCenter
-            visible: pane.thermal.lensShading !== "" || pane.thermal.lensShadingBusy
-            implicitWidth: lensButtonLabel.implicitWidth + 16
-            implicitHeight: 22
-            radius: 6
-            color: "transparent"
-            border.width: 1
-            border.color: Theme.line
-            opacity: pane.lensUsable ? 1 : 0.4
-            Label {
-                id: lensButtonLabel
-                anchors.centerIn: parent
-                text: "렌즈 보정"
-                font.family: Theme.font
-                font.pixelSize: 12
-                font.weight: Font.DemiBold
-                color: Theme.text
-            }
-            MouseArea {
-                anchors.fill: parent
-                enabled: pane.lensUsable
-                cursorShape: Qt.PointingHandCursor
-                onClicked: pane.lensShadingClicked()
-            }
         }
     }
 
@@ -176,11 +154,11 @@ Rectangle {
     }
     Column {
         id: warmupInfo
-        anchors { right: parent.right; top: statePill.bottom; topMargin: 18; rightMargin: 22 }
+        anchors { left: parent.left; bottom: recordInfo.visible ? recordInfo.top : parent.bottom; leftMargin: 18
+                  bottomMargin: recordInfo.visible ? 24 : 18 }
         spacing: 6
         visible: pane.thermal.warmup !== ""
         Row {
-            anchors.right: parent.right
             spacing: 8
             Rectangle {
                 anchors.verticalCenter: parent.verticalCenter
@@ -196,7 +174,6 @@ Rectangle {
             }
         }
         Label {
-            anchors.right: parent.right
             text: pane.thermal.warmupDetail
             font.family: Theme.font
             font.pixelSize: 13
@@ -204,7 +181,6 @@ Rectangle {
             color: Theme.textMuted
         }
         Label {
-            anchors.right: parent.right
             visible: text !== ""
             text: pane.thermal.lensFitText + (pane.thermal.lensRecalibrate && pane.lensUsable ? "  ›" : "")
             font.family: Theme.font
@@ -280,9 +256,10 @@ Rectangle {
         }
         Label {
             anchors.right: parent.right
+            visible: pane.devInfo
             text: pane.thermal.rangeLow + " ~ " + pane.thermal.rangeHigh
             font.family: Theme.font
-            font.pixelSize: 12
+            font.pixelSize: 13
             font.features: { "tnum": 1 }
             color: Theme.textMuted
         }
@@ -295,7 +272,7 @@ Rectangle {
         text: pane.thermal.error
         wrapMode: Text.Wrap
         font.family: Theme.font
-        font.pixelSize: 12
+        font.pixelSize: 13
         color: Theme.textMuted
     }
 }

@@ -3,39 +3,45 @@ import QtQuick.Controls
 import QtQuick.Layouts
 import HwLab
 
-// 열화상 오른쪽 여백에 크게 그리는 PPG 맥파입니다. 위 RGB 패널과 같은 폭이라 미리보기 두 줄의 균형이 맞습니다.
-// 이 칸이 보일 때 왼쪽 PpgPanel은 작은 맥파를 숨기고 연결과 포트 선택만 맡습니다. 값과 색은 PpgPanel의 맥파와 같습니다.
+// 미리보기 아래에 미리보기 폭으로 그리는 PPG 맥파입니다. 왼쪽에 상태 글자, 오른쪽에 최근 5초 맥파를 둡니다.
+// 포트 고르기는 설정 패널의 PpgPanel이 맡고, 그 패널은 작은 맥파를 숨깁니다. 값과 색은 PpgPanel의 맥파와 같습니다.
 Rectangle {
     id: pane
     required property PpgController ppg
     readonly property bool hasWave: ppg.connected && ppg.wave.length > 1
 
-    color: Theme.background
+    radius: Theme.radius
+    color: Theme.previewBackground
 
-    // 왼쪽 경계선. RGB 패널의 경계선과 같은 선입니다.
-    Rectangle {
-        width: 1
-        height: parent.height
-        color: Theme.line
-    }
+    RowLayout {
+        anchors { fill: parent; leftMargin: 16; rightMargin: 16; topMargin: 12; bottomMargin: 12 }
+        spacing: 16
 
-    ColumnLayout {
-        anchors { fill: parent; leftMargin: 16; rightMargin: 12; topMargin: 14; bottomMargin: 14 }
-        spacing: 4
-
-        Label {
-            text: "PPG"
-            font.pixelSize: 14
-            font.weight: Font.DemiBold
-            color: Theme.text
-        }
-        Label {
-            Layout.fillWidth: true
-            text: pane.ppg.connected ? pane.ppg.statusText : "연결 안 함. 왼쪽 PPG 칸에서 포트를 고릅니다"
-            wrapMode: Text.Wrap
-            font.pixelSize: 12
-            font.features: { "tnum": 1 }
-            color: Theme.textMuted
+        ColumnLayout {
+            Layout.alignment: Qt.AlignVCenter
+            Layout.preferredWidth: 260
+            Layout.maximumWidth: 260
+            spacing: 4
+            Label {
+                text: "PPG"
+                font.pixelSize: 14
+                font.weight: Font.DemiBold
+                color: Theme.text
+            }
+            Label {
+                Layout.fillWidth: true
+                text: pane.ppg.connected ? pane.ppg.statusText : "연결 안 함. 설정에서 포트를 고릅니다"
+                wrapMode: Text.Wrap
+                font.pixelSize: 13
+                font.features: { "tnum": 1 }
+                color: Theme.textMuted
+            }
+            Label {
+                visible: pane.hasWave
+                text: "최근 5초"
+                font.pixelSize: 13
+                color: Theme.textMuted
+            }
         }
 
         // 최근 5초 맥파. 마지막 점을 오른쪽 끝에 둡니다. 높이가 너무 크면 파형이 과장되어 보여 200화소까지만 씁니다.
@@ -69,12 +75,6 @@ Rectangle {
                     ctx.stroke()
                 }
             }
-        }
-        Label {
-            visible: pane.hasWave
-            text: "최근 5초"
-            font.pixelSize: 11
-            color: Theme.textMuted
         }
     }
 }

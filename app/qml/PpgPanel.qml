@@ -30,7 +30,7 @@ ColumnLayout {
         Label {
             Layout.fillWidth: true
             text: "PPG"
-            font.pixelSize: 12
+            font.pixelSize: 13
             font.weight: Font.DemiBold
             font.letterSpacing: 1
             color: Theme.textMuted
@@ -86,7 +86,7 @@ ColumnLayout {
                     visible: panel.ppg.connected || panel.ppg.tone === "error"
                     text: panel.ppg.statusText
                     wrapMode: Text.Wrap
-                    font.pixelSize: 12
+                    font.pixelSize: 13
                     font.features: { "tnum": 1 }
                     color: panel.ppg.tone === "ok" ? Theme.textMuted : panel.stateColor
                 }
@@ -168,7 +168,7 @@ ColumnLayout {
                         Label {
                             text: portRow.modelData.vidPid
                             visible: text !== ""
-                            font.pixelSize: 12
+                            font.pixelSize: 13
                             font.features: { "tnum": 1 }
                             color: Theme.textMuted
                         }
@@ -177,7 +177,7 @@ ColumnLayout {
                                   : portRow.modelData.lightOpen ? "조명에서 사용 중"
                                   : portRow.modelData.suggested ? "지난번 PPG" : ""
                             visible: text !== ""
-                            font.pixelSize: 12
+                            font.pixelSize: 13
                             color: portRow.open ? Theme.text : portRow.modelData.lightOpen ? Theme.textMuted : Theme.settling
                         }
                     }
@@ -185,7 +185,7 @@ ColumnLayout {
                         Layout.fillWidth: true
                         text: portRow.modelData.description + (portRow.modelData.serial !== "" ? "  " + portRow.modelData.serial : "")
                         elide: Text.ElideRight
-                        font.pixelSize: 11
+                        font.pixelSize: 13
                         color: Theme.textMuted
                     }
                 }
@@ -203,13 +203,13 @@ ColumnLayout {
             Layout.fillWidth: true
             visible: panel.ppg.ports.length === 0
             text: "직렬 포트가 없습니다"
-            font.pixelSize: 12
+            font.pixelSize: 13
             color: Theme.textMuted
         }
         Label {
             visible: panel.ppg.connected
             text: "연결 끊기"
-            font.pixelSize: 12
+            font.pixelSize: 13
             color: Theme.textMuted
             opacity: panel.editable ? 1 : 0.4
             MouseArea {

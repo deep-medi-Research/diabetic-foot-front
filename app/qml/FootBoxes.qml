@@ -18,6 +18,8 @@ Item {
     // 상자 테두리 모양입니다. 화소 왼쪽 상자, 화소 오른쪽 상자 순서이고 "solid"(2화소 실선), "dashed"(2화소 점선),
     // "faint"(1화소 흐린 점선) 중 하나입니다. RGB 패널이 고른 발을 강조할 때 씁니다.
     property var outline: ["solid", "solid"]
+    // true이면 발 이름 아래에 프레임 화소 크기(폭 × 높이)를 보입니다. 개발용 값이라 설정 패널이 열린 동안만 켭니다.
+    property bool showSizes: true
     // true이면 Shift를 누른 채 상자 안을 누른 것을 받지 않고 아래 항목(RgbAreaPicker)으로 넘깁니다.
     property bool passShift: false
     signal footClicked()
@@ -194,6 +196,7 @@ Item {
             // 발 이름 아래: 프레임 화소 크기(폭 × 높이)
             Rectangle {
                 anchors { horizontalCenter: parent.horizontalCenter; top: footPill.bottom; topMargin: 6 }
+                visible: overlay.showSizes
                 width: sizeLabel.implicitWidth + 16
                 height: 20
                 radius: 10
@@ -203,7 +206,7 @@ Item {
                     anchors.centerIn: parent
                     text: box.area.width + " × " + box.area.height
                     font.family: Theme.font
-                    font.pixelSize: 11
+                    font.pixelSize: 13
                     font.features: { "tnum": 1 }
                     color: box.ok ? Theme.textMuted : Theme.mismatch
                 }

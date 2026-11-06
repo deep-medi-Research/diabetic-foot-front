@@ -135,6 +135,9 @@ qt_target_qml_sources(hwlab_app QML_FILES qml/PpgPanel.qml qml/PpgWave.qml)
 
 # 앱 종료 때 녹화 중 확인과 카메라 복원 결과 안내
 qt_target_qml_sources(hwlab_app QML_FILES qml/RestoreNotice.qml qml/CloseConfirm.qml)
+
+# 개발과 시험 기록용 설정 패널(카메라 설정과 다시 읽은 값, 발 상자 RGB, 포트, 저장 위치, 렌즈 보정, 분석 판)
+qt_target_qml_sources(hwlab_app QML_FILES qml/SettingsPanel.qml)
 target_sources(hwlab_app PRIVATE src/scripted_rgb_camera.h src/late_rgb_camera.h)
 
 # 배포 패키지: 관류 분석 프로그램, VC++ 런타임, 실행 명령, 라이선스 고지입니다. 이 레포 밖의 배포 스크립트가 이 옵션을 채웁니다.

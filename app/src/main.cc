@@ -521,7 +521,8 @@ int main(int argc, char* argv[]) {
   engine.addImageProvider(QStringLiteral("thermal"), new ThermalImageProvider(controller.thermal()));
   // 화면 최상위의 required property로 넘깁니다. 전역 이름(context property)을 쓰지 않아 QML에서 타입 검사가 됩니다.
   engine.setInitialProperties({{QStringLiteral("capture"), QVariant::fromValue(&controller)},
-                               {QStringLiteral("analysis"), QVariant::fromValue(&analysis)}});
+                               {QStringLiteral("analysis"), QVariant::fromValue(&analysis)},
+                               {QStringLiteral("openSettings"), args.contains(QStringLiteral("--open-settings"))}});
   engine.loadFromModule("HwLab", "Main");
   if (engine.rootObjects().isEmpty()) return 1;
   // 창이 떠 있는 동안 Windows가 PC를 잠자기 모드로 바꾸지 않게 합니다. 잠자기에서 깨어나면 USB 장치가 다시 연결되어 열어 둔

@@ -56,7 +56,7 @@ ColumnLayout {
         visible: field.problem !== ""
         text: field.problem
         wrapMode: Text.Wrap
-        font.pixelSize: 12
+        font.pixelSize: 13
         color: Theme.mismatch
     }
 }

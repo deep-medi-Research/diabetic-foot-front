@@ -144,7 +144,7 @@ Rectangle {
                 Layout.fillWidth: true
                 Layout.preferredWidth: 1
                 spacing: 0
-                Label { text: cell.modelData[0]; font.pixelSize: 11; color: Theme.textMuted }
+                Label { text: cell.modelData[0]; font.pixelSize: 13; color: Theme.textMuted }
                 Label {
                     text: RgbText.value(numbers.latest, cell.modelData[1])
                     font.pixelSize: 24
@@ -156,7 +156,7 @@ Rectangle {
                     Layout.fillWidth: true
                     text: "포화 " + RgbText.saturation(cell.sat)
                     elide: Text.ElideRight
-                    font.pixelSize: 11
+                    font.pixelSize: 13
                     font.features: { "tnum": 1 }
                     color: cell.sat > 0 ? Theme.settling : Theme.textMuted
                 }
@@ -189,14 +189,14 @@ Rectangle {
         readonly property real sat: latest.valid ? Math.max(latest.satR, latest.satG, latest.satB) : 0
         spacing: 10
         LineLegend { visible: numbersLine.legend !== null; dashed: numbersLine.legend === true }
-        Label { visible: numbersLine.name !== ""; text: numbersLine.name; font.pixelSize: 12; color: Theme.textMuted }
+        Label { visible: numbersLine.name !== ""; text: numbersLine.name; font.pixelSize: 13; color: Theme.textMuted }
         Repeater {
             model: [["R", "r"], ["G", "g"], ["B", "b"]]
             delegate: Row {
                 id: pair
                 required property var modelData
                 spacing: 3
-                Label { anchors.baseline: value.baseline; text: pair.modelData[0]; font.pixelSize: 11; color: Theme.textMuted }
+                Label { anchors.baseline: value.baseline; text: pair.modelData[0]; font.pixelSize: 13; color: Theme.textMuted }
                 Label {
                     id: value
                     text: RgbText.value(numbersLine.latest, pair.modelData[1])
@@ -212,7 +212,7 @@ Rectangle {
             horizontalAlignment: Text.AlignRight
             text: "포화 " + RgbText.saturation(numbersLine.sat)
             elide: Text.ElideLeft
-            font.pixelSize: 11
+            font.pixelSize: 13
             font.features: { "tnum": 1 }
             color: numbersLine.sat > 0 ? Theme.settling : Theme.textMuted
         }
@@ -240,7 +240,7 @@ Rectangle {
                     visible: !charts.compact
                     spacing: 6
                     Rectangle { anchors.verticalCenter: parent.verticalCenter; width: 10; height: 2; color: track.modelData[2] }
-                    Label { text: track.modelData[0]; font.pixelSize: 11; color: Theme.textMuted }
+                    Label { text: track.modelData[0]; font.pixelSize: 13; color: Theme.textMuted }
                 }
                 RgbChart {
                     Layout.fillWidth: true
@@ -293,7 +293,7 @@ Rectangle {
                     Layout.fillWidth: true
                     text: "미리보기를 누르거나 끌면 관찰 영역, 발 상자 안에서는 Shift+끌기"
                     wrapMode: Text.WordWrap
-                    font.pixelSize: 11
+                    font.pixelSize: 13
                     color: Theme.textMuted
                 }
                 Segmented {
@@ -337,7 +337,7 @@ Rectangle {
                             Layout.fillWidth: true
                             Layout.preferredWidth: 1
                             text: modelData
-                            font.pixelSize: 11
+                            font.pixelSize: 13
                             color: Theme.textMuted
                         }
                     }
@@ -350,7 +350,7 @@ Rectangle {
                             Layout.preferredWidth: 56
                             spacing: 6
                             LineLegend { anchors.verticalCenter: parent.verticalCenter; dashed: parent.modelData[1] }
-                            Label { text: parent.modelData[0]; font.pixelSize: 12; color: Theme.textMuted }
+                            Label { text: parent.modelData[0]; font.pixelSize: 13; color: Theme.textMuted }
                         }
                     }
                     Repeater {
@@ -375,7 +375,7 @@ Rectangle {
                     opacity: panel.valueOpacity
                     text: panel.compareSatText()
                     elide: Text.ElideRight
-                    font.pixelSize: 11
+                    font.pixelSize: 13
                     color: text === "포화 없음" ? Theme.textMuted : Theme.settling
                 }
                 Rectangle { Layout.fillWidth: true; height: 1; color: Theme.line }
@@ -402,7 +402,7 @@ Rectangle {
                         Layout.fillWidth: true
                         text: "발 상자 평균"
                         elide: Text.ElideRight
-                        font.pixelSize: 12
+                        font.pixelSize: 13
                         font.weight: Font.DemiBold
                         color: Theme.textMuted
                     }
@@ -452,7 +452,7 @@ Rectangle {
                         text: "x " + panel.trace.area.x + ", y " + panel.trace.area.y + ", "
                               + panel.trace.area.width + " x " + panel.trace.area.height
                         elide: Text.ElideRight
-                        font.pixelSize: 11
+                        font.pixelSize: 13
                         font.features: { "tnum": 1 }
                         color: Theme.textMuted
                     }
@@ -550,7 +550,7 @@ Rectangle {
             Label {
                 visible: timeWindow.live
                 text: panel.trace.stale ? "멈춤" : "실시간"
-                font.pixelSize: 11
+                font.pixelSize: 13
                 color: Theme.textMuted
             }
             Rectangle {
@@ -563,7 +563,7 @@ Rectangle {
                     id: nowLabel
                     anchors.centerIn: parent
                     text: "지금으로"
-                    font.pixelSize: 11
+                    font.pixelSize: 13
                     font.weight: Font.DemiBold
                     color: Theme.background
                 }

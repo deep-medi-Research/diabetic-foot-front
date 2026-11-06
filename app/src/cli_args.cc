@@ -68,6 +68,7 @@ constexpr ArgSpec kArguments[] = {
      "--after 뒤 화면을 이미지로 저장하고 끝납니다. 결과 창이 열려 있으면 <이름>_result.<확장자>도 저장합니다", false},
     {"--after", "<ms>", Group::kCheck, "--screenshot을 찍기까지의 시간입니다", false},
     {"--press-start", nullptr, Group::kCheck, "--after의 3분의 1 시점에 촬영 버튼을 누릅니다", false},
+    {"--open-settings", nullptr, Group::kCheck, "설정 패널을 연 채로 시작합니다. 설정 패널을 --screenshot으로 확인할 때 씁니다", false},
     {"--close-after", "<ms>", Group::kCheck, "정한 시간 뒤 창을 닫습니다. 종료 때 카메라 복원 흐름을 시험할 때 씁니다", false},
 };
 

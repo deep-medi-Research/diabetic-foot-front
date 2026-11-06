@@ -28,7 +28,7 @@ ColumnLayout {
         Label {
             Layout.fillWidth: true
             text: "조명"
-            font.pixelSize: 12
+            font.pixelSize: 13
             font.weight: Font.DemiBold
             font.letterSpacing: 1
             color: Theme.textMuted
@@ -126,7 +126,7 @@ ColumnLayout {
                         Label {
                             text: portRow.modelData.vidPid
                             visible: text !== ""
-                            font.pixelSize: 12
+                            font.pixelSize: 13
                             font.features: { "tnum": 1 }
                             color: Theme.textMuted
                         }
@@ -136,7 +136,7 @@ ColumnLayout {
                                   : portRow.modelData.lastPpg ? "지난번 PPG"
                                   : portRow.modelData.suggested ? "기억한 변환기" : ""
                             visible: text !== ""
-                            font.pixelSize: 12
+                            font.pixelSize: 13
                             color: portRow.open ? Theme.text : portRow.modelData.ppgOpen ? Theme.textMuted : Theme.settling
                         }
                     }
@@ -145,7 +145,7 @@ ColumnLayout {
                         text: portRow.modelData.description
                               + (portRow.modelData.serial !== "" ? "  " + portRow.modelData.serial : "")
                         elide: Text.ElideRight
-                        font.pixelSize: 11
+                        font.pixelSize: 13
                         color: Theme.textMuted
                     }
                 }
@@ -169,14 +169,14 @@ ColumnLayout {
                 Layout.fillWidth: true
                 text: "지난번 PPG 장치로 연결한 변환기입니다(" + panel.light.pendingPort + "). 조명으로 열면 이 포트에 밝기 명령을 보냅니다."
                 wrapMode: Text.Wrap
-                font.pixelSize: 12
+                font.pixelSize: 13
                 color: Theme.settling
             }
             RowLayout {
                 spacing: 16
                 Label {
                     text: "조명으로 열기"
-                    font.pixelSize: 12
+                    font.pixelSize: 13
                     font.weight: Font.DemiBold
                     color: Theme.text
                     opacity: panel.canSend ? 1 : 0.4
@@ -190,7 +190,7 @@ ColumnLayout {
                 }
                 Label {
                     text: "취소"
-                    font.pixelSize: 12
+                    font.pixelSize: 13
                     color: Theme.textMuted
                     MouseArea {
                         anchors.fill: parent
@@ -205,14 +205,14 @@ ColumnLayout {
             Layout.fillWidth: true
             visible: panel.light.ports.length === 0
             text: "직렬 포트가 없습니다"
-            font.pixelSize: 12
+            font.pixelSize: 13
             color: Theme.textMuted
         }
         // 연결한 포트를 닫습니다. LED는 마지막 밝기로 남습니다.
         Label {
             visible: panel.light.connected
             text: "연결 끊기"
-            font.pixelSize: 12
+            font.pixelSize: 13
             color: Theme.textMuted
             opacity: panel.editable ? 1 : 0.4
             MouseArea {
@@ -275,7 +275,7 @@ ColumnLayout {
                     anchors.centerIn: parent
                     visible: panel.light.confirmed
                     text: "✓"
-                    font.pixelSize: 11
+                    font.pixelSize: 13
                     color: Theme.text
                 }
             }
@@ -283,7 +283,7 @@ ColumnLayout {
                 Layout.fillWidth: true
                 text: panel.light.confirmed ? "LED 보드로 확인함" : "LED 밝기가 바뀌는 것을 봤으면 누르십시오"
                 wrapMode: Text.Wrap
-                font.pixelSize: 12
+                font.pixelSize: 13
                 color: panel.light.confirmed ? Theme.textMuted : Theme.settling
             }
         }
@@ -301,7 +301,7 @@ ColumnLayout {
         visible: panel.light.connected
         text: panel.light.responseText
         wrapMode: Text.Wrap
-        font.pixelSize: 12
+        font.pixelSize: 13
         color: panel.light.responseState === "not_seen" ? Theme.settling : Theme.textMuted
     }
     Label {
@@ -310,7 +310,7 @@ ColumnLayout {
         visible: !panel.editable
         text: "밝기는 미리보기에서만 바꿀 수 있습니다"
         wrapMode: Text.Wrap
-        font.pixelSize: 12
+        font.pixelSize: 13
         color: Theme.textMuted
     }
     Label {
@@ -319,7 +319,7 @@ ColumnLayout {
         visible: panel.light.error !== ""
         text: panel.light.error
         wrapMode: Text.Wrap
-        font.pixelSize: 12
+        font.pixelSize: 13
         color: Theme.mismatch
     }
 }
