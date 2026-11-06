@@ -168,7 +168,7 @@ struct Capture::Impl {
   std::deque<double> light_recent;      // 최근 RGB 프레임의 평균 밝기. 수신 스레드에서만 씁니다
   std::optional<LightProbe> light_probe;  // 수신 스레드에서만 씁니다
 
-  bool PostLight(LightRequest request) {
+  bool PostLight(const LightRequest& request) {
     if (light == nullptr) return false;
     {
       std::lock_guard<std::mutex> lock(status_mutex);

@@ -108,7 +108,7 @@ PpgSaveResult SaveRecord(const hwlab::platform::PpgRecord& record, const std::st
 
 PpgController::PpgController(hwlab::platform::SerialPortOpener opener,
                              std::function<std::vector<hwlab::platform::SerialPortInfo>()> list_ports,
-                             RememberedValues* remembered_values, QString remembered, QObject* parent)
+                             RememberedValues* remembered_values, const QString& remembered, QObject* parent)
     : QObject(parent),
       remembered_values_(remembered_values),
       remembered_(remembered.isEmpty() ? remembered_values->Value(QLatin1String(kIdentityKey)).toString()
@@ -118,7 +118,7 @@ PpgController::PpgController(hwlab::platform::SerialPortOpener opener,
   callbacks.state = [this](const hwlab::platform::PpgSnapshot& snapshot) {
     QMetaObject::invokeMethod(this, [this, snapshot] { ApplySnapshot(snapshot); }, Qt::QueuedConnection);
   };
-  callbacks.wave = [this](std::vector<double> points) {
+  callbacks.wave = [this](const std::vector<double>& points) {
     QList<qreal> wave(points.begin(), points.end());
     QMetaObject::invokeMethod(this, [this, wave = std::move(wave)] { ApplyWave(wave); }, Qt::QueuedConnection);
   };

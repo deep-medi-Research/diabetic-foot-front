@@ -91,7 +91,7 @@ class PpgController : public QObject {
    */
   PpgController(hwlab::platform::SerialPortOpener opener,
                 std::function<std::vector<hwlab::platform::SerialPortInfo>()> list_ports,
-                RememberedValues* remembered_values, QString remembered = QString(), QObject* parent = nullptr);
+                RememberedValues* remembered_values, const QString& remembered = QString(), QObject* parent = nullptr);
 
   /** 장치 스레드를 끝냅니다. 직렬 드라이버가 멈춰도 1초 넘게 기다리지 않습니다(PpgSensor::kQuitWaitUs). */
   ~PpgController() override;
