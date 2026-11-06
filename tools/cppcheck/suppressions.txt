@@ -1,0 +1,23 @@
+# cppcheck가 이미 알려 준 지적(baseline)입니다. 여기 없는 새 지적은 CI가 막습니다.
+# 한 줄은 `지적 종류:파일`입니다. 줄 번호는 적지 않아, 코드가 밀려도 그대로 맞습니다.
+# 새 지적은 코드를 고쳐서 없앱니다. 고칠 수 없으면 그 줄 위에 `// cppcheck-suppress 지적종류`와 이유를 남깁니다.
+# 이 파일에 줄을 더하는 것은 이미 있던 지적을 인정할 때만 합니다.
+
+# StripElapsed는 받은 문자열을 그대로 돌려주는 경로가 있어, 상수 참조로 바꾸면 그 경로마다 복사가 한 번 늘어납니다.
+passedByValue:platform/src/perfusion_analysis.cc
+
+# PpgParser::Counts는 5개 int64를 담은 구조체라 값으로 돌려도 복사 비용이 무시할 수준이고, 돌려받은 값은 그 뒤 객체가 바뀌어도 그대로입니다.
+returnByReference:platform/include/hwlab/platform/ppg_wire.h
+
+# Qt 속성 getter는 QString, QList처럼 암묵적으로 공유되는 값을 값으로 돌려주는 것이 Qt 관례이고, 복사 비용이 없습니다.
+returnByReference:app/src/*
+
+# 시험의 지역 구조체는 중괄호로 값을 채우는 집합체라 멤버 초기화가 필요 없는데, cppcheck가 생성자 없는 구조체로 보고 지적합니다.
+uninitMemberVarNoCtor:core/test/*
+uninitMemberVarNoCtor:platform/test/*
+
+# Source의 멤버 path는 참조라 선언에서 초기화할 수 없고, 중괄호 초기화로 채웁니다.
+uninitMemberVarNoCtor:platform/tools/hwlab_capture.cc
+
+# `std::vector<std::vector<wchar_t>> storage(n, ...)`의 data()를 목록에 담는 코드입니다. 벡터 원소를 가리키는데 cppcheck가 지역 변수 주소로 읽습니다.
+objectIndex:platform/src/windows/rgb_camera_windows.cc

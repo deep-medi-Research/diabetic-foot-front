@@ -126,7 +126,7 @@ std::optional<PerfusionSummary> ReadPerfusionSummary(const std::string& json, st
     const auto level = NumberAt(json, {"cuff_level", "level_pct_sbp"});
     c.has_level = level && std::isfinite(*level);
     if (c.has_level) c.level_pct = static_cast<int32_t>(std::lround(*level));
-    const auto number = [&](std::vector<std::string> path) { return NumberAt(json, path).value_or(kNoNumber); };
+    const auto number = [&](const std::vector<std::string>& path) { return NumberAt(json, path).value_or(kNoNumber); };
     c.e = number({"cuff_level", "E"});
     c.p_ge40 = number({"cuff_level", "p_ge40"});
     c.p_ge80 = number({"cuff_level", "p_ge80"});
@@ -171,7 +171,7 @@ std::optional<PerfusionSummary> ReadPerfusionSummary(const std::string& json, st
   }
   for (const char* side : {"left", "right"}) {
     PerfusionSummary::Foot& foot = std::string(side) == "left" ? s.left : s.right;
-    const auto number = [&](std::vector<std::string> path) { return NumberAt(json, path).value_or(kNoNumber); };
+    const auto number = [&](const std::vector<std::string>& path) { return NumberAt(json, path).value_or(kNoNumber); };
     foot.pi_toes = number({"per_side", side, "pi_toes"});
     foot.pi_fore = number({"per_side", side, "pi_fore"});
     foot.pi_mid = number({"per_side", side, "pi_mid"});

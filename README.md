@@ -167,6 +167,20 @@ cmake --preset windows-debug -DFETCHCONTENT_SOURCE_DIR_GOOGLETEST=C:/src/googlet
 
 시험 없이 빌드하려면 `-DHWLAB_BUILD_TESTS=OFF -DHWLAB_PLATFORM_TESTS=OFF -DHWLAB_APP_TESTS=OFF`를 줍니다. 그때 `ctest --preset`은 시험이 없어 실패합니다.
 
+## 정적 분석
+
+GitHub Actions가 C++ 소스나 헤더가 바뀐 PR에서는 cppcheck로 `core/`, `platform/`, `app/`의 C++ 코드를, QML이 바뀐 PR에서는 qmllint로 `app/qml/`을 검사하고, 새 지적이 하나라도 있으면 실패합니다. 빌드와 시험은 하지 않으므로 Qt, FFmpeg 없이 돕니다.
+
+macOS에서는 `brew install cppcheck`로 설치하고 레포 루트에서 같은 스크립트를 돌립니다. 걸리는 시간은 1분 안팎입니다.
+
+```bash
+bash tools/cppcheck/run.sh
+```
+
+- CI의 cppcheck 판은 [`tools/cppcheck/version.txt`](tools/cppcheck/version.txt)에 있습니다. 판이 다르면 스크립트가 경고하며 결과가 조금 다를 수 있습니다.
+- 이미 있던 지적은 [`tools/cppcheck/suppressions.txt`](tools/cppcheck/suppressions.txt)에 이유와 함께 있습니다. 새 지적은 코드를 고쳐 없애고, 오탐일 때만 그 줄 위에 `// cppcheck-suppress <지적 종류> ; <이유>`를 둡니다.
+- qmllint는 HwLab 모듈을 빌드하지 않고 돌려서 구문과 형식 해석이 필요 없는 분류만 검사합니다. 명령은 [`static-analysis-qml.yml`](.github/workflows/static-analysis-qml.yml)에 있습니다.
+
 ## 실행
 
 명령줄 실행 형식과 자주 쓰는 인자입니다.

@@ -931,6 +931,7 @@ TEST(PpgSensor, CsvRoundTrip) {
 
   const std::string bad = (dir / "bad_ppg.csv").string();
   std::FILE* f = std::fopen(bad.c_str(), "wb");
+  ASSERT_NE(f, nullptr);
   std::fputs("t,v\n1,2\n", f);
   std::fclose(f);
   EXPECT_FALSE(hwlab::platform::ReadPpgCsv(bad, &error).has_value());
