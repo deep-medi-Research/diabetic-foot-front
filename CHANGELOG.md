@@ -12,6 +12,8 @@
 
 ## [Unreleased]
 
+## [0.1.20] - 2026-11-06
+
 ### 추가
 
 - PPG 사이드카(`_ppg.json`, `schema_version` 3)에 측정 데이터마다 마지막 표본의 장치 시각과 PC 수신 시각을 배열 두 개(`anchor_device_us`, `anchor_host_us`)로 남깁니다. 시계 맞춤 방법을 고친 뒤에도 지난 촬영의 공통 시각을 다시 계산할 수 있습니다.
