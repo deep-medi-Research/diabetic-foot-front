@@ -133,6 +133,7 @@ build/macos-debug/app/hwlab_app --spec specs/see3cam_manual_720p60.json --out bu
 | --- | --- |
 | `--fake-thermal-absent` | 열화상 장치를 찾지 못함 |
 | `--fake-thermal-delay-ms <ms>` | 열화상을 연 뒤 첫 프레임이 늦게 옴 |
+| `--fake-thermal-warmup <분>` | 열화상 카메라가 켠 지 이만큼 지난 온도에서 시작함(0은 식은 카메라) |
 | `--fake-free-bytes <바이트>` | 디스크 여유 부족 |
 | `--fake-restore-fails` | 종료 때 카메라 설정 복원이 안 맞음 |
 | `--no-thermal` | 열화상을 일부러 쓰지 않음 |
@@ -319,6 +320,7 @@ rm -r ~/Library/Application\ Support/deepmedi/hwlab-dev
 | `--fake` | 장비 없이 가짜 RGB, 열화상, PPG(COM6), LED(COM7)로 시작합니다. 화면에서 바꾼 값을 다음 실행에 남기지 않습니다 |
 | `--fake-thermal-absent` | --fake에서 열화상 장치를 찾지 못하는 상태로 만듭니다. 열화상 없이 찍을지 묻는 안내를 시험할 때 씁니다 |
 | `--fake-thermal-delay-ms <ms>` | --fake에서 열화상을 연 뒤 첫 프레임이 이 시간만큼 늦게 오게 합니다. 같은 안내를 시험할 때 씁니다 |
+| `--fake-thermal-warmup <분>` | --fake의 열화상 카메라 온도를 켠 지 이만큼 지난 값에서 시작합니다. 0이면 식은 카메라이고, 주지 않으면 다 데워진 카메라(120분)입니다 |
 | `--fake-free-bytes <바이트>` | 디스크 여유를 읽지 않고 이 값으로 봅니다. 디스크 부족 거부를 시험할 때 씁니다 |
 | `--fake-restore-fails` | --fake에서 실행 전 색온도를 자동으로 두고 자동 색온도 명령을 실패시켜, 종료 때 카메라 복원 불일치 안내를 시험합니다 |
 

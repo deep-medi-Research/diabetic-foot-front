@@ -41,7 +41,14 @@ std::optional<hwlab::platform::LensShadingStatus> ScriptedThermalCamera::LensSha
   return inner_->LensShading();
 }
 
-bool ScriptedThermalCamera::CorrectLensShading(std::string* error) { return inner_->CorrectLensShading(error); }
+bool ScriptedThermalCamera::CorrectLensShading(const std::optional<hwlab::timing::LensShadingConditions>& made,
+                                               std::string* error) {
+  return inner_->CorrectLensShading(made, error);
+}
+
+std::optional<hwlab::platform::CameraTemperature> ScriptedThermalCamera::LastCameraTemperature() const {
+  return inner_->LastCameraTemperature();
+}
 
 bool ScriptedThermalCamera::Holding() const {
   std::lock_guard<std::mutex> lock(mutex_);

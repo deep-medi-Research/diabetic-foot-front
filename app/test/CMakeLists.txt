@@ -45,6 +45,11 @@ hwlab_add_app_test(test_shot_form
   SOURCES test_shot_form.cc
     ../src/shot_form.h ../src/shot_form.cc ../src/remembered_values.h ../src/remembered_values.cc)
 
+# 열화상 칸의 예열 단계와 렌즈 보정 판정 문장을 시험합니다.
+hwlab_add_app_test(test_thermal_view
+  SOURCES test_thermal_view.cc ../src/thermal_view.h ../src/thermal_view.cc
+  LIBRARIES Qt6::Gui Qt6::Quick)
+
 # 촬영 화면의 종료 순서(녹화 중 닫기, 프레임이 멈춘 카메라)를 가짜 카메라로 시험합니다.
 hwlab_add_app_test(test_capture_controller
   SOURCES test_capture_controller.cc

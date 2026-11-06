@@ -49,6 +49,24 @@ class ThermalView : public QObject {
   Q_PROPERTY(QString lensShadingText READ lensShadingText NOTIFY statusChanged)
   /** 렌즈 셰이딩 보정 요청을 아직 끝내지 않았는지입니다. 보정하는 동안 열화상 프레임이 오지 않습니다. */
   Q_PROPERTY(bool lensShadingBusy READ lensShadingBusy NOTIFY statusChanged)
+  /**
+   * 카메라 온도로 잰 예열 단계입니다(timing::WarmupPhase). "measuring", "warming", "settling", "ready"이고,
+   * 수신 중이 아니거나 카메라 온도를 주지 않는 카메라는 빈 문자열입니다.
+   */
+  Q_PROPERTY(QString warmup READ warmup NOTIFY statusChanged)
+  /** 예열 단계 문장입니다. 예: "예열 중". warmup이 비면 빈 문자열입니다. */
+  Q_PROPERTY(QString warmupText READ warmupText NOTIFY statusChanged)
+  /** 예열 단계의 근거입니다. 예: "지난 10분 분당 +0.12 °C", "4분 뒤 판정". warmup이 비면 빈 문자열입니다. */
+  Q_PROPERTY(QString warmupDetail READ warmupDetail NOTIFY statusChanged)
+  /**
+   * 적용된 렌즈 보정의 판정입니다(timing::LensShadingFit). "unknown"(보정 때 기록 없음),
+   * "made-warming", "wait-warmup", "moved", "fits"이고, 보정이 없거나 warmup이 비면 빈 문자열입니다.
+   */
+  Q_PROPERTY(QString lensFit READ lensFit NOTIFY statusChanged)
+  /** lensFit 문장입니다. 예: "보정 때보다 0.9 °C 다름, 다시 보정". "fits"와 빈 lensFit은 빈 문자열입니다. */
+  Q_PROPERTY(QString lensFitText READ lensFitText NOTIFY statusChanged)
+  /** 다시 보정하라는 알림을 보일 때 true입니다. lensFit이 "made-warming"이나 "moved"인 때입니다. */
+  Q_PROPERTY(bool lensRecalibrate READ lensRecalibrate NOTIFY statusChanged)
   Q_PROPERTY(double measuredFps READ measuredFps NOTIFY statusChanged)
   Q_PROPERTY(int written READ written NOTIFY statusChanged)
   Q_PROPERTY(int dropped READ dropped NOTIFY statusChanged)
@@ -108,6 +126,12 @@ class ThermalView : public QObject {
   QString lensShading() const;
   QString lensShadingText() const;
   bool lensShadingBusy() const { return status_.lens_shading_busy; }
+  QString warmup() const;
+  QString warmupText() const;
+  QString warmupDetail() const;
+  QString lensFit() const;
+  QString lensFitText() const;
+  bool lensRecalibrate() const;
   double measuredFps() const { return measured_fps_; }
   int written() const { return static_cast<int>(status_.written); }
   int dropped() const { return static_cast<int>(status_.dropped); }
@@ -149,6 +173,8 @@ class ThermalView : public QObject {
 
  private:
   void ConvertLoop();
+  std::optional<hwlab::timing::WarmupStatus> ShownWarmup() const;
+  std::optional<hwlab::timing::LensShadingFit> ShownLensFit() const;
 
   const bool available_;
   const QString absent_reason_;

@@ -515,8 +515,13 @@ struct Capture::Impl {
     }
     // 요청 뒤 끊겨 다시 여는 중이면 몇 초 늦게 보정하게 되고 그 사이 렌즈 앞을 치웠을 수 있어 보정하지 않습니다.
     const bool receiving = thermal_device->Connection() == ThermalConnection::kReceiving;
+    const ThermalStatus now = thermal->Status();
+    std::optional<timing::LensShadingConditions> made;
+    if (now.camera_temperature) {
+      made = timing::LensShadingConditions{now.camera_temperature->shutter_c, now.camera_temperature->fpa, now.warmup.phase};
+    }
     std::string ignored;  // 결과와 이유는 카메라의 LensShading에 남습니다
-    if (preview && receiving) thermal_device->CorrectLensShading(&ignored);
+    if (preview && receiving) thermal_device->CorrectLensShading(made, &ignored);
     thermal->RefreshLensShading();
     std::lock_guard<std::mutex> lock(status_mutex);
     lens_shading_busy = false;

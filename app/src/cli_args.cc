@@ -31,6 +31,8 @@ constexpr ArgSpec kArguments[] = {
      "장비 없이 가짜 RGB, 열화상, PPG(COM6), LED(COM7)로 시작합니다. 화면에서 바꾼 값을 다음 실행에 남기지 않습니다", false},
     {"--fake-thermal-absent", nullptr, Group::kFake, "--fake에서 열화상 장치를 찾지 못하는 상태로 만듭니다. 열화상 없이 찍을지 묻는 안내를 시험할 때 씁니다", false},
     {"--fake-thermal-delay-ms", "<ms>", Group::kFake, "--fake에서 열화상을 연 뒤 첫 프레임이 이 시간만큼 늦게 오게 합니다. 같은 안내를 시험할 때 씁니다", false},
+    {"--fake-thermal-warmup", "<분>", Group::kFake,
+     "--fake의 열화상 카메라 온도를 켠 지 이만큼 지난 값에서 시작합니다. 0이면 식은 카메라이고, 주지 않으면 다 데워진 카메라(120분)입니다", false},
     {"--fake-free-bytes", "<바이트>", Group::kFake, "디스크 여유를 읽지 않고 이 값으로 봅니다. 디스크 부족 거부를 시험할 때 씁니다", false},
     {"--fake-restore-fails", nullptr, Group::kFake,
      "--fake에서 실행 전 색온도를 자동으로 두고 자동 색온도 명령을 실패시켜, 종료 때 카메라 복원 불일치 안내를 시험합니다", false},

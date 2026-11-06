@@ -34,7 +34,8 @@ class ScriptedThermalCamera final : public hwlab::platform::ThermalCamera {
   hwlab::platform::ThermalConnection Connection() const override;
   void SetLensShadingFolder(const std::string& folder) override;
   std::optional<hwlab::platform::LensShadingStatus> LensShading() const override;
-  bool CorrectLensShading(std::string* error) override;
+  bool CorrectLensShading(const std::optional<hwlab::timing::LensShadingConditions>& made, std::string* error) override;
+  std::optional<hwlab::platform::CameraTemperature> LastCameraTemperature() const override;
 
  private:
   bool Holding() const;

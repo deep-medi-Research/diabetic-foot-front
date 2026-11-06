@@ -302,6 +302,13 @@ int main(int argc, char* argv[]) {
   } else if (fake) {
     hwlab::platform::FakeThermalScript script;
     script.pc_clock = true;
+    // 시간 상수 15분은 이전 레포 이슈 #49의 2026-10-28 식은 카메라(셔터 24.2 °C에서 10분 31.3, 30분 36.5, 60분 38.2)에
+    // 가깝습니다.
+    script.fpa_tau_us = 15 * 60'000'000LL;
+    const QString warmed = Arg(args, QStringLiteral("--fake-thermal-warmup"));
+    bool minutes_given = false;
+    const qlonglong minutes = warmed.toLongLong(&minutes_given);
+    script.warmed_before_open_us = (minutes_given ? minutes : 120) * 60'000'000LL;
     thermal = std::make_unique<hwlab::platform::FakeThermalCamera>(script);
     const bool absent = args.contains(QStringLiteral("--fake-thermal-absent"));
     const int delay_ms = Arg(args, QStringLiteral("--fake-thermal-delay-ms")).toInt();

@@ -78,7 +78,7 @@ Popup {
             text: "판: 나무나 두꺼운 종이처럼 반사가 없고 열이 잘 퍼지지 않는 실온의 평평한 판을 씁니다.\n"
                   + "대는 방법: 판을 렌즈와 정면으로 마주 보지 않게 30도 이상 기울여 화면 전체를 덮습니다. "
                   + "렌즈가 보는 면에는 손이나 카메라가 닿지 않게 합니다.\n"
-                  + "시점: 앱에서 열화상이 보이기 시작하고 40분 이상 지나 카메라가 데워진 뒤에 보정합니다.\n\n"
+                  + "시점: 열화상 칸에 \"예열 완료\"가 보인 뒤에 보정합니다. 카메라를 USB에서 뽑아 두어 식었으면 꽂아 둔 카메라보다 오래 걸립니다.\n\n"
                   + "판을 정면으로 대면 데워진 렌즈가 판에 비치고, 가리지 않으면 그때 보이던 장면이 보정값에 섞여 "
                   + "영상이 오히려 고르지 않게 됩니다. 보정값은 저장되어 다음에 앱을 켤 때 그대로 적용됩니다. "
                   + "보정하는 약 2초 동안 열화상이 멈춥니다."
@@ -86,6 +86,17 @@ Popup {
             font.pixelSize: 13
             lineHeight: 1.2
             color: Theme.textMuted
+        }
+        Label {
+            Layout.topMargin: 12
+            Layout.fillWidth: true
+            visible: prompt.capture.thermal.warmup !== ""
+            wrapMode: Text.Wrap
+            text: "지금 열화상 카메라: " + prompt.capture.thermal.warmupText + ", " + prompt.capture.thermal.warmupDetail
+            font.family: Theme.font
+            font.pixelSize: 13
+            font.weight: Font.DemiBold
+            color: prompt.capture.thermal.warmup === "ready" ? Theme.text : Theme.settling
         }
         RowLayout {
             Layout.topMargin: 24

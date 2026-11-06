@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <chrono>
+#include <cmath>
 #include <filesystem>
 #include <fstream>
 #include <thread>
@@ -14,6 +15,13 @@ namespace {
 
 // DeviceName과 보정 파일 이름이 같은 이름을 쓰게 합니다(실제 구현은 장치 이름으로 파일 이름을 만듭니다).
 constexpr const char* kDeviceName = "FakeThermal";
+
+// 장치의 FPA 값 단위(TE-EV1 실측 0.061 간격), 셔터 온도 = 1.460 x FPA 값 - 105.20(이전 레포 이슈 #49, 2026-10-28
+// 예열 기록)의 절편, 셔터 PT100 원시값을 °C로 옮기는 식(thermal_camera_windows.cc)입니다.
+constexpr double kFpaStep = 0.061;
+constexpr double kShutterAtZeroFpa = -105.20;
+constexpr double kShutterCelsiusPerCount = 0.005417;
+constexpr double kShutterCelsiusOffset = 87.8602;
 
 int64_t PcMicros() {
   return std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now().time_since_epoch())
@@ -43,6 +51,8 @@ bool FakeThermalCamera::Open(std::string* error) {
     script_.disconnect_after = -1;
   }
   if (script_.pc_clock) now_us_ = PcMicros();
+  if (!first_opened_us_) first_opened_us_ = now_us_;
+  last_temperature_.reset();
   open_ = true;
   lens_shading_ = lens_shading_folder_.empty() ? std::nullopt : std::optional<LensShadingStatus>(LoadLensShading());
   opened_at_ = Timestamp{now_us_};
@@ -157,6 +167,16 @@ ReceivedFrame FakeThermalCamera::Emit() {
   frame.host_time = frame.view.time;
   last_frame_ = frame.host_time;
   last_device_frame_ = device_frame_;
+  if (script_.fpa_tau_us > 0) {
+    const double age = static_cast<double>(now_us_ - *first_opened_us_ + script_.warmed_before_open_us);
+    const double fpa = script_.fpa_end - (script_.fpa_end - script_.fpa_start) *
+                                             std::exp(-age / static_cast<double>(script_.fpa_tau_us));
+    const double stepped = std::round(fpa / kFpaStep) * kFpaStep;
+    const double shutter_c = kTeEv1WarmupRule.shutter_c_per_fpa * stepped + kShutterAtZeroFpa;
+    const auto shutter_raw = static_cast<uint16_t>(std::lround((shutter_c + kShutterCelsiusOffset) / kShutterCelsiusPerCount));
+    last_temperature_ = CameraTemperature{static_cast<float>(stepped), shutter_raw,
+                                          shutter_raw * kShutterCelsiusPerCount - kShutterCelsiusOffset};
+  }
   ++sent_;
   ++device_frame_;
   next_ideal_us_ += script_.device_period_us;
@@ -206,14 +226,21 @@ std::optional<LensShadingStatus> FakeThermalCamera::LensShading() const {
   return open_ ? lens_shading_ : std::nullopt;
 }
 
-bool FakeThermalCamera::CorrectLensShading(std::string* error) {
+std::optional<CameraTemperature> FakeThermalCamera::LastCameraTemperature() const {
+  std::lock_guard<std::mutex> lock(mutex_);
+  return last_temperature_;
+}
+
+bool FakeThermalCamera::CorrectLensShading(const std::optional<timing::LensShadingConditions>& made,
+                                           std::string* error) {
   std::lock_guard<std::mutex> lock(mutex_);
   if (!open_ || lens_shading_folder_.empty()) {
     if (error != nullptr) *error = open_ ? "렌즈 셰이딩 보정 파일 폴더가 정해지지 않았습니다" : "열려 있지 않습니다";
     return false;
   }
   if (script_.lens_shading_fails) {
-    lens_shading_ = LensShadingStatus{{record::LensShadingSource::kFailed, std::nullopt}, "렌즈 셰이딩 보정이 실패했습니다"};
+    lens_shading_ = LensShadingStatus{{record::LensShadingSource::kFailed, std::nullopt}, "렌즈 셰이딩 보정이 실패했습니다",
+                                      std::nullopt};
     if (error != nullptr) *error = lens_shading_->error;
     return false;
   }
@@ -225,9 +252,12 @@ bool FakeThermalCamera::CorrectLensShading(std::string* error) {
   std::ofstream file(path, std::ios::trunc);
   file << now_s << "\n";
   file.close();
-  lens_shading_ = file ? LensShadingStatus{{record::LensShadingSource::kCorrected, now_s}, std::string()}
+  lens_shading_ = file ? LensShadingStatus{{record::LensShadingSource::kCorrected, now_s}, std::string(), made}
                        : LensShadingStatus{{record::LensShadingSource::kCorrected, std::nullopt},
-                                           "보정은 적용했지만 보정 파일을 저장하지 못했습니다"};
+                                           "보정은 적용했지만 보정 파일을 저장하지 못했습니다", made};
+  if (file && made && !WriteLensShadingConditions(path, now_s, *made)) {
+    lens_shading_->error = "보정 파일은 저장했지만 보정 때의 카메라 온도를 저장하지 못했습니다";
+  }
   return true;
 }
 
@@ -240,9 +270,9 @@ LensShadingStatus FakeThermalCamera::LoadLensShading() const {
   if (!file) return {};
   int64_t saved_s = 0;
   if (!(file >> saved_s)) {
-    return {{record::LensShadingSource::kFailed, std::nullopt}, "보정 파일을 불러오지 못했습니다"};
+    return {{record::LensShadingSource::kFailed, std::nullopt}, "보정 파일을 불러오지 못했습니다", std::nullopt};
   }
-  return {{record::LensShadingSource::kLoaded, saved_s}, std::string()};
+  return {{record::LensShadingSource::kLoaded, saved_s}, std::string(), ReadLensShadingConditions(LensShadingPath(), saved_s)};
 }
 
 int32_t FakeThermalCamera::Calibrations() const {

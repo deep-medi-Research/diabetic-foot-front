@@ -20,6 +20,7 @@ Rectangle {
     signal lensShadingClicked()
 
     readonly property string connState: thermal.state
+    readonly property bool lensUsable: editable && connState === "receiving" && !thermal.lensShadingBusy
     readonly property color stateColor: connState === "receiving" ? Theme.text
                                       : connState === "searching" ? Theme.settling
                                       : connState === "lost" ? Theme.mismatch : Theme.textMuted
@@ -110,10 +111,8 @@ Rectangle {
             color: pane.thermal.lensShading === "none" || pane.thermal.lensShading === "failed" ? Theme.settling
                                                                                                 : Theme.textMuted
         }
-        // 렌즈 보정 버튼. 미리보기에서 열화상을 받는 동안만 누를 수 있습니다(보정하는 동안 열화상이 멈춤).
         Rectangle {
             id: lensButton
-            readonly property bool usable: pane.editable && pane.connState === "receiving" && !pane.thermal.lensShadingBusy
             anchors.verticalCenter: parent.verticalCenter
             visible: pane.thermal.lensShading !== "" || pane.thermal.lensShadingBusy
             implicitWidth: lensButtonLabel.implicitWidth + 16
@@ -122,7 +121,7 @@ Rectangle {
             color: "transparent"
             border.width: 1
             border.color: Theme.line
-            opacity: usable ? 1 : 0.4
+            opacity: pane.lensUsable ? 1 : 0.4
             Label {
                 id: lensButtonLabel
                 anchors.centerIn: parent
@@ -134,7 +133,7 @@ Rectangle {
             }
             MouseArea {
                 anchors.fill: parent
-                enabled: lensButton.usable
+                enabled: pane.lensUsable
                 cursorShape: Qt.PointingHandCursor
                 onClicked: pane.lensShadingClicked()
             }
@@ -143,6 +142,7 @@ Rectangle {
 
     // 위 오른쪽: 연결 상태
     Rectangle {
+        id: statePill
         anchors { right: parent.right; top: parent.top; margins: 14 }
         visible: pane.thermal.available
         height: 30
@@ -164,6 +164,58 @@ Rectangle {
                 font.pixelSize: 13
                 font.weight: Font.DemiBold
                 color: Theme.text
+            }
+        }
+    }
+
+    Rectangle {
+        anchors { fill: warmupInfo; margins: -8 }
+        visible: warmupInfo.visible
+        radius: 8
+        color: "#b3000000"
+    }
+    Column {
+        id: warmupInfo
+        anchors { right: parent.right; top: statePill.bottom; topMargin: 18; rightMargin: 22 }
+        spacing: 6
+        visible: pane.thermal.warmup !== ""
+        Row {
+            anchors.right: parent.right
+            spacing: 8
+            Rectangle {
+                anchors.verticalCenter: parent.verticalCenter
+                width: 8; height: 8; radius: 4
+                color: pane.thermal.warmup === "ready" ? Theme.text : Theme.settling
+            }
+            Label {
+                text: pane.thermal.warmupText
+                font.family: Theme.font
+                font.pixelSize: 13
+                font.weight: Font.DemiBold
+                color: pane.thermal.warmup === "ready" ? Theme.text : Theme.settling
+            }
+        }
+        Label {
+            anchors.right: parent.right
+            text: pane.thermal.warmupDetail
+            font.family: Theme.font
+            font.pixelSize: 13
+            font.features: { "tnum": 1 }
+            color: Theme.textMuted
+        }
+        Label {
+            anchors.right: parent.right
+            visible: text !== ""
+            text: pane.thermal.lensFitText + (pane.thermal.lensRecalibrate && pane.lensUsable ? "  ›" : "")
+            font.family: Theme.font
+            font.pixelSize: 13
+            font.weight: pane.thermal.lensRecalibrate ? Font.DemiBold : Font.Normal
+            color: pane.thermal.lensRecalibrate ? Theme.settling : Theme.textMuted
+            MouseArea {
+                anchors.fill: parent
+                enabled: pane.thermal.lensRecalibrate && pane.lensUsable
+                cursorShape: Qt.PointingHandCursor
+                onClicked: pane.lensShadingClicked()
             }
         }
     }
